@@ -5,4 +5,4 @@ from config import CONFIG
 
 class FileHandler(RequestHandler):
     def get(self):
-        self.write("TEST")
+        self.render('base.html')
