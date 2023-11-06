@@ -1,0 +1,2 @@
+upload_directory = "uploads"
+port = 8080
