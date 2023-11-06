@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}home{% endblock %}
+
+{% block body %}
+<div id="file_list"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function composeFileList(path) {
+        fetch("{{ url_for('composer.compose_file_list') }}/" + path).then(
+            response => {
+                if (response.status == 302) {
+                    window.location = response.url;
+                } else {
+                    response.text().then(
+                        body => {
+                            document.getElementById('file_list').innerHTML = body;
+                        }
+                    );
+                }
+            }
+        );
+    }
+
+    window.onload = () => {
+        composeFileList('');
+    };
+</script>
+{% endblock %}
