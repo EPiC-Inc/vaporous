@@ -1,7 +1,20 @@
-{% for file_name, file_metadata in files.items() %}
-<div class="file_select">
-    <span class="file_icon">{{ file_metadata.get('icon') }}</span>
-    <span class="file_name">{{ file_name }}</span>
-    <span class="file_size">Size: {{ file_metadata.get('size') }}</span>
+<div>
+    <div>
+        <span class="file_select" onclick="composeFileList('')">Home</span>
+        {% for full_segment, segment in path %}
+        /
+        <span class="file_select" onclick="composeFileList('{{ full_segment }}')">{{ segment }}</span>
+        {% endfor %}
+    </div>
+    {% for file_name, file_metadata in files.items() %}
+    {% if file_metadata.get('type') == 'dir' %}
+    <div class="file_select" onclick="composeFileList('{{ file_name }}')">
+    {% else %}
+    <div class="file_select">
+    {% endif %}
+        <span class="file_icon">{{ file_metadata.get('icon') }}</span>
+        <span class="file_name">{{ file_name }}</span>
+        <span class="file_size">Size: {{ file_metadata.get('size') }}</span>
+    </div>
+    {% endfor %}
 </div>
-{% endfor %}

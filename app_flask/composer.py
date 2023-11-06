@@ -13,4 +13,16 @@ def compose_file_list(base_directory='') -> str | Response:
     # if not session.get("logged_in"):
     #     return redirect(url_for('index'))
     viewable_files = list_files(base_directory)
-    return render_template('_file_list.html', files=viewable_files)
+    paths = []
+    current_path = ''
+    for path in base_directory.split('/'):
+        if not path:
+            continue
+        current_path += path
+        paths.append((current_path, path))
+        current_path += '/'
+    print(paths)
+    return render_template('_file_list.html',
+                           path=paths,
+                           files=viewable_files
+                           )

@@ -6,7 +6,7 @@ from . import CONFIG, app
 
 @app.get('/')
 def index() -> str:
-    if session.get('logged_in'):
+    if session.get('authentic'):
         return render_template('index.html')
     # return render_template('challenge.html')
     return render_template('files.html')
