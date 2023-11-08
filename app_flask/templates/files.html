@@ -2,12 +2,47 @@
 {% block title %}home{% endblock %}
 
 {% block body %}
-<div id="file_list"></div>
+<div id="drop_zone" ondrop="dropHandler(event);" ondragover="dragOverHandler(event);">
+    <header></header>
+    <div id="file_container">
+        <div id="file_list">...</div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
+    CURRENT_PATH = '';
+
+    var dragEventRefCounter = 0;
+    document.getElementById('drop_zone').ondragleave = (event) => {
+        // event.preventDefault();
+        dragEventRefCounter -= 1;
+        if (dragEventRefCounter === 0)
+            event.currentTarget.classList.remove('dragging');
+    }
+
+    document.getElementById('drop_zone').ondragenter = (event) => {
+        dragEventRefCounter += 1;
+        event.currentTarget.classList.add('dragging');
+    }
+
+    function dropHandler(event) {
+        event.preventDefault();
+        dragEventRefCounter = 0;
+        event.currentTarget.classList.remove('dragging');
+
+        console.log('test');
+    }
+
+    function dragOverHandler(event) {
+        event.preventDefault();
+    }
+
+
     function composeFileList(path) {
+        CURRENT_PATH = path;
+        document.getElementById('file_list').innerHTML = '...';
         fetch("{{ url_for('composer.compose_file_list') }}/" + path).then(
             response => {
                 if (response.status == 302) {
@@ -15,7 +50,7 @@
                 } else {
                     response.text().then(
                         body => {
-                            document.getElementById('file_list').innerHTML = body;
+                            document.getElementById('file_container').innerHTML = body;
                         }
                     );
                 }

@@ -12,6 +12,7 @@ def compose_file_list(base_directory='') -> str | Response:
     #TODO - check if user has access
     # if not session.get("logged_in"):
     #     return redirect(url_for('index'))
+    session['current_path'] = base_directory
     viewable_files = list_files(base_directory)
     paths = []
     current_path = ''
@@ -21,8 +22,7 @@ def compose_file_list(base_directory='') -> str | Response:
         current_path += path
         paths.append((current_path, path))
         current_path += '/'
-    print(paths)
     return render_template('_file_list.html',
-                           path=paths,
+                           paths=paths,
                            files=viewable_files
                            )

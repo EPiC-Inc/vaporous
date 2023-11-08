@@ -1,3 +1,64 @@
+body {
+    margin: 0;
+    height: 100vh;
+}
+
+#drop_zone {
+    border: 10px solid #0000;
+    box-sizing: border-box;
+    height: 100%;
+}
+#drop_zone.dragging {
+    border: 10px dashed darkcyan;
+}
+
+.location_select {
+    cursor: pointer;
+}
+
 .file_select {
     cursor: pointer;
+    animation: fadeIn 400ms;
+}
+
+@keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+
+#file_container {
+    box-sizing: border-box;
+    height: 100%;
+    margin: 0 auto;
+    padding: 2% 0;
+    width: 60%
+}
+#file_navigate {
+    font-size: 1.1em;
+    overflow-x: auto;
+}
+#file_list {
+    display: flex;
+    flex-direction: column;
+    gap: 1%;
+    height: 95%;
+    margin-top: 4%;
+    overflow-y: auto;
+}
+.file_select {
+    display:flex;
+    flex-direction: row;
+    gap: 2%;
+    width: 100%;
+}
+.file_select .file_name {
+    flex-grow: 6;
+}
+
+/* ANCHOR: mobile */
+@media only screen and (max-width: 600px) {
+    #file_container {
+        width: 100%
+    }
 }
