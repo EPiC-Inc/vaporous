@@ -2,7 +2,7 @@ from flask import (Blueprint, redirect, render_template, request, session,
                    url_for)
 from werkzeug.wrappers.response import Response
 
-from .file_manip import list_files, retrieve
+from .file_manip import list_files
 
 composer = Blueprint('composer', __name__)
 

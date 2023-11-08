@@ -12,7 +12,8 @@ app.config['SESSION_COOKIE_SAMESITE'] = "Strict"
 
 from . import routes
 
-# from .api import api
-# app.register_blueprint(api, url_prefix=r'/api')
+# Set up API endpoints
+from .api import api
+app.register_blueprint(api, url_prefix=r'/api')
 from .composer import composer
 app.register_blueprint(composer, url_prefix=r'/compose')
