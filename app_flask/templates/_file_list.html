@@ -5,16 +5,32 @@
     <span class="location_select" onclick="composeFileList('{{ full_segment }}')">{{ segment }}</span>
     {% endfor %}
 </div>
-<div id="file_list">
-    {% for file_name, file_metadata in files.items() %}
-    {% if file_metadata.type == 'dir' %}
-    <div class="file_select" onclick="composeFileList('{{ file_metadata.path }}')">
-    {% else %}
-    <div class="file_select">
-    {% endif %}
-        <img class="file_icon" src="" alt="{{ file_metadata.icon }}.png"/>
-        <span class="file_name">{{ file_name }}</span>
-        <span class="file_size">Size: {{ file_metadata.size }}</span>
-    </div>
-{% endfor %}
-</div>
+<table id="file_list">
+    <thead>
+        <tr>
+            <th class="file_icon"></th>
+            <th class="file_name">Name</th>
+            <th class="file_size">Size</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for file_name, file_metadata in files.items() %}
+        {% if file_metadata.type == 'dir' %}
+        <tr class="file_select" onclick="composeFileList('{{ file_metadata.path }}')">
+        {% else %}
+        <tr class="file_select">
+        {% endif %}
+            <td class="file_icon">
+                <img src="{{ url_for('static', filename=file_metadata.icon + '.png') }}"
+                alt="{{ file_metadata.icon }}.png" />
+            </td>
+            <td class="file_name">
+                <span>{{ file_name }}</span>
+            </td>
+            <td class="file_size">
+                <span>Size: {{ file_metadata.size }}</span>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

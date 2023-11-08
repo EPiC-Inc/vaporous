@@ -38,7 +38,7 @@ def list_files(current_directory: str | PathLike) -> dict:
                 case '.mp4' | '.webm':
                     icon = 'icon-video'
                 case '.zip' | '.7z' | '.rar':
-                    icon = 'icon-zip'
+                    icon = 'icon-archive'
                 case _:
                     if entry.is_dir():
                         icon = 'icon-dir'
