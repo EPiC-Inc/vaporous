@@ -52,6 +52,12 @@ body {
     gap: 2%;
     width: 100%;
 }
+.file_select:hover {
+    background-color: cyan;
+}
+.file_select .file_icon {
+    width: 60px;
+}
 .file_select .file_name {
     flex-grow: 6;
 }

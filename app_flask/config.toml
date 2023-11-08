@@ -1,3 +1,4 @@
 host = "0.0.0.0"
-upload_directory = "/home/emmettwb/fileserve/app_flask/uploads"
+upload_directory = "app_flask/uploads"
 port = 8080
+anchor_navigation = true

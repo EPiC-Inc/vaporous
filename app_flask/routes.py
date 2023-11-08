@@ -9,7 +9,9 @@ def index() -> str:
     if session.get('authentic'):
         return render_template('index.html')
     # return render_template('challenge.html')
-    return render_template('files.html')
+    return render_template('files.html',
+                           anchor_navigation = CONFIG.anchor_navigation
+                           )
 
 @app.post('/challenge')
 def challenge_response() -> Response:

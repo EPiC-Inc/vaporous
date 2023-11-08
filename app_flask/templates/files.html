@@ -43,13 +43,16 @@
     function composeFileList(path) {
         CURRENT_PATH = path;
         document.getElementById('file_list').innerHTML = '...';
-        fetch("{{ url_for('composer.compose_file_list') }}/" + path).then(
+        fetch("{{ url_for('composer.compose_file_list') }}" + path).then(
             response => {
-                if (response.status == 302) {
+                if (response.redirected) {
                     window.location = response.url;
                 } else {
                     response.text().then(
                         body => {
+                            // {% if anchor_navigation %}
+                            window.location.hash = `#${CURRENT_PATH}`;
+                            // {% endif %}
                             document.getElementById('file_container').innerHTML = body;
                         }
                     );
@@ -59,7 +62,7 @@
     }
 
     window.onload = () => {
-        composeFileList('');
+        composeFileList(window.location.hash.substring(1));
     };
 </script>
 {% endblock %}

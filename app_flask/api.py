@@ -20,5 +20,5 @@ def retrieve_file(filename) -> Response:
         raise FileNotFoundError
 
 @api.errorhandler(FileNotFoundError)
-def file_not_found(e):
+def handle_FileNotFoundError(e):
     return {}, 404

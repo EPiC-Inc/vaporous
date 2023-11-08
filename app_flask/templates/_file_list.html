@@ -7,14 +7,14 @@
 </div>
 <div id="file_list">
     {% for file_name, file_metadata in files.items() %}
-    {% if file_metadata.get('type') == 'dir' %}
-    <div class="file_select" onclick="composeFileList('{{ file_name }}')">
+    {% if file_metadata.type == 'dir' %}
+    <div class="file_select" onclick="composeFileList('{{ file_metadata.path }}')">
     {% else %}
     <div class="file_select">
     {% endif %}
-        <img class="file_icon" src="" alt="{{ file_metadata.get('icon') }}.png"/>
+        <img class="file_icon" src="" alt="{{ file_metadata.icon }}.png"/>
         <span class="file_name">{{ file_name }}</span>
-        <span class="file_size">Size: {{ file_metadata.get('size') }}</span>
+        <span class="file_size">Size: {{ file_metadata.size }}</span>
     </div>
 {% endfor %}
 </div>

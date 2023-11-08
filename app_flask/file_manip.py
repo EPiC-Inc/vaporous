@@ -1,5 +1,8 @@
 from math import floor, log, pow
 from os import PathLike, path, scandir
+from pathlib import Path
+from re import compile
+from types import SimpleNamespace
 
 from flask import send_from_directory
 from werkzeug.utils import secure_filename
@@ -7,6 +10,8 @@ from werkzeug.wrappers.response import Response
 
 from . import CONFIG
 
+
+dot_re = compile(r'\.\.+')
 
 def convert_size(size_bytes):
    if size_bytes == 0:
@@ -18,11 +23,10 @@ def convert_size(size_bytes):
    return f"{s}{size_name[i]}"
 
 def list_files(current_directory: str | PathLike) -> dict:
-    # Might not hurt to cache the results of this function
-    current_directory = secure_filename(str(current_directory))
-    current_directory = path.join(CONFIG.upload_directory, current_directory)
+    current_directory = dot_re.sub(r'.', str(current_directory))
+    full_directory = path.join(path.abspath(CONFIG.upload_directory), current_directory)
     results = {}
-    with scandir(current_directory) as files:
+    with scandir(full_directory) as files:
         for entry in files:
             match path.splitext(entry.name)[1]:
                 case '.txt':
@@ -40,15 +44,17 @@ def list_files(current_directory: str | PathLike) -> dict:
                         icon = 'icon-dir'
                     else:
                         icon = 'icon-file'
-            results[entry.name] = {
+            results[entry.name] = SimpleNamespace(**{
                 'type': 'file' if entry.is_file() else 'dir',
                 'icon': icon,
-                'size': convert_size(entry.stat().st_size)
-                }
+                'size': convert_size(entry.stat().st_size),
+                'path': Path(path.join(current_directory, entry.name)).as_posix()
+                })
 
     return results
 
 def retrieve(filename: str | PathLike) -> Response:
+    #TODO - verify access of user
     # filename = secure_filename(str(filename))
     return send_from_directory(CONFIG.upload_directory,
                                filename,

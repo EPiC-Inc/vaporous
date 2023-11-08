@@ -8,6 +8,7 @@ app = Flask(__name__)
 from .config import CONFIG
 
 app.secret_key = 'insecure key please change'
+app.config['SESSION_COOKIE_SAMESITE'] = "Strict"
 
 from . import routes
 

@@ -26,3 +26,9 @@ def compose_file_list(base_directory='') -> str | Response:
                            paths=paths,
                            files=viewable_files
                            )
+
+@composer.errorhandler(FileNotFoundError)
+def handle_FileNotFoundError(e) -> str:
+    return render_template('_file_list.html',
+                           files={}
+                           )
