@@ -5,11 +5,9 @@ from re import compile
 from types import SimpleNamespace
 
 from flask import send_from_directory
-from werkzeug.utils import secure_filename
 from werkzeug.wrappers.response import Response
 
 from . import CONFIG
-
 
 dot_re = compile(r'\.\.+')
 
@@ -53,9 +51,9 @@ def list_files(current_directory: str | PathLike) -> dict:
 
     return results
 
-def retrieve(filename: str | PathLike) -> Response:
+def retrieve(file_path: str | PathLike) -> Response:
     #TODO - verify access of user
-    # filename = secure_filename(str(filename))
+    file_path = dot_re.sub(r'.', str(file_path))
     return send_from_directory(CONFIG.upload_directory,
-                               filename,
+                               file_path,
                                as_attachment=False)
