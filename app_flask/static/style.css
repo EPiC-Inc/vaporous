@@ -195,13 +195,17 @@ td:first-child {
  }
 
 /* ANCHOR: responsive stuff */
-@media only screen and (max-width: 600px) {
+@media only screen and (orientation: portrait) {
+    body {
+        font-size: 3.3em;
+        width: 100%;
+    }
     #file_container {
-        width: 100%
+        width: 100%;
     }
 }
 @media only screen and (min-width: 2000px) {
     #file_container {
-        width: 45%
+        width: 45%;
     }
 }
