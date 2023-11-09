@@ -5,12 +5,38 @@
     font-display: swap;
     src: url('aldrich.woff2') format('woff2');
     unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-  }
+}
+
+* {
+    --hover-background-color: rgb(245, 245, 245);
+}
 
 body {
     font-family: "Aldrich";
     margin: 0;
     height: 100vh;
+}
+
+a {
+    color: #008b9d;
+    display: inline-block;
+    text-decoration: none;
+}
+a::after {
+    content: '';
+    display: inline-block;
+    position: absolute;
+    width: 100%;
+    height: 3px;
+    transform: scaleX(0);
+    transition: transform 0.25s ease-out;
+    bottom: 0;
+    left: 0;
+    background-color: #008b9d;
+}
+span:hover a::after, tr:hover a::after {
+  transform: scaleX(1);
+  transform-origin: bottom left;
 }
 
 #drop_zone {
@@ -24,6 +50,7 @@ body {
 
 #progress_bar {
     height: 24px;
+    width: 100%;
 }
 
 .file_navigate {
@@ -32,6 +59,7 @@ body {
 }
 .location_select {
     cursor: pointer;
+    position: relative;
 }
 
 .file_select {
@@ -45,7 +73,7 @@ body {
     padding: 0.3rem;
 }
 .location_select:hover {
-    background-color: rgb(191, 191, 191);
+    background-color: var(--hover-background-color);
 }
 
 @keyframes fadeIn {
@@ -98,7 +126,7 @@ body {
     box-sizing: border-box;
     max-height: 95%;
     margin: 0 auto;
-    padding: 2% 0;
+    padding: 1% 0;
     width: 60%
 }
 #file_navigate {
@@ -124,7 +152,7 @@ body {
     width: 100%;
 }
 .file_select:hover td {
-    background-color: rgb(191, 191, 191);
+    background-color: var(--hover-background-color);
 }
 .file_select * * {
     padding: 0.4rem;
@@ -141,6 +169,7 @@ body {
 .file_name {
     /* align-self: center;
     flex-grow: 6; */
+    position: relative;
     width: auto;
 }
 .file_size {

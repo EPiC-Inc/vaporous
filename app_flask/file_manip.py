@@ -5,6 +5,8 @@ from re import compile
 from types import SimpleNamespace
 
 from flask import send_from_directory
+from werkzeug.datastructures import FileStorage
+from werkzeug.security import safe_join
 from werkzeug.wrappers.response import Response
 
 from . import CONFIG
@@ -51,9 +53,27 @@ def list_files(current_directory: str | PathLike) -> dict:
 
     return results
 
+def save_file(directory: str | PathLike, file_obj: FileStorage) -> None:
+    directory = dot_re.sub(r'.', str(directory))
+    file_name = dot_re.sub(r'.', str(file_obj.filename))
+    file_name = safe_join(directory, file_name)
+    file_name = safe_join(path.abspath(CONFIG.upload_directory), str(file_name))
+    print(file_name)
+    if file_name is None:
+        raise ValueError("Invalid file name or upload path")
+
+    c = 0
+    while path.exists(file_name):
+        c += 1
+        old_name = Path(str(file_obj.filename)).stem
+        file_name = Path(file_name).with_stem(f"{old_name}_{c}")
+    print(file_name)
+    file_obj.save(file_name)
+
 def retrieve(file_path: str | PathLike) -> Response:
-    #TODO - verify access of user
     file_path = dot_re.sub(r'.', str(file_path))
-    return send_from_directory(CONFIG.upload_directory,
+    print(file_path)
+    print(path.exists(str(safe_join(CONFIG.upload_directory, file_path))))
+    return send_from_directory(path.abspath(CONFIG.upload_directory),
                                file_path,
                                as_attachment=False)

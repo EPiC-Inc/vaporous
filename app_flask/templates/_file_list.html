@@ -1,8 +1,8 @@
 <div id="file_navigate">
-    <span class="location_select" onclick="composeFileList('')">Home</span>
+    <span class="location_select" onclick="composeFileList('')"><a style="width: 100%;">Home</a></span>
     {% for full_segment, segment in paths %}
     /
-    <span class="location_select" onclick="composeFileList('{{ full_segment }}')">{{ segment }}</span>
+    <span class="location_select" onclick="composeFileList('{{ full_segment }}')"><a style="width: 100%;">{{ segment }}</a></span>
     {% endfor %}
 </div>
 <table id="file_list">
@@ -15,11 +15,11 @@
     </thead>
     <tbody>
         {% for file_name, file_metadata in files.items() %}
-        {% if anchor_navigation %}
-        {% set onclick_func = "window.location.hash = '" + file_metadata.path + "';" %}
-        {% else %}
-        {% set onclick_func = "composeFileList('" + file_metadata.path + "');" %}
-        {% endif %}
+            {% if anchor_navigation %}
+            {% set onclick_func = "window.location.hash = '" + file_metadata.path + "';" %}
+            {% else %}
+            {% set onclick_func = "composeFileList('" + file_metadata.path + "');" %}
+            {% endif %}
         {% if file_metadata.type == 'dir' %}
         <tr class="file_select" onclick="{{ onclick_func }}">
         {% else %}
@@ -30,7 +30,9 @@
                 alt="{{ file_metadata.icon }}.png" />
             </td>
             <td class="file_name">
-                <span>{{ file_name }}</span>
+                <a href="{{ url_for('retrieve_file', filename=file_metadata.path) }}" target="_blank" style="width: 100%;">
+                    <span>{{ file_name }}</span>
+                </a>
             </td>
             <td class="file_size">
                 <span>{{ file_metadata.size }}</span>

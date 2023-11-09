@@ -3,12 +3,12 @@ from flask import (Blueprint, redirect, render_template, request, session,
 from werkzeug.wrappers.response import Response
 
 from .config import CONFIG
-from .file_manip import list_files
+from .file_manip import list_files, retrieve, save_file
 
 composer = Blueprint('composer', __name__)
 
-@composer.get('/dir_view/')
-@composer.get('/dir_view/<path:base_directory>')
+@composer.route('/dir_view/')
+@composer.route('/dir_view/<path:base_directory>')
 def compose_file_list(base_directory='') -> str | Response:
     #TODO - check if user has access
     # if not session.get("logged_in"):
@@ -28,6 +28,20 @@ def compose_file_list(base_directory='') -> str | Response:
                            files=viewable_files,
                            anchor_navigation = CONFIG.anchor_navigation
                            )
+
+
+@composer.post('/upload')
+def upload_file():
+    files = request.files.getlist('file')
+    upload_path = request.form.get('uploadPath')
+    if upload_path is None:
+        return "No uploadPath!", 422
+    if 'file' not in request.files:
+        return "No file part!", 422
+
+    for file in files:
+        save_file(upload_path, file)
+    return 'Success'
 
 @composer.errorhandler(FileNotFoundError)
 def handle_FileNotFoundError(e) -> str:

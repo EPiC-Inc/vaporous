@@ -2,9 +2,11 @@
 {% block title %}home{% endblock %}
 
 {% block body %}
-<div id="drop_zone" ondrop="dropHandler(event);" ondragover="dragOverHandler(event);">
+<div id="drop_zone">
     <header></header>
-    <div id="progress_bar"></div>
+    <div>
+        <progress id="progress_bar" max=100 value=0 style="visibility: hidden;"></progress>
+    </div>
     <div id="file_container">
         <div id="file_list">
             loading scripts... <br />
@@ -16,34 +18,78 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='file_upload.js') }}"></script>
 <script>
     CURRENT_PATH = '';
 
-    var dragEventRefCounter = 0;
-    document.getElementById('drop_zone').ondragleave = (event) => {
-        // event.preventDefault();
-        dragEventRefCounter -= 1;
-        if (dragEventRefCounter === 0)
-            event.currentTarget.classList.remove('dragging');
+    dropZone = document.getElementById('drop_zone')
+    dropZone.ondragleave = (event) => {
+        event.preventDefault();
+        event.currentTarget.classList.remove('dragging');
     }
-
-    document.getElementById('drop_zone').ondragenter = (event) => {
-        dragEventRefCounter += 1;
+    dropZone.ondragenter = (event) => {
+        event.preventDefault();
         event.currentTarget.classList.add('dragging');
     }
-
-    function dropHandler(event) {
+    dropZone.addEventListener("paste", (e) => {
+        e.preventDefault();
+        uploadFiles(e.clipboardData);
+    });
+    dropZone.ondragover = (event) => {
         event.preventDefault();
-        dragEventRefCounter = 0;
+    }
+    dropZone.ondrop = (event) => {
+        event.preventDefault();
         event.currentTarget.classList.remove('dragging');
-
-        console.log('test');
+        uploadFiles(event.dataTransfer);
     }
 
-    function dragOverHandler(event) {
-        event.preventDefault();
-    }
+    async function uploadFiles(dataTransfer) {
+        if (!dataTransfer.files.length) {
+            return;
+        }
+        let progressBar = document.getElementById('progress_bar');
+        progressBar.value = 0;
+        progressBar.style.visibility = "visible";
 
+        let files = dataTransfer.items;
+        let formData = new FormData();
+        formData.append('uploadPath', CURRENT_PATH);
+
+        let numFiles = files.length;
+        let numFilesDone = 0;
+
+        for (let i = 0; i < numFiles; i++) {
+            const item = files[i];
+            if (item.kind === "file") {
+                numFilesDone++;
+                progressBar.value = (numFilesDone / numFiles) * 100;
+                if (typeof item.webkitGetAsEntry === "function") {
+                    const entry = item.webkitGetAsEntry();
+                    const entryContent = await readEntryContentAsync(entry);
+                    ([...entryContent]).forEach((file, i) => {
+                        formData.append('file', file);
+                    })
+                    continue;
+                }
+
+                const file = item.getAsFile();
+                if (file) {
+                    formData.append('file', file);
+                }
+            }
+        }
+        fetch("{{ url_for('composer.upload_file') }}",{
+            method: "POST",
+            body: formData
+        }).then((response) => {
+            progressBar.style.visibility = "hidden";
+            composeFileList(CURRENT_PATH);
+        }).catch((e) => {
+            progressBar.style.visibility = "hidden";
+            console.log(e);
+        });
+    }
 
     async function composeFileList(path) {
         document.getElementById('file_list').innerHTML = '<span class="loader"></span>';

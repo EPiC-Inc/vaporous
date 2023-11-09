@@ -2,6 +2,7 @@ from flask import flash, redirect, render_template, request, session, url_for
 from werkzeug.wrappers.response import Response
 
 from . import CONFIG, app
+from .file_manip import retrieve
 
 
 @app.get('/')
@@ -18,6 +19,15 @@ def challenge_response() -> Response:
     # if passwd correct set cookie
     return redirect(url_for('index'))
 
+@app.route('/file', methods=["GET", "POST"])
+@app.route('/file/<path:filename>')
+def retrieve_file(filename=None) -> str | Response:
+    #TODO - verify user access
+    if request.method == "POST":
+        return ''
+    if not filename:
+        return 'No file selected'
+    return retrieve(filename)
 
 @app.errorhandler(404)
 def page_not_found(e) -> tuple[str, int]:

@@ -1,5 +1,6 @@
 anchor_navigation = true
 host = "0.0.0.0"
+max_upload_size_mb = 400000
 port = 8080
 private_paths = false
 upload_directory = "app_flask/uploads"
