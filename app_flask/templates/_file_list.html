@@ -15,8 +15,13 @@
     </thead>
     <tbody>
         {% for file_name, file_metadata in files.items() %}
+        {% if anchor_navigation %}
+        {% set onclick_func = "window.location.hash = '" + file_metadata.path + "';" %}
+        {% else %}
+        {% set onclick_func = "composeFileList('" + file_metadata.path + "');" %}
+        {% endif %}
         {% if file_metadata.type == 'dir' %}
-        <tr class="file_select" onclick="composeFileList('{{ file_metadata.path }}')">
+        <tr class="file_select" onclick="{{ onclick_func }}">
         {% else %}
         <tr class="file_select">
         {% endif %}
@@ -28,7 +33,7 @@
                 <span>{{ file_name }}</span>
             </td>
             <td class="file_size">
-                <span>Size: {{ file_metadata.size }}</span>
+                <span>{{ file_metadata.size }}</span>
             </td>
         </tr>
         {% endfor %}

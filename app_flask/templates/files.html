@@ -4,9 +4,12 @@
 {% block body %}
 <div id="drop_zone" ondrop="dropHandler(event);" ondragover="dragOverHandler(event);">
     <header></header>
+    <div id="progress_bar"></div>
     <div id="file_container">
         <div id="file_list">
-            <!-- YEAG -->
+            loading scripts... <br />
+            if this text does not disappear, please enable javascript. <br />
+            i'll probably have a js-free page in the future
         </div>
     </div>
 </div>
@@ -43,28 +46,27 @@
 
 
     async function composeFileList(path) {
+        document.getElementById('file_list').innerHTML = '<span class="loader"></span>';
         CURRENT_PATH = path;
-        document.getElementById('file_list').innerHTML = '...';
+        // {% if anchor_navigation %}
+        window.location.hash = `#${path}`;
+        // {% endif %}
         let response = await fetch("{{ url_for('composer.compose_file_list') }}" + path);
         if (response.redirected) {
             window.location = response.url;
         } else {
             response.text().then(
                 body => {
-                    // {% if anchor_navigation %}
-                    window.location.hash = `#${CURRENT_PATH}`;
-                    // {% endif %}
                     document.getElementById('file_container').innerHTML = body;
                 }
             );
         }
     }
 
-    // {% if anchor_navigation %}
     window.onload = () => {
         composeFileList(window.location.hash.substring(1));
     };
-
+    // {% if anchor_navigation %}
     window.addEventListener('hashchange', () => {
         composeFileList(window.location.hash.substring(1));
     });

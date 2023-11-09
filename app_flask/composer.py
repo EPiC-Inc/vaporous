@@ -2,6 +2,7 @@ from flask import (Blueprint, redirect, render_template, request, session,
                    url_for)
 from werkzeug.wrappers.response import Response
 
+from .config import CONFIG
 from .file_manip import list_files
 
 composer = Blueprint('composer', __name__)
@@ -24,7 +25,8 @@ def compose_file_list(base_directory='') -> str | Response:
         current_path += '/'
     return render_template('_file_list.html',
                            paths=paths,
-                           files=viewable_files
+                           files=viewable_files,
+                           anchor_navigation = CONFIG.anchor_navigation
                            )
 
 @composer.errorhandler(FileNotFoundError)
