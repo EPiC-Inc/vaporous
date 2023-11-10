@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}home{% endblock %}
+
+{% block body %}
+<div>
+    <form autocomplete="off" action="{{ url_for('index') }}" method="post" id="challenge">
+        <label for="passphrase">Information will be free,</label>
+        <input id="passphrase" name="challenge-response" type="password" autocomplete="off">
+    </form>
+</div>
+{% endblock %}

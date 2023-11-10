@@ -2,8 +2,14 @@
 {% block title %}home{% endblock %}
 
 {% block body %}
+<header>
+    <div>Not authenticated</div>
+    <div>
+        <label for="upload_button" id="upload_label">Upload</label>
+        <input id="upload_button" type="file" hidden>
+    </div>
+</header>
 <div id="drop_zone">
-    <header></header>
     <div>
         <progress id="progress_bar" max=100 value=0 style="visibility: hidden;"></progress>
     </div>
@@ -44,6 +50,12 @@
         uploadFiles(event.dataTransfer);
     }
 
+    document.getElementById('upload_button').onchange = (event) => {
+        let dataTransfer = new DataTransfer();
+        dataTransfer.items.add(event.currentTarget.files[0])
+        uploadFiles(dataTransfer);
+    }
+
     async function uploadFiles(dataTransfer) {
         if (!dataTransfer.files.length) {
             return;
@@ -61,10 +73,14 @@
 
         for (let i = 0; i < numFiles; i++) {
             const item = files[i];
+            if (!item) {
+                // WHY ARE THERE BLANK ITEMS? CHROMIUM CAN SUCK MY DICK AND BALLS
+                continue;
+            }
             if (item.kind === "file") {
                 numFilesDone++;
                 progressBar.value = (numFilesDone / numFiles) * 100;
-                if (typeof item.webkitGetAsEntry === "function") {
+                if (typeof item.webkitGetAsEntry === "function" && item.webkitGetAsEntry()) {
                     const entry = item.webkitGetAsEntry();
                     const entryContent = await readEntryContentAsync(entry);
                     ([...entryContent]).forEach((file, i) => {

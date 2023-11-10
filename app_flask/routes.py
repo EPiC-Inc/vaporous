@@ -5,14 +5,17 @@ from . import CONFIG, app
 from .file_manip import retrieve
 
 
-@app.get('/')
-def index() -> str:
+@app.route('/', methods=["GET", "POST"])
+def index() -> str | Response:
     if session.get('authentic'):
-        return render_template('index.html')
-    # return render_template('challenge.html')
-    return render_template('files.html',
+        return render_template('files.html',
                            anchor_navigation = CONFIG.anchor_navigation
                            )
+    if request.method == "POST":
+        if request.form.get('challenge-response') == "manifesto destiny":
+            session['authentic'] = True
+            return redirect(url_for('index'))
+    return render_template('challenge.html')
 
 @app.post('/challenge')
 def challenge_response() -> Response:
