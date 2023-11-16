@@ -14,7 +14,7 @@ app.config['MAX_CONTENT_LENGTH'] = CONFIG.max_upload_size_mb * 1024 * 1024
 from . import routes
 
 # Set up API endpoints
-from .api import api
-app.register_blueprint(api, url_prefix=r'/api')
+# from .api import api
+# app.register_blueprint(api, url_prefix=r'/api')
 from .composer import composer
 app.register_blueprint(composer, url_prefix=r'/compose')
