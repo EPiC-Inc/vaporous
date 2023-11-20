@@ -1,7 +1,7 @@
 from flask import Blueprint, redirect, render_template, request, session, url_for
 from werkzeug.wrappers.response import Response
 
-from .config import CONFIG
+from . import CONFIG
 from .file_manip import list_files, retrieve, save_file
 
 composer = Blueprint("composer", __name__)
