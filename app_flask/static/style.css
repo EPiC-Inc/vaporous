@@ -110,7 +110,7 @@ span:hover a::after, tr:hover a::after {
     font-size: 3rem;
     margin: auto;
     mix-blend-mode: screen;
-    vertical-align: sub;
+    padding-top: 5%;
 }
 .loader, .internet_disconnect {
     border-radius: 50%;
