@@ -15,7 +15,7 @@ dot_re = compile(r"\.\.+")
 
 
 def convert_size(size_bytes: int) -> str:
-    '''Human-readable size string.'''
+    """Human-readable size string."""
     if size_bytes == 0:
         return "0B"
     size_name = ("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
@@ -26,7 +26,7 @@ def convert_size(size_bytes: int) -> str:
 
 
 def list_files(current_directory: str | PathLike) -> dict:
-    '''List the files under current_directory.'''
+    """List the files under current_directory."""
     current_directory = dot_re.sub(r".", str(current_directory))
     full_directory = path.join(path.abspath(CONFIG.upload_directory), current_directory)
     results = {}
@@ -56,12 +56,14 @@ def list_files(current_directory: str | PathLike) -> dict:
                     "path": Path(path.join(current_directory, entry.name)).as_posix(),
                 }
             )
+    # This annoying conglomerate makes sure the folders are always first
+    results = dict(sorted(results.items(), key=lambda entry: entry[1].type))
 
     return results
 
 
 def save_file(directory: str | PathLike, file_obj: FileStorage) -> None:
-    '''Saves a file under directory.'''
+    """Saves a file under directory."""
     directory = dot_re.sub(r".", str(directory))
     file_name = dot_re.sub(r".", str(file_obj.filename))
     file_name = safe_join(directory, file_name)
@@ -80,7 +82,7 @@ def save_file(directory: str | PathLike, file_obj: FileStorage) -> None:
 
 
 def retrieve(file_path: str | PathLike) -> Response:
-    '''Retrieves a file at file_path.'''
+    """Retrieves a file at file_path."""
     file_path = dot_re.sub(r".", str(file_path))
     print(file_path)
     print(path.exists(str(safe_join(CONFIG.upload_directory, file_path))))
