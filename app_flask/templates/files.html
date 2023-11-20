@@ -102,7 +102,7 @@
             progressBar.style.visibility = "hidden";
             composeFileList(CURRENT_PATH);
         }).catch((e) => {
-            progressBar.style.visibility = "hidden";
+            // progressBar.style.visibility = "hidden"; // Probably unnecessary
             console.log(e);
         });
     }
