@@ -97,8 +97,23 @@ span:hover a::after, tr:hover a::after {
 
 .loader {
     animation: rotate 1s linear infinite;
-    border-radius: 50%;
     display: block;
+}
+.internet_disconnect {
+    /* align-content: center; */
+    align-items: center;
+    background-color: red;
+    display: flex;
+}
+.internet_disconnect span {
+    color: white;
+    font-size: 3rem;
+    margin: auto;
+    mix-blend-mode: screen;
+    vertical-align: sub;
+}
+.loader, .internet_disconnect {
+    border-radius: 50%;
     height: 4rem;
     left: 50%;
     position: absolute;

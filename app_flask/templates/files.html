@@ -113,7 +113,9 @@
         // {% if anchor_navigation %}
         window.location.hash = `#${path}`;
         // {% endif %}
-        let response = await fetch("{{ url_for('composer.compose_file_list') }}" + path);
+        let response = await fetch("{{ url_for('composer.compose_file_list') }}" + path).catch((e) => {
+                document.getElementById('file_list').innerHTML = '<span class="internet_disconnect"><span>X</span></span>';
+            });
         if (response.redirected) {
             window.location = response.url;
         } else {
