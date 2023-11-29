@@ -11,6 +11,7 @@
             <th class="file_icon"></th>
             <th class="file_name">Name</th>
             <th class="file_size">Size</th>
+            <th class="file_properties"></th>
         </tr>
     </thead>
     <tbody>
@@ -21,7 +22,7 @@
             {% set onclick_func = "composeFileList('" + file_metadata.path + "');" %}
             {% endif %}
         {% if file_metadata.type == 'dir' %}
-        <tr class="file_select" onclick="{{ onclick_func }}">
+        <tr class="file_select">
         {% else %}
         <tr class="file_select">
         {% endif %}
@@ -31,7 +32,7 @@
             </td>
             <td class="file_name">
                 {% if file_metadata.type == 'dir' %}
-                <a style="width: 100%;">
+                <a style="width: 100%;" onclick="{{ onclick_func }}">
                 {% else %}
                 <a href="{{ url_for('retrieve_file', filename=file_metadata.path) }}" target="_blank" style="width: 100%;">
                 {% endif %}
@@ -40,6 +41,14 @@
             </td>
             <td class="file_size">
                 <span>{{ file_metadata.size }}</span>
+            </td>
+            <td class="file_properties">
+                <button>···
+                    <div class="file_menu">
+                        <div onclick="">Rename</div>
+                        <div style="color: red;" onclick="">Move to trash</div>
+                    </div>
+                </button>
             </td>
         </tr>
         {% endfor %}
