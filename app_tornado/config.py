@@ -1,4 +1,7 @@
-from tomllib import load as toml_load
+try:
+    from tomllib import load as toml_load
+except:
+    from tomli import load as toml_load # type: ignore
 from types import SimpleNamespace
 
 CONFIG = {}
