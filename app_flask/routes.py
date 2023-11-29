@@ -25,7 +25,9 @@ def challenge_response() -> Response:
 @app.route("/file", methods=["GET", "POST"])
 @app.route("/file/<path:filename>")
 def retrieve_file(filename=None) -> str | Response:
-    # TODO - verify user access
+    # Check token and/or access
+    if not session.get("authentic"):
+        return redirect(url_for("index"))
     if request.method == "POST":
         return ""
     if not filename:
