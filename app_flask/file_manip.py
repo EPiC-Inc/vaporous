@@ -1,5 +1,4 @@
 from math import floor, log, pow
-from os import PathLike, path, scandir
 from pathlib import Path
 from re import compile
 from types import SimpleNamespace
@@ -13,6 +12,24 @@ from . import CONFIG
 
 dot_re = compile(r"\.\.+")
 
+EXTENSIONS = {
+    ".txt": "icon-text",
+    ".pdf": "icon-text",
+    ".png": "icon-image",
+    ".jpg": "icon-image",
+    ".jpeg": "icon-image",
+    ".gif": "icon-image",
+    ".ico": "icon-image",
+    ".webp": "icon-image",
+    ".wav": "icon-audio",
+    ".mp3": "icon-audio",
+    ".mp4": "icon-video",
+    ".webm": "icon-video",
+    ".zip": "icon-archive",
+    ".7z": "icon-archive",
+    ".rar": "icon-archive"
+}
+
 
 def convert_size(size_bytes: int) -> str:
     """Human-readable size string."""
@@ -25,55 +42,45 @@ def convert_size(size_bytes: int) -> str:
     return f"{s}{size_name[i]}"
 
 
-def list_files(current_directory: str | PathLike) -> dict:
+def list_files(current_directory: str | Path) -> dict:
     """List the files under current_directory."""
     current_directory = dot_re.sub(r".", str(current_directory))
-    full_directory = path.join(path.abspath(CONFIG.upload_directory), current_directory)
+    full_directory = Path(
+        Path(CONFIG.upload_directory).absolute()
+        ).joinpath(current_directory)
     results = {}
-    with scandir(full_directory) as files:
-        for entry in files:
-            match path.splitext(entry.name)[1]:
-                case ".txt":
-                    icon = "icon-text"
-                case ".png" | ".jpg" | ".jpeg" | ".gif" | ".ico" | ".webp":
-                    icon = "icon-image"
-                case ".wav" | ".mp3":
-                    icon = "icon-audio"
-                case ".mp4" | ".webm":
-                    icon = "icon-video"
-                case ".zip" | ".7z" | ".rar":
-                    icon = "icon-archive"
-                case _:
-                    if entry.is_dir():
-                        icon = "icon-dir"
-                    else:
-                        icon = "icon-file"
-            results[entry.name] = SimpleNamespace(
-                **{
-                    "type": "file" if entry.is_file() else "dir",
-                    "icon": icon,
-                    "size": convert_size(entry.stat().st_size),
-                    "path": Path(path.join(current_directory, entry.name)).as_posix(),
-                }
-            )
+    for entry in full_directory.iterdir():
+        if entry.is_dir():
+            icon = "icon-dir"
+        else:
+            extension = Path(entry.name).suffix
+            icon = EXTENSIONS.get(extension, "icon-file")
+        results[entry.name] = SimpleNamespace(
+            **{
+                "type": "file" if entry.is_file() else "dir",
+                "icon": icon,
+                "size": convert_size(entry.stat().st_size),
+                "path": Path(current_directory).joinpath(entry.name).as_posix(),
+            }
+        )
     # This annoying conglomerate makes sure the folders are always first
     results = dict(sorted(results.items(), key=lambda entry: entry[1].type))
 
     return results
 
 
-def save_file(directory: str | PathLike, file_obj: FileStorage) -> None:
+def save_file(directory: str | Path, file_obj: FileStorage) -> None:
     """Saves a file under directory."""
     directory = dot_re.sub(r".", str(directory))
     file_name = dot_re.sub(r".", str(file_obj.filename))
     file_name = safe_join(directory, file_name)
-    file_name = safe_join(path.abspath(CONFIG.upload_directory), str(file_name))
+    file_name = safe_join(str(Path(CONFIG.upload_directory).absolute()), str(file_name))
     print(file_name)
     if file_name is None:
         raise ValueError("Invalid file name or upload path")
 
     c = 0
-    while path.exists(file_name):
+    while Path(file_name).exists():
         c += 1
         old_name = Path(str(file_obj.filename)).stem
         file_name = Path(file_name).with_stem(f"{old_name}_{c}")
@@ -81,11 +88,11 @@ def save_file(directory: str | PathLike, file_obj: FileStorage) -> None:
     file_obj.save(file_name)
 
 
-def retrieve(file_path: str | PathLike) -> Response:
+def retrieve(file_path: str | Path) -> Response:
     """Retrieves a file at file_path."""
     file_path = dot_re.sub(r".", str(file_path))
     print(file_path)
-    print(path.exists(str(safe_join(CONFIG.upload_directory, file_path))))
+    print(Path(str(safe_join(CONFIG.upload_directory, file_path))).exists())
     return send_from_directory(
-        path.abspath(CONFIG.upload_directory), file_path, as_attachment=False
+        Path(CONFIG.upload_directory).absolute(), file_path, as_attachment=False
     )
