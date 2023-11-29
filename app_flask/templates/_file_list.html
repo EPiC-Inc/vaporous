@@ -27,7 +27,7 @@
         {% endif %}
             <td class="file_icon">
                 <img src="{{ url_for('static', filename=file_metadata.icon + '.png') }}"
-                alt="{{ file_metadata.icon }}.png" />
+                alt="{{ file_metadata.icon }}.png" draggable="false" />
             </td>
             <td class="file_name">
                 {% if file_metadata.type == 'dir' %}

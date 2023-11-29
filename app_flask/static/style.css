@@ -192,6 +192,7 @@ span:hover a::after, tr:hover a::after {
 .file_icon img {
     image-rendering: pixelated;
     height: 32px;
+    user-select: none;
     vertical-align: middle;
     width: 32px;
 }
