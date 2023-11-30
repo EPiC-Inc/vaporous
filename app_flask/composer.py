@@ -11,8 +11,8 @@ composer = Blueprint("composer", __name__)
 @composer.route("/dir_view/<path:base_directory>")
 def compose_file_list(base_directory="") -> str | Response:
     # TODO - check if user has access
-    # if not session.get("logged_in"):
-    #     return redirect(url_for('index'))
+    if not session.get("authentic"):
+        return redirect(url_for('index'))
     # session['current_path'] = base_directory
     viewable_files = list_files(base_directory)
     paths = []
@@ -32,7 +32,9 @@ def compose_file_list(base_directory="") -> str | Response:
 
 
 @composer.post("/upload")
-def upload_file():
+def upload_file() -> tuple[str, int]:
+    if not session.get("authentic"):
+        return "Not authenticated", 401
     files = request.files.getlist("file")
     upload_path = request.form.get("uploadPath")
     if upload_path is None:
@@ -42,8 +44,21 @@ def upload_file():
 
     for file in files:
         save_file(upload_path, file)
-    return "Success"
+    return "Success", 200
 
+@composer.route("/rename", methods=["POST"])
+@composer.route("/rename/<path:to_rename>", methods=["POST"])
+def rename_file(to_rename: str = "") -> tuple[str, int]:
+    if not session.get("authentic"):
+        return "Not authenticated", 401
+    return '', 501
+
+@composer.route("/delete", methods=["GET", "POST"])
+@composer.route("/delete/<path:to_delete>", methods=["GET", "POST"])
+def delete_file(to_delete: str = "") -> tuple[str, int]:
+    if not session.get("authentic"):
+        return "Not authenticated", 401
+    return '', 501
 
 @composer.errorhandler(FileNotFoundError)
 def handle_FileNotFoundError(e) -> str:

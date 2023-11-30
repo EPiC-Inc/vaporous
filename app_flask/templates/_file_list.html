@@ -45,8 +45,8 @@
             <td class="file_properties">
                 <button>···
                     <div class="file_menu">
-                        <div onclick="">Rename</div>
-                        <div style="color: red;" onclick="">Move to trash</div>
+                        <div onclick="renameFile(this, '{{ file_metadata.path }}');">Rename</div>
+                        <div style="color: red;" onclick="deleteFile(this, '{{ file_metadata.path }}');">Move to trash</div>
                     </div>
                 </button>
             </td>

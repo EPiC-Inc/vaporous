@@ -31,7 +31,7 @@ header {
     height: 5%;
     padding: 0 2%;
 }
-header div {
+header .header_btn {
     border: 2px solid var(--text-color);
     border-radius: 5px;
     cursor: pointer;
@@ -217,12 +217,8 @@ span:hover a::after, tr:hover a::after {
     float: right;
 }
 .file_properties {
-    opacity: 0;
     min-width: max-content;
     width: 2rem;
-}
-tr:hover .file_properties {
-    opacity: 1;
 }
 .file_properties button {
     background: none;

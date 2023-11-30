@@ -3,9 +3,11 @@
 
 {% block body %}
 <header>
-    <div>Not authenticated</div>
     <div>
-        <label for="upload_button" id="upload_label">Upload</label>
+        <span class="header_btn">Not authenticated</span>
+    </div>
+    <div>
+        <label class="header_btn" for="upload_button" id="upload_label">Upload</label>
         <input id="upload_button" type="file" hidden>
     </div>
 </header>
@@ -25,7 +27,7 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='file_upload.js') }}"></script>
-<script>
+<script type="text/javascript">
     CURRENT_PATH = '';
 
     dropZone = document.getElementById('drop_zone')
@@ -125,6 +127,18 @@
                 }
             );
         }
+    }
+
+    function renameFile(self, path) {
+        self.parentNode.parentNode.blur();
+        console.log('Renaming');
+        console.log(path);
+    }
+
+    function deleteFile(self, path) {
+        self.parentNode.parentNode.blur();
+        console.log("Deleting")
+        console.log(path);
     }
 
     window.onload = () => {
