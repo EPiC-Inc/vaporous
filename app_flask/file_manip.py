@@ -64,7 +64,7 @@ def list_files(current_directory: str | Path) -> dict:
             }
         )
     # This annoying conglomerate makes sure the folders are always first
-    results = dict(sorted(results.items(), key=lambda entry: entry[0]))
+    results = dict(sorted(results.items(), key=lambda entry: entry[0].casefold()))
     results = dict(sorted(results.items(), key=lambda entry: entry[1].type))
 
     return results
