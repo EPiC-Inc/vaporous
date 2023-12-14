@@ -8,11 +8,11 @@
 }
 
 :root {
-    --background-color: white;
+    --background-color: black;
     --drop-zone-color: darkcyan;
-    --hover-background-color: rgb(245, 245, 245);
+    --hover-background-color: rgb(36, 36, 36);
     --nav-color: #008b9d;
-    --text-color: black;
+    --text-color: darkgrey;
     color: var(--text-color);
     font-family: "Aldrich";
 }
@@ -198,6 +198,7 @@ span:hover a::after, tr:hover a::after {
 }
 .file_icon img {
     image-rendering: pixelated;
+    filter: invert(0.7);
     height: 32px;
     user-select: none;
     vertical-align: middle;
@@ -220,10 +221,13 @@ span:hover a::after, tr:hover a::after {
     min-width: max-content;
     width: 2rem;
 }
+tr:hover .file_properties button {
+    color: var(--text-color);
+}
 .file_properties button {
     background: none;
     border: none;
-    color: inherit;
+    color: #0000;
     font-size: inherit;
     margin: auto;
     position: relative;
@@ -235,6 +239,7 @@ span:hover a::after, tr:hover a::after {
     background-color: var(--background-color);
     border: 2px solid gray;
     border-radius: 5px;
+    color: var(--text-color);
     display: none;
     z-index: 2;
 }

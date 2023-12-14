@@ -8,7 +8,7 @@
     </div>
     <div>
         <label class="header_btn" for="upload_button" id="upload_label">Upload</label>
-        <input id="upload_button" type="file" hidden>
+        <input id="upload_button" type="file" hidden multiple>
     </div>
 </header>
 <div id="drop_zone">
@@ -30,13 +30,18 @@
 <script type="text/javascript">
     CURRENT_PATH = '';
 
+    var dropZone_refs = 0;
     dropZone = document.getElementById('drop_zone')
     dropZone.ondragleave = (event) => {
         event.preventDefault();
+        dropZone_refs -= 1;
+        if (dropZone_refs <= 0) {
         event.currentTarget.classList.remove('dragging');
+        }
     }
     dropZone.ondragenter = (event) => {
         event.preventDefault();
+        dropZone_refs += 1;
         event.currentTarget.classList.add('dragging');
     }
     dropZone.addEventListener("paste", (e) => {
