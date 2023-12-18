@@ -2,7 +2,7 @@ from flask import flash, redirect, render_template, request, session, url_for
 from werkzeug.wrappers.response import Response
 
 from . import CONFIG, app
-from .file_manip import retrieve
+from .file_api import retrieve
 
 
 @app.route("/", methods=["GET", "POST"])

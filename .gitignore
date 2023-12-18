@@ -2,6 +2,7 @@
 .vscode
 uploads/
 config.toml
+sessions
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
