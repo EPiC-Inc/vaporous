@@ -134,6 +134,12 @@
         }
     }
 
+    function shareFile(self, path) {
+        self.parentNode.parentNode.blur();
+        console.log("Sharing")
+        console.log(path);
+    }
+
     function renameFile(self, path) {
         self.parentNode.parentNode.blur();
         console.log('Renaming');
@@ -142,7 +148,7 @@
 
     function deleteFile(self, path) {
         self.parentNode.parentNode.blur();
-        console.log("Deleting")
+        console.log("Deleting");
         console.log(path);
     }
 
