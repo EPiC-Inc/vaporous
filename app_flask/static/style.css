@@ -63,7 +63,7 @@ span:hover a::after, tr:hover a::after {
 #drop_zone {
     border: 10px solid #0000;
     box-sizing: border-box;
-    height: 95%;
+    height: 100%;
 }
 #drop_zone.dragging {
     border: 10px dashed var(--drop-zone-color);

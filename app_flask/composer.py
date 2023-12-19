@@ -15,9 +15,10 @@ def compose_file_list(base_directory="") -> str | Response:
     user = get_session(session.get("id", ''))
     if not user:
         return redirect(url_for('login_page'))
-    viewable_files = list_files(f"{user.home}/{base_directory}")
+    home = user.home if user.user_level > 0 else '.'
+    viewable_files = list_files(f"{home}/{base_directory}")
     for file_ in viewable_files.values():
-        file_.path = file_.path[len(user.home):]
+        file_.path = file_.path[len(user.home):] if user.user_level > 0 else file_.path
     paths = []
     current_path = ""
     for path in base_directory.split("/"):

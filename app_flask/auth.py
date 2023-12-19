@@ -13,6 +13,7 @@ from .objects import User
 @dataclass(slots=True)
 class Session:
     username: str
+    user_level: int
     home: str
     expires: datetime
 
@@ -44,15 +45,18 @@ def login(username: str, password: str | bytes):
         pass
     SESSIONS[id] = Session(
         username=username,
-        home=f"home/{username}" if user_level > 0 else ".",
+        user_level=user_level,
+        home=f"home/{username}" if user_level > 0 else '.',
         expires=datetime.now() + SESSION_EXPIRY,
     )
     return id
 
 
-def add_user(username: str, password: str | bytes):
+def add_user(username: str, password: str | bytes) -> tuple[bool, str]:
     if not (username and password):
         return False, "Blank username and password"
+    if len(username) > 40:
+        return False, "Username too long"
     if not valid_username_regex.fullmatch(username):
         return False, "Invalid username"
     username = username.lower()
@@ -62,7 +66,7 @@ def add_user(username: str, password: str | bytes):
     new_user = User(username, password_hash)
     user_table.insert_object(new_user)
     new_folder("home", username)
-    return True
+    return True, "Success"
 
 
 def get_session(session_id: str) -> Session | None:
