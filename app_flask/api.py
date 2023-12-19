@@ -2,7 +2,7 @@ from flask import Blueprint, redirect, request, url_for
 from werkzeug.wrappers.response import Response
 from werkzeug.exceptions import NotFound
 
-from .file_manip import list_files, retrieve
+from .file_api import list_files, retrieve
 
 api = Blueprint("api", __name__)
 

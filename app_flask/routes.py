@@ -1,38 +1,42 @@
 from flask import flash, redirect, render_template, request, session, url_for
-from werkzeug.wrappers.response import Response
 
 from . import CONFIG, app
-from .file_manip import retrieve
+from .file_api import retrieve
+from .auth import login, get_session
 
 
 @app.route("/", methods=["GET", "POST"])
-def index() -> str | Response:
-    if session.get("authentic"):
+def index():
+    if get_session(session.get("id", "")):
         return render_template("files.html", anchor_navigation=CONFIG.anchor_navigation)
+    session.clear()
+    return redirect(url_for("login_page"))
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login_page():
     if request.method == "POST":
-        if request.form.get("challenge-response") == "manifesto destiny":
-            session["authentic"] = True
+        username = request.form.get("username", "")[:40]
+        password = request.form.get("password", "")[:100]
+        if session_id := login(username, password):
+            session["id"] = session_id
             return redirect(url_for("index"))
-    return render_template("challenge.html")
-
-
-@app.post("/challenge")
-def challenge_response() -> Response:
-    # if passwd correct set cookie
-    return redirect(url_for("index"))
+        flash("invalid username or password", category="error")
+    return render_template("login.html")
 
 
 @app.route("/file", methods=["GET", "POST"])
 @app.route("/file/<path:filename>")
-def retrieve_file(filename=None) -> str | Response:
+def retrieve_file(filename=None):
     # Check token and/or access
-    if not session.get("authentic"):
-        return redirect(url_for("index"))
+    user = get_session(session.get("id", ""))
+    if not user:
+        return redirect(url_for("login_page"))
     if request.method == "POST":
-        return ""
+        return "Not implemented", 501
     if not filename:
         return "No file selected"
-    return retrieve(filename)
+    return retrieve(f"{user.home}/{filename}")
 
 
 @app.errorhandler(404)
