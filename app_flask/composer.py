@@ -3,6 +3,7 @@ from werkzeug.wrappers.response import Response
 
 from . import CONFIG
 from .file_api import list_files, retrieve, save_file
+from .auth import get_session
 
 composer = Blueprint("composer", __name__)
 
@@ -11,8 +12,8 @@ composer = Blueprint("composer", __name__)
 @composer.route("/dir_view/<path:base_directory>")
 def compose_file_list(base_directory="") -> str | Response:
     # TODO - check if user has access
-    if not session.get("authentic"):
-        return redirect(url_for('index'))
+    if not get_session(session.get("id", '')):
+        return redirect(url_for('login_page'))
     # session['current_path'] = base_directory
     viewable_files = list_files(base_directory)
     paths = []
@@ -33,7 +34,7 @@ def compose_file_list(base_directory="") -> str | Response:
 
 @composer.post("/upload")
 def upload_file() -> tuple[str, int]:
-    if not session.get("authentic"):
+    if not get_session(session.get("id", '')):
         return "Not authenticated", 401
     files = request.files.getlist("file")
     upload_path = request.form.get("uploadPath")
@@ -49,14 +50,14 @@ def upload_file() -> tuple[str, int]:
 @composer.route("/rename", methods=["POST"])
 @composer.route("/rename/<path:to_rename>", methods=["POST"])
 def rename_file(to_rename: str = "") -> tuple[str, int]:
-    if not session.get("authentic"):
+    if not get_session(session.get("id", '')):
         return "Not authenticated", 401
     return '', 501
 
 @composer.route("/delete", methods=["GET", "POST"])
 @composer.route("/delete/<path:to_delete>", methods=["GET", "POST"])
 def delete_file(to_delete: str = "") -> tuple[str, int]:
-    if not session.get("authentic"):
+    if not get_session(session.get("id", '')):
         return "Not authenticated", 401
     return '', 501
 

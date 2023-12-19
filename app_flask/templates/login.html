@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}log in{% endblock %}
+
+{% block head %}
+<style>
+    #login {
+        align-items: center;
+        display: flex;
+        flex-direction: column;
+        font-size: 1.4rem;
+        gap: 1rem;
+        height: 100vh;
+        justify-content: center;
+    }
+    #login input {
+        font-size: 1.6rem;
+        font-family: "Aldrich";
+    }
+    .error {
+        color: brown;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<section>
+    <form id="login" action="{{ url_for('login_page') }}" method="post">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <div>
+            <label for="user">username</label>
+            <input id="user" name="username" type="text" maxlength="40">
+        </div>
+        <div>
+            <label for="pass">password</label>
+            <input id="pass" name="password" type="password" maxlength="100">
+        </div>
+        <input type="submit" value="log in" style="cursor: pointer;">
+    </form>
+</section>
+{% endblock %}
