@@ -52,7 +52,7 @@ def login(username: str, password: str | bytes):
     return id
 
 
-def add_user(username: str, password: str | bytes) -> tuple[bool, str]:
+def add_user(username: str, password: str | bytes, *, user_level: int = 99) -> tuple[bool, str]:
     if not (username and password):
         return False, "Blank username and password"
     if len(username) > 40:
@@ -63,7 +63,7 @@ def add_user(username: str, password: str | bytes) -> tuple[bool, str]:
     if isinstance(password, str):
         password = password.encode()
     password_hash = scrypt(password, salt=username.encode(), **SCRYPT_SETTINGS)
-    new_user = User(username, password_hash)
+    new_user = User(username, password_hash, user_level)
     user_table.insert_object(new_user)
     new_folder("home", username)
     return True, "Success"
