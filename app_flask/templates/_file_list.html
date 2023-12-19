@@ -32,9 +32,9 @@
             </td>
             <td class="file_name">
                 {% if file_metadata.type == 'dir' %}
-                <a style="width: 100%;" onclick="{{ onclick_func }}">
+                <a style="height: 100%;width: 100%;" onclick="{{ onclick_func }}">
                 {% else %}
-                <a href="{{ url_for('retrieve_file', filename=file_metadata.path) }}" target="_blank" style="width: 100%;">
+                <a href="{{ url_for('retrieve_file', filename=file_metadata.path) }}" target="_blank" style="height: 100%;width: 100%;">
                 {% endif %}
                     <span>{{ file_name }}</span>
                 </a>
