@@ -6,6 +6,7 @@ from types import SimpleNamespace
 from flask import send_from_directory
 from werkzeug.datastructures import FileStorage
 from werkzeug.security import safe_join
+from werkzeug.utils import secure_filename
 from werkzeug.wrappers.response import Response
 
 from . import CONFIG
@@ -27,7 +28,7 @@ EXTENSIONS = {
     ".webm": "icon-video",
     ".zip": "icon-archive",
     ".7z": "icon-archive",
-    ".rar": "icon-archive"
+    ".rar": "icon-archive",
 }
 
 
@@ -45,9 +46,10 @@ def convert_size(size_bytes: int) -> str:
 def list_files(current_directory: str | Path) -> dict:
     """List the files under current_directory."""
     current_directory = dot_re.sub(r".", str(current_directory))
-    full_directory = Path(
-        Path(CONFIG.upload_directory).absolute()
-        ).joinpath(current_directory)
+    print("Listing", current_directory)
+    full_directory = Path(CONFIG.upload_directory).absolute() / current_directory
+
+    print("Full", full_directory)
     results = {}
     for entry in full_directory.iterdir():
         if entry.is_dir():
@@ -97,3 +99,17 @@ def retrieve(file_path: str | Path) -> Response:
     return send_from_directory(
         Path(CONFIG.upload_directory).absolute(), file_path, as_attachment=False
     )
+
+
+def new_folder(current_directory: str | Path, folder_name: str) -> Path | None:
+    """Creates a new folder under the file tree."""
+    current_directory = dot_re.sub(r".", str(current_directory))
+    folder_name = secure_filename(folder_name[:40])
+    new_path = safe_join(CONFIG.upload_directory, current_directory)
+    if not new_path:
+        return None
+    new_path = Path(new_path) / folder_name
+    if new_path.exists():
+        return None
+    new_path.mkdir()
+    return new_path

@@ -12,10 +12,12 @@ composer = Blueprint("composer", __name__)
 @composer.route("/dir_view/<path:base_directory>")
 def compose_file_list(base_directory="") -> str | Response:
     # TODO - check if user has access
-    if not get_session(session.get("id", '')):
+    user = get_session(session.get("id", ''))
+    if not user:
         return redirect(url_for('login_page'))
-    # session['current_path'] = base_directory
-    viewable_files = list_files(base_directory)
+    viewable_files = list_files(f"{user.home}/{base_directory}")
+    for file_ in viewable_files.values():
+        file_.path = file_.path[len(user.home):]
     paths = []
     current_path = ""
     for path in base_directory.split("/"):
@@ -34,7 +36,8 @@ def compose_file_list(base_directory="") -> str | Response:
 
 @composer.post("/upload")
 def upload_file() -> tuple[str, int]:
-    if not get_session(session.get("id", '')):
+    user = get_session(session.get("id", ''))
+    if not user:
         return "Not authenticated", 401
     files = request.files.getlist("file")
     upload_path = request.form.get("uploadPath")
@@ -44,7 +47,7 @@ def upload_file() -> tuple[str, int]:
         return "No file part!", 422
 
     for file in files:
-        save_file(upload_path, file)
+        save_file(f"{user.home}/{upload_path}", file)
     return "Success", 200
 
 @composer.route("/rename", methods=["POST"])

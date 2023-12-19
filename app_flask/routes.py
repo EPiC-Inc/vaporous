@@ -29,13 +29,14 @@ def login_page():
 @app.route("/file/<path:filename>")
 def retrieve_file(filename=None):
     # Check token and/or access
-    if not get_session(session.get("id", "")):
+    user = get_session(session.get("id", ""))
+    if not user:
         return redirect(url_for("login_page"))
     if request.method == "POST":
         return "Not implemented", 501
     if not filename:
         return "No file selected"
-    return retrieve(filename)
+    return retrieve(f"{user.home}/{filename}")
 
 
 @app.errorhandler(404)
