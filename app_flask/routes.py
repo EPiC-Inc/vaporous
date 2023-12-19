@@ -7,8 +7,13 @@ from .auth import login, get_session
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    if get_session(session.get("id", "")):
-        return render_template("files.html", anchor_navigation=CONFIG.anchor_navigation)
+    user = get_session(session.get("id", ""))
+    if user:
+        return render_template(
+            "files.html",
+            anchor_navigation=CONFIG.anchor_navigation,
+            username=user.username,
+        )
     session.clear()
     return redirect(url_for("login_page"))
 

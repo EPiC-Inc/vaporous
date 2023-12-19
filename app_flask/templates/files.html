@@ -5,7 +5,7 @@
 <div id="drop_zone">
     <header>
         <div>
-            <span class="header_btn">{{ username if username else "Not Authenticated" }}</span>
+            <span class="header_btn">{{ "👤 " + username or "Not Authenticated" }}</span>
         </div>
         <div>
             <label class="header_btn" for="upload_button" id="upload_label">Upload</label>
