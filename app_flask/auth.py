@@ -60,6 +60,11 @@ def add_user(username: str, password: str | bytes, *, user_level: int = 99) -> t
     if not valid_username_regex.fullmatch(username):
         return False, "Invalid username"
     username = username.lower()
+    user_already_exists = user_table.query(
+        "username", where_column="username", where_data=[username]
+    )
+    if user_already_exists:
+        return False, "Username already exists"
     if isinstance(password, str):
         password = password.encode()
     password_hash = scrypt(password, salt=username.encode(), **SCRYPT_SETTINGS)

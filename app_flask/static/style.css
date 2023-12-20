@@ -42,6 +42,7 @@ header .header_btn {
 a {
     color: var(--nav-color);
     display: inline-block;
+    position: relative;
     text-decoration: none;
 }
 a::after {
@@ -56,7 +57,7 @@ a::after {
     left: 0;
     background-color: var(--nav-color);
 }
-span:hover a::after, tr:hover a::after {
+span:hover a::after, tr:hover a::after, a:hover::after {
   transform: scaleX(1);
   transform-origin: bottom left;
 }

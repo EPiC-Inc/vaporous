@@ -1,6 +1,21 @@
 {% extends 'base.html' %}
 {% block title %}404{% endblock %}
 
+{% block head %}
+<style>
+    body {
+        height: 100%;
+    }
+    #fourohfour {
+        text-align: center;
+        margin-top: 14%;
+    }
+</style>
+{% endblock %}
+
 {% block body %}
-404 file not found
+<section id="fourohfour">
+    <span>404 file not found</span><br /><br />
+    <div style="width: 100%"><a style="width: fit-content;" href="/">home</a></div>
+</section>
 {% endblock %}
