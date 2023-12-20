@@ -5,17 +5,20 @@
 <div id="drop_zone">
     <header>
         <div>
-            {% if user_level == 0 %}
-            <span class="header_btn"><a href="#">Control Panel</a></span>
-            {% endif %}
-        </div>
-        <div>
             {% if username %}
             <span class="header_btn"><a href="{{ url_for('user_settings') }}">👤 {{ username }}</a></span>
             {% else %}
             <span class="header_btn">Not Authenticated</span>
             {% endif %}
         </div>
+        {% if user_level == 0 %}
+        <div>
+            <span class="header_btn" onclick="composeFileList('{{ user_home }}')">My Home Folder</span>
+        </div>
+        <div>
+            <span class="header_btn"><a href="#">Control Panel</a></span>
+        </div>
+        {% endif %}
         <div>
             <label class="header_btn" for="upload_button" id="upload_label">Upload</label>
             <input id="upload_button" type="file" hidden multiple>

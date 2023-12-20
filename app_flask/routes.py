@@ -14,6 +14,7 @@ def index():
             anchor_navigation=CONFIG.anchor_navigation,
             username=user.username,
             user_level=user.user_level,
+            user_home=f"home/{user.username}"
         )
     session.clear()
     return redirect(url_for("login_page"))
