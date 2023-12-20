@@ -13,6 +13,7 @@ def index():
             "files.html",
             anchor_navigation=CONFIG.anchor_navigation,
             username=user.username,
+            user_level=user.user_level,
         )
     session.clear()
     return redirect(url_for("login_page"))

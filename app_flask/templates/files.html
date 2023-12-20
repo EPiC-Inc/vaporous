@@ -5,6 +5,11 @@
 <div id="drop_zone">
     <header>
         <div>
+            {% if user_level == 0 %}
+            <span class="header_btn"><a href="#">Control Panel</a></span>
+            {% endif %}
+        </div>
+        <div>
             {% if username %}
             <span class="header_btn"><a href="{{ url_for('user_settings') }}">👤 {{ username }}</a></span>
             {% else %}
