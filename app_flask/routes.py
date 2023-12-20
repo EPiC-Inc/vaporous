@@ -2,7 +2,7 @@ from flask import flash, redirect, render_template, request, session, url_for
 
 from . import CONFIG, app
 from .file_api import retrieve
-from .auth import login, get_session
+from .auth import login, get_session, update_password
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -28,6 +28,31 @@ def login_page():
             return redirect(url_for("index"))
         flash("invalid username or password", category="error")
     return render_template("login.html")
+
+
+@app.route("/user", methods=["GET", "POST"])
+def user_settings():
+    user = get_session(session.get("id", ""))
+    if not user:
+        return redirect(url_for("login_page"))
+    if request.method == "POST":
+        old_password = request.form.get("old_password", "")[:100]
+        new_password = request.form.get("new_password", "")[:100]
+        new_password_confirm = request.form.get("new_password_confirm", "")[:100]
+        if old_password and new_password and new_password_confirm:
+            if new_password == new_password_confirm:
+                success, message = update_password(
+                    user.username, old_password, new_password
+                )
+                if success:
+                    flash("password successfully changed", category="success")
+                else:
+                    flash(f"error changing password: {message}", category="error")
+            else:
+                flash("new passwords do not match", category="error")
+        else:
+            flash("please fill out all fields", category="error")
+    return render_template("user.html", username=user.username)
 
 
 @app.route("/file", methods=["GET", "POST"])

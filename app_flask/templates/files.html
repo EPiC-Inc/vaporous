@@ -5,7 +5,7 @@
 <div id="drop_zone">
     <header>
         <div>
-            <span class="header_btn">{{ "👤 " + username or "Not Authenticated" }}</span>
+            <span class="header_btn"><a href="{{ url_for('user_settings') }}">{{ "👤 " + username or "Not Authenticated" }}</a></span>
         </div>
         <div>
             <label class="header_btn" for="upload_button" id="upload_label">Upload</label>

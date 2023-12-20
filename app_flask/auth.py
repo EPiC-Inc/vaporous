@@ -27,6 +27,13 @@ SESSIONS = {}
 SESSION_EXPIRY = timedelta(hours=24)
 
 
+def validate_password(password: str | bytes) -> bool:
+    """TODO: Check password strength."""
+    if isinstance(password, bytes):
+        password = password.decode()
+    return bool(len(password))
+
+
 def login(username: str, password: str | bytes):
     if not (username and password):
         return False
@@ -57,6 +64,8 @@ def login(username: str, password: str | bytes):
 def update_password(
     username: str, old_password: str | bytes, new_password: str | bytes
 ) -> tuple[bool, str]:
+    if not validate_password(new_password):
+        return False, "New password isn't strong enough"
     result = user_table.query(
         "username, password", where_column="username", where_data=[username]
     )
@@ -69,7 +78,7 @@ def update_password(
         new_password = new_password.encode()
     old_password_hash = scrypt(old_password, salt=username.encode(), **SCRYPT_SETTINGS)
     if not str(old_password_hash) == str(stored_hash):
-        return False, "Invalid password"
+        return False, "Invalid old password"
     new_password_hash = scrypt(new_password, salt=username.encode(), **SCRYPT_SETTINGS)
     user_table.update_property(
         "password", str(new_password_hash), where_column="username", where_data=username
@@ -86,6 +95,8 @@ def add_user(
         return False, "Username too long"
     if not valid_username_regex.fullmatch(username):
         return False, "Invalid username"
+    if not validate_password(password):
+        return False, "Password not strong enough"
     username = username.lower()
     user_already_exists = user_table.query(
         "username", where_column="username", where_data=[username]
