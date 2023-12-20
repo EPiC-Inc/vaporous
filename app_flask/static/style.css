@@ -88,6 +88,13 @@ span:hover a::after, tr:hover a::after {
     cursor: pointer;
     animation: fadeIn 400ms;
 }
+.file_select a {
+    box-sizing: border-box;
+    height: 100%;
+    line-height: 190%;
+    vertical-align: middle;
+    width: 100%;
+}
 
 .location_select {
     box-sizing: border-box;
