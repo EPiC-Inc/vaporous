@@ -1,8 +1,8 @@
 from flask import flash, redirect, render_template, request, session, url_for
 
 from . import CONFIG, app
+from .auth import del_session, get_session, login, update_password
 from .file_api import retrieve
-from .auth import login, get_session, update_password
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -14,7 +14,7 @@ def index():
             anchor_navigation=CONFIG.anchor_navigation,
             username=user.username,
             user_level=user.user_level,
-            user_home=f"home/{user.username}"
+            user_home=f"home/{user.username}",
         )
     session.clear()
     return redirect(url_for("login_page"))
@@ -69,6 +69,15 @@ def retrieve_file(filename=None):
     if not filename:
         return "No file selected"
     return retrieve(f"{user.home}/{filename}")
+
+
+@app.route("/logout")
+def logout():
+    user = get_session(session.get("id", ""))
+    if user:
+        pass
+    session.clear()
+    return redirect(url_for("login_page"))
 
 
 @app.errorhandler(404)

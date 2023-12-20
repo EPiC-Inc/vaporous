@@ -120,3 +120,6 @@ def get_session(session_id: str) -> Session | None:
         del SESSIONS[session_id]
         return None
     return session
+
+def del_session(session_id:str) -> None:
+    del SESSIONS[session_id]

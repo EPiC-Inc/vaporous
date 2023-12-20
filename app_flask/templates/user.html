@@ -3,6 +3,9 @@
 
 {% block head %}
 <style>
+    #logout {
+        color: darkred;
+    }
     #fields {
         display: grid;
         gap: 1rem;
@@ -12,13 +15,13 @@
         align-items: center;
         display: flex;
         flex-direction: column;
-        font-size: 1.4rem;
-        gap: 1rem;
+        font-size: 1rem;
+        gap: 0.8rem;
         height: 100vh;
         justify-content: center;
     }
     #password_change input {
-        font-size: 1.6rem;
+        font-size: 1.2rem;
         font-family: "Aldrich";
     }
     .error {
@@ -33,6 +36,7 @@
 {% block body %}
 <section>
     <form id="password_change" action="{{ url_for('user_settings') }}" method="post">
+        <a href="{{ url_for('logout') }}" id="logout">logout</a>
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
