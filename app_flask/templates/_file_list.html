@@ -15,6 +15,15 @@
         </tr>
     </thead>
     <tbody>
+        {% if not files %}
+        <tr>
+            <td></td>
+            <td>
+                <div style="text-align: center;">[ empty ]</div>
+            </td>
+            <td></td>
+        </tr>
+        {% endif %}
         {% for file_name, file_metadata in files.items() %}
             {% if anchor_navigation %}
             {% set onclick_func = "window.location.hash = '" + file_metadata.path + "';" %}
