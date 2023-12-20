@@ -66,6 +66,7 @@ def update_password(
 ) -> tuple[bool, str]:
     if not validate_password(new_password):
         return False, "New password isn't strong enough"
+    username = username.lower()
     result = user_table.query(
         "username, password", where_column="username", where_data=[username]
     )
