@@ -13,10 +13,10 @@
         </div>
         {% if user_level == 0 %}
         <div>
-            <span class="header_btn" onclick="composeFileList('{{ user_home }}')">My Home Folder</span>
+            <span class="header_btn"><a>Control Panel</a></span>
         </div>
         <div>
-            <span class="header_btn"><a href="#">Control Panel</a></span>
+            <span class="header_btn" onclick="composeFileList('{{ user_home }}')">My Home Folder</span>
         </div>
         {% endif %}
         <div>

@@ -6,6 +6,9 @@
     #logout {
         color: darkred;
     }
+    #logout:after {
+        background-color: darkred;
+    }
     #fields {
         display: grid;
         gap: 1rem;
@@ -36,7 +39,7 @@
 {% block body %}
 <section>
     <form id="password_change" action="{{ url_for('user_settings') }}" method="post">
-        <a href="{{ url_for('logout') }}" id="logout">logout</a>
+        <a href="{{ url_for('logout') }}" id="logout" class="link">logout</a>
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}

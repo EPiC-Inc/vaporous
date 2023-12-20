@@ -1,3 +1,4 @@
+"""This module contains routes for the application."""
 from flask import flash, redirect, render_template, request, session, url_for
 
 from . import CONFIG, app
@@ -73,9 +74,9 @@ def retrieve_file(filename=None):
 
 @app.route("/logout")
 def logout():
-    user = get_session(session.get("id", ""))
-    if user:
-        pass
+    session_id = session.get("id", "")
+    if session_id:
+        del_session(session_id)
     session.clear()
     return redirect(url_for("login_page"))
 

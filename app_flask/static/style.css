@@ -68,7 +68,7 @@ span:hover a::after, tr:hover a::after, a:hover::after {
 #drop_zone {
     border: 10px solid #0000;
     box-sizing: border-box;
-    height: 100%;
+    min-height: 100%;
 }
 #drop_zone.dragging {
     border: 10px dashed var(--drop-zone-color);
@@ -172,9 +172,8 @@ span:hover a::after, tr:hover a::after, a:hover::after {
 
 #file_container {
     box-sizing: border-box;
-    max-height: 95%;
     margin: 0 auto;
-    padding: 1% 0;
+    padding: 1% 0 10% 0;
     width: 60%
 }
 #file_navigate {
