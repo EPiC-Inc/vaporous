@@ -46,10 +46,8 @@ def convert_size(size_bytes: int) -> str:
 def list_files(current_directory: str | Path) -> dict:
     """List the files under current_directory."""
     current_directory = dot_re.sub(r".", str(current_directory))
-    print("Listing", current_directory)
     full_directory = Path(CONFIG.upload_directory).absolute() / current_directory
 
-    print("Full", full_directory)
     results = {}
     for entry in full_directory.iterdir():
         if entry.is_dir():
@@ -78,7 +76,6 @@ def save_file(directory: str | Path, file_obj: FileStorage) -> None:
     file_name = dot_re.sub(r".", str(file_obj.filename))
     file_name = safe_join(directory, file_name)
     file_name = safe_join(str(Path(CONFIG.upload_directory).absolute()), str(file_name))
-    print(file_name)
     if file_name is None:
         raise ValueError("Invalid file name or upload path")
 
@@ -87,15 +84,12 @@ def save_file(directory: str | Path, file_obj: FileStorage) -> None:
         c += 1
         old_name = Path(str(file_obj.filename)).stem
         file_name = Path(file_name).with_stem(f"{old_name}_{c}")
-    print(file_name)
     file_obj.save(file_name)
 
 
 def retrieve(file_path: str | Path) -> Response:
     """Retrieves a file at file_path."""
     file_path = dot_re.sub(r".", str(file_path))
-    print(file_path)
-    print(Path(str(safe_join(CONFIG.upload_directory, file_path))).exists())
     return send_from_directory(
         Path(CONFIG.upload_directory).absolute(), file_path, as_attachment=False
     )
