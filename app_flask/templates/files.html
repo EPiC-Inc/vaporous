@@ -2,6 +2,32 @@
 {% block title %}files{% endblock %}
 
 {% block body %}
+<div id="new_folder_overlay" class="overlay" onclick="this.style.visibility='hidden';" style="visibility: hidden;">
+    <form onclick="event.stopPropagation();" onsubmit="newFolder();return false;">
+        <span id="new_folder_errors" class="error"></span>
+        <span>Location: <span id="new_folder_location"></span></span>
+        <div>
+            <label for="new_folder_name">New folder name&nbsp;&nbsp;</label>
+            <input id="new_folder_name" class="bg_glow_gradient" type="text" style="font-size: large;">
+        </div>
+        <input id="new_folder_submit" type="submit" value="Create">
+    </form>
+</div>
+<div id="share_file_overlay" class="overlay" onclick="this.style.visibility='hidden';" style="visibility: hidden;">
+    <section>
+        test
+    </section>
+</div>
+<div id="rename_file_overlay" class="overlay" onclick="this.style.visibility='hidden';" style="visibility: hidden;">
+    <section>
+        test2
+    </section>
+</div>
+<div id="delete_file_overlay" class="overlay" onclick="this.style.visibility='hidden';" style="visibility: hidden;">
+    <section>
+        test3
+    </section>
+</div>
 <div id="drop_zone">
     <header>
         {% if username %}
@@ -17,7 +43,7 @@
         {% endif %}
         <label class="header_btn" for="upload_button" id="upload_label">Upload</label>
         <input id="upload_button" type="file" hidden multiple>
-        <span class="header_btn">New Folder</span>
+        <span class="header_btn" onclick="showNewFolderOverlay();">New Folder</span>
     </header>
     <div>
         <progress id="progress_bar" max=100 value=0 style="visibility: hidden;"></progress>
@@ -34,6 +60,47 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='file_upload.js') }}"></script>
+<script type="text/javascript">
+    function newFolder() {
+        document.getElementById("new_folder_submit").disabled = true;
+        console.log('a');
+    }
+
+    function shareFile(self, path) {
+        self.parentNode.parentNode.blur();
+        console.log("Sharing")
+        console.log(path);
+    }
+
+    function renameFile(self, path) {
+        self.parentNode.parentNode.blur();
+        console.log('Renaming');
+        console.log(path);
+    }
+
+    function deleteFile(self, path) {
+        self.parentNode.parentNode.blur();
+        console.log("Deleting");
+        console.log(path);
+    }
+
+    function showNewFolderOverlay() {
+        document.getElementById("new_folder_submit").disabled = false;
+        document.getElementById("new_folder_overlay").style.visibility = "visible";
+    }
+    function showShareFileOverlay() {
+        document.getElementById("new_folder_submit").disabled = false;
+        document.getElementById("new_folder_overlay").style.visibility = "visible";
+    }
+    function showRenameFileOverlay() {
+        document.getElementById("new_folder_submit").disabled = false;
+        document.getElementById("new_folder_overlay").style.visibility = "visible";
+    }
+    function showDeleteFileOverlay() {
+        document.getElementById("new_folder_submit").disabled = false;
+        document.getElementById("new_folder_overlay").style.visibility = "visible";
+    }
+</script>
 <script type="text/javascript">
     CURRENT_PATH = '';
 
@@ -139,24 +206,6 @@
                 }
             );
         }
-    }
-
-    function shareFile(self, path) {
-        self.parentNode.parentNode.blur();
-        console.log("Sharing")
-        console.log(path);
-    }
-
-    function renameFile(self, path) {
-        self.parentNode.parentNode.blur();
-        console.log('Renaming');
-        console.log(path);
-    }
-
-    function deleteFile(self, path) {
-        self.parentNode.parentNode.blur();
-        console.log("Deleting");
-        console.log(path);
     }
 
     window.onload = () => {
