@@ -25,16 +25,12 @@
         </tr>
         {% endif %}
         {% for file_name, file_metadata in files.items() %}
-            {% if anchor_navigation %}
+        {% if anchor_navigation %}
             {% set onclick_func = "window.location.hash = '" + file_metadata.path + "';" %}
-            {% else %}
-            {% set onclick_func = "composeFileList('" + file_metadata.path + "');" %}
-            {% endif %}
-        {% if file_metadata.type == 'dir' %}
-        <tr class="file_select">
         {% else %}
-        <tr class="file_select">
+            {% set onclick_func = "composeFileList('" + file_metadata.path + "');" %}
         {% endif %}
+        <tr class="file_select">
             <td class="file_icon">
                 <img src="{{ url_for('static', filename=file_metadata.icon + '.png') }}"
                 alt="{{ file_metadata.icon }}.png" draggable="false" />
@@ -56,7 +52,7 @@
                     <div class="file_menu">
                         <div onclick="shareFile(this, '{{ file_metadata.path }}');">Sharing</div>
                         <div onclick="renameFile(this, '{{ file_metadata.path }}');">Rename</div>
-                        <div style="color: red;" onclick="deleteFile(this, '{{ file_metadata.path }}');">Move to trash</div>
+                        <div style="color: red;" onclick="deleteFile(this, '{{ file_metadata.path }}');">Delete</div>
                     </div>
                 </button>
             </td>

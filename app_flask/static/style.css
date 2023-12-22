@@ -31,12 +31,18 @@ header {
     height: 5%;
     padding: 0 2%;
 }
-header .header_btn {
+.header_btn {
+    background-image: linear-gradient(to top, #535353 50%, transparent 50%);
+    background-size: 200% 200%;
     border: 2px solid var(--text-color);
     border-radius: 5px;
     box-sizing: border-box;
     cursor: pointer;
-    padding: 0.3rem 0.3rem 0.1rem 0.3rem;
+    padding: 0.3rem 0.3rem 0.2rem 0.3rem;
+    transition: background-position 200ms ease-out;
+}
+.header_btn:hover {
+    background-position: 0 100%;
 }
 
 a {

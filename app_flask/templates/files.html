@@ -4,28 +4,20 @@
 {% block body %}
 <div id="drop_zone">
     <header>
-        <div>
-            {% if username %}
-            <span class="header_btn"><a href="{{ url_for('user_settings') }}">👤 {{ username }}</a></span>
-            {% else %}
-            <span class="header_btn">Not Authenticated</span>
-            {% endif %}
-        </div>
-        {% if user_level == 0 %}
-        <div>
-            <span class="header_btn"><a>Control Panel</a></span>
-        </div>
-        <div>
-            <span class="header_btn" onclick="composeFileList('{{ user_home }}')">My Home Folder</span>
-        </div>
+        {% if username %}
+        <a class="header_btn" href="{{ url_for('user_settings') }}">[you] {{ username }}</a>
+        {% else %}
+        <span class="header_btn">Not Authenticated</span>
         {% endif %}
-        <div>
-            <label class="header_btn" for="upload_button" id="upload_label">Upload</label>
-            <input id="upload_button" type="file" hidden multiple>
-        </div>
-        <div>
-            <span class="header_btn">New Folder</span>
-        </div>
+        {% if user_level <= 1 %}
+        <a class="header_btn">
+            Control Panel
+        </a>
+        <span class="header_btn" onclick="composeFileList('{{ user_home }}')">My Home Folder</span>
+        {% endif %}
+        <label class="header_btn" for="upload_button" id="upload_label">Upload</label>
+        <input id="upload_button" type="file" hidden multiple>
+        <span class="header_btn">New Folder</span>
     </header>
     <div>
         <progress id="progress_bar" max=100 value=0 style="visibility: hidden;"></progress>
