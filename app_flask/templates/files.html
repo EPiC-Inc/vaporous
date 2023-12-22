@@ -3,12 +3,12 @@
 
 {% block body %}
 <div id="new_folder_overlay" class="overlay" onclick="this.style.visibility='hidden';" style="visibility: hidden;">
-    <form onclick="event.stopPropagation();" onsubmit="newFolder();return false;">
+    <form onclick="event.stopPropagation();" onsubmit="event.preventDefault();newFolder();">
         <span id="new_folder_errors" class="error"></span>
         <span>Location: <span id="new_folder_location"></span></span>
         <div>
             <label for="new_folder_name">New folder name&nbsp;&nbsp;</label>
-            <input id="new_folder_name" class="bg_glow_gradient" type="text" style="font-size: large;">
+            <input id="new_folder_name" class="bg_glow_gradient" type="text" style="font-size: large;" autocomplete="off" required>
         </div>
         <input id="new_folder_submit" type="submit" value="Create">
     </form>
@@ -60,47 +60,6 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='file_upload.js') }}"></script>
-<script type="text/javascript">
-    function newFolder() {
-        document.getElementById("new_folder_submit").disabled = true;
-        console.log('a');
-    }
-
-    function shareFile(self, path) {
-        self.parentNode.parentNode.blur();
-        console.log("Sharing")
-        console.log(path);
-    }
-
-    function renameFile(self, path) {
-        self.parentNode.parentNode.blur();
-        console.log('Renaming');
-        console.log(path);
-    }
-
-    function deleteFile(self, path) {
-        self.parentNode.parentNode.blur();
-        console.log("Deleting");
-        console.log(path);
-    }
-
-    function showNewFolderOverlay() {
-        document.getElementById("new_folder_submit").disabled = false;
-        document.getElementById("new_folder_overlay").style.visibility = "visible";
-    }
-    function showShareFileOverlay() {
-        document.getElementById("new_folder_submit").disabled = false;
-        document.getElementById("new_folder_overlay").style.visibility = "visible";
-    }
-    function showRenameFileOverlay() {
-        document.getElementById("new_folder_submit").disabled = false;
-        document.getElementById("new_folder_overlay").style.visibility = "visible";
-    }
-    function showDeleteFileOverlay() {
-        document.getElementById("new_folder_submit").disabled = false;
-        document.getElementById("new_folder_overlay").style.visibility = "visible";
-    }
-</script>
 <script type="text/javascript">
     CURRENT_PATH = '';
 
@@ -216,5 +175,74 @@
         composeFileList(window.location.hash.substring(1));
     });
     // {% endif %}
+
+    function newFolder() {
+        document.getElementById("new_folder_submit").disabled = true;
+        fetch("{{ url_for('composer.add_new_folder') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                "current_path": CURRENT_PATH,
+                "folder_name": document.getElementById("new_folder_name").value
+            }),
+        }).then((response) => {
+            if (response.ok) {
+                response.json().then((body) => {
+                    console.log(body);
+                    if (body[0]) {
+                        composeFileList(CURRENT_PATH);
+                        document.getElementById("new_folder_overlay").style.visibility = "hidden";
+                    } else {
+                        document.getElementById("new_folder_errors").innerText = body[1];
+                        document.getElementById("new_folder_submit").disabled = false;
+                    }
+                });
+            } else {
+                throw new Error(response.statusText);
+            }
+        }).catch((e) => {
+            alert(e);
+            document.getElementById("new_folder_submit").disabled = false;
+        });
+    }
+
+    function shareFile(self, path) {
+        self.parentNode.parentNode.blur();
+        console.log("Sharing")
+        console.log(path);
+    }
+
+    function renameFile(self, path) {
+        self.parentNode.parentNode.blur();
+        console.log('Renaming');
+        console.log(path);
+    }
+
+    function deleteFile(self, path) {
+        self.parentNode.parentNode.blur();
+        console.log("Deleting");
+        console.log(path);
+    }
+
+    function showNewFolderOverlay() {
+        document.getElementById("new_folder_location").innerText = "Home/" + CURRENT_PATH;
+        document.getElementById("new_folder_name").value = "";
+        document.getElementById("new_folder_submit").disabled = false;
+        document.getElementById("new_folder_overlay").style.visibility = "visible";
+    }
+    function showShareFileOverlay() {
+        document.getElementById("new_folder_submit").disabled = false;
+        document.getElementById("new_folder_overlay").style.visibility = "visible";
+    }
+    function showRenameFileOverlay() {
+        document.getElementById("new_folder_submit").disabled = false;
+        document.getElementById("new_folder_overlay").style.visibility = "visible";
+    }
+    function showDeleteFileOverlay() {
+        document.getElementById("new_folder_submit").disabled = false;
+        document.getElementById("new_folder_overlay").style.visibility = "visible";
+    }
 </script>
 {% endblock %}
