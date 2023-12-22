@@ -23,6 +23,24 @@ body {
     height: 100vh;
 }
 
+form label {
+    line-height: 150%;
+}
+form .bg_glow_gradient {
+    background-color: transparent;
+    background-image: linear-gradient(to top, rgb(72, 72, 72) 25%, transparent 100%);
+    background-size: 200% 200%;
+    border: none;
+    border-bottom: 4px solid rgb(72, 72, 72);
+    color: var(--text-color);
+    outline: none;
+    padding: 0.3rem 0.3rem 0.1rem 0.3rem;
+    transition: background-position 400ms ease-out;
+}
+form .bg_glow_gradient:focus{
+    background-position: 0 100%;
+}
+
 header {
     align-items: flex-end;
     display: flex;
@@ -32,7 +50,7 @@ header {
     padding: 0 2%;
 }
 .header_btn {
-    background-image: linear-gradient(to top, #535353 50%, transparent 50%);
+    background-image: linear-gradient(to top, rgb(72, 72, 72) 50%, transparent 50%);
     background-size: 200% 200%;
     border: 2px solid var(--text-color);
     border-radius: 5px;
