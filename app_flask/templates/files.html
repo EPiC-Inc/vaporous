@@ -2,7 +2,7 @@
 {% block title %}files{% endblock %}
 
 {% block body %}
-<div id="new_folder_overlay" class="overlay" onclick="this.style.visibility='hidden';" style="visibility: hidden;">
+<div id="new_folder_overlay" class="overlay" onclick="this.style.display='none';" style="display: none;">
     <form onclick="event.stopPropagation();" onsubmit="event.preventDefault();newFolder();">
         <span id="new_folder_errors" class="error"></span>
         <span>Location: <span id="new_folder_location"></span></span>
@@ -13,19 +13,30 @@
         <input id="new_folder_submit" type="submit" value="Create">
     </form>
 </div>
-<div id="share_file_overlay" class="overlay" onclick="this.style.visibility='hidden';" style="visibility: hidden;">
-    <section>
-        test
+<div id="share_file_overlay" class="overlay" onclick="this.style.display='none';" style="display: none;">
+    <section onclick="event.stopPropagation();">
+        <span>Share link: <span id="share_link_disabled">disabled</span><span id="share_link" style="display: none;">test</span></span>
+        <div style="align-items: center;display: flex;margin: 4% 0;">
+            <label for="anonymous_access">Anonymous access:&nbsp;&nbsp;</label>
+            <input class="toggle" type="checkbox" id="anonymous_access">
+        </div>
+        <input type="submit" value="Create share link">
     </section>
 </div>
-<div id="rename_file_overlay" class="overlay" onclick="this.style.visibility='hidden';" style="visibility: hidden;">
-    <section>
+<div id="rename_file_overlay" class="overlay" onclick="this.style.display='none';" style="display: none;">
+    <section onclick="event.stopPropagation();">
         test2
     </section>
 </div>
-<div id="delete_file_overlay" class="overlay" onclick="this.style.visibility='hidden';" style="visibility: hidden;">
-    <section>
-        test3
+<div id="delete_file_overlay" class="overlay" onclick="this.style.display='none';" style="display: none;">
+    <section onclick="event.stopPropagation();">
+        <span id="delete_errors" class="error"></span>
+        <span>Delete &lt;Home/<span id="to_delete"></span>&gt;?</span>
+        <span class="error" id="delete_folder_notice" style="display: none;">NOTE: Selected item is a folder. All contents inside WILL be deleted.</span>
+        <div>
+            <input type="submit" value="Cancel" onclick="this.parentNode.parentNode.parentNode.style.display='none';">
+            <input type="submit" value="Delete" style="background-color: crimson;" onclick="deleteFile();" id="delete_submit">
+        </div>
     </section>
 </div>
 <div id="drop_zone">
@@ -196,10 +207,9 @@
         }).then((response) => {
             if (response.ok) {
                 response.json().then((body) => {
-                    console.log(body);
                     if (body[0]) {
                         composeFileList(CURRENT_PATH);
-                        document.getElementById("new_folder_overlay").style.visibility = "hidden";
+                        document.getElementById("new_folder_overlay").style.display = "none";
                     } else {
                         document.getElementById("new_folder_errors").innerText = body[1];
                         document.getElementById("new_folder_submit").disabled = false;
@@ -226,8 +236,9 @@
         console.log(path);
     }
 
-    function deleteFile(self, path) {
-        self.parentNode.parentNode.blur();
+    function deleteFile() {
+        document.getElementById("delete_submit").disabled = true;
+        var path = document.getElementById("to_delete").innerText;
         console.log("Deleting");
         console.log(path);
     }
@@ -237,7 +248,7 @@
         document.getElementById("new_folder_location").innerText = "Home/" + CURRENT_PATH;
         document.getElementById("new_folder_name").value = "";
         document.getElementById("new_folder_submit").disabled = false;
-        document.getElementById("new_folder_overlay").style.visibility = "visible";
+        document.getElementById("new_folder_overlay").style.display = "flex";
     }
     function showShareFileOverlay() {
         document.getElementById("new_folder_submit").disabled = false;
@@ -247,9 +258,16 @@
         document.getElementById("new_folder_submit").disabled = false;
         document.getElementById("new_folder_overlay").style.visibility = "visible";
     }
-    function showDeleteFileOverlay() {
-        document.getElementById("new_folder_submit").disabled = false;
-        document.getElementById("new_folder_overlay").style.visibility = "visible";
+    function showDeleteFileOverlay(self, path, is_dir) {
+        self.parentNode.parentNode.blur();
+        document.getElementById("to_delete").innerText = path;
+        if (is_dir === "dir") {
+            document.getElementById("delete_folder_notice").style.display = "inline";
+        } else {
+            document.getElementById("delete_folder_notice").style.display = "none";
+        }
+        document.getElementById("delete_submit").disabled = false;
+        document.getElementById("delete_file_overlay").style.display = "flex";
     }
 </script>
 {% endblock %}

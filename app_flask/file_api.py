@@ -30,9 +30,15 @@ EXTENSIONS = {
     ".rar": "icon-archive",
 }
 
+PRIVATE_PATHS = [Path(CONFIG.upload_directory).absolute() / path for path in CONFIG.private_paths]
+PROTECTED_PATHS = [Path(CONFIG.upload_directory).absolute() / path for path in CONFIG.protected_paths]
+
 
 def secure_filename(filename: str) -> str:
-    return "".join(filter(lambda char: char not in "\\/?%*:|\"<>.", filename))
+    filename = dot_re.sub(".", filename)
+    if filename.startswith(".") and filename.endswith("."):
+        filename = filename[:-1]
+    return "".join(filter(lambda char: char not in "\\/?%*:|\"<>", filename))
 
 
 def convert_size(size_bytes: int) -> str:
@@ -46,13 +52,29 @@ def convert_size(size_bytes: int) -> str:
     return f"{s}{size_name[i]}"
 
 
-def list_files(current_directory: str | Path) -> dict:
+def list_files(current_directory: str | Path, user_home: str | Path = "") -> dict:
     """List the files under current_directory."""
     current_directory = dot_re.sub(r".", str(current_directory))
     full_directory = Path(CONFIG.upload_directory).absolute() / current_directory
-
+    # if not current_directory == user_home:
+    #     for private_path in PRIVATE_PATHS:
+    #         print(private_path)
+    #         if full_directory.match(private_path):
+    #             private = True
+    #             break
     results = {}
     for entry in full_directory.iterdir():
+        full_path = Path(current_directory).joinpath(entry.name)
+        abs_path = Path(full_directory).joinpath(entry.name)
+        print(full_directory / abs_path)
+        private = False
+        for private_path in PRIVATE_PATHS:
+            print(private_path)
+            if (full_directory / abs_path).match(private_path):
+                private = True
+                break
+        if private:
+            continue
         if entry.is_dir():
             icon = "icon-dir"
         else:
@@ -63,7 +85,7 @@ def list_files(current_directory: str | Path) -> dict:
                 "type": "file" if entry.is_file() else "dir",
                 "icon": icon,
                 "size": convert_size(entry.stat().st_size),
-                "path": Path(current_directory).joinpath(entry.name).as_posix(),
+                "path": full_path.as_posix(),
             }
         )
     # This annoying conglomerate makes sure the folders are always first

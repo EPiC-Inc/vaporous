@@ -11,6 +11,7 @@
     --background-color: black;
     --drop-zone-color: darkcyan;
     --hover-background-color: rgb(36, 36, 36);
+    --light-background-color: rgb(72, 72, 72);
     --nav-color: #008b9d;
     --text-color: darkgrey;
     color: var(--text-color);
@@ -36,17 +37,62 @@ form label {
 }
 input.bg_glow_gradient {
     background-color: transparent;
-    background-image: linear-gradient(to top, rgb(72, 72, 72) 25%, transparent 100%);
+    background-image: linear-gradient(to top, var(--light-background-color) 25%, transparent 100%);
     background-size: 200% 200%;
     border: none;
-    border-bottom: 4px solid rgb(72, 72, 72);
+    border-bottom: 4px solid var(--light-background-color);
     color: var(--text-color);
     outline: none;
     padding: 0.3rem 0.3rem 0.1rem 0.3rem;
-    transition: background-position 400ms ease-out;
+    transition: background-position 200ms ease-out;
 }
 input.bg_glow_gradient:focus{
     background-position: 0 100%;
+}
+
+input.toggle {
+    position: relative;
+    height: 1.5rem;
+    width: 2.75rem;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    /* border-radius: 9999px; */
+    background-color: var(--light-background-color);
+    transition: background-color 200ms ease-out;
+}
+
+input.toggle:checked {
+    background-color: var(--nav-color);
+}
+
+input.toggle::before {
+    position: absolute;
+    content: "";
+    left: calc(1.5rem - 1.25rem);
+    top: calc(1.5rem - 1.3rem);
+    display: block;
+    height: 1rem;
+    width: 1rem;
+    cursor: pointer;
+    border: 1px solid rgba(100, 116, 139, 0.527);
+    /* border-radius: 9999px; */
+    background-color: whitesmoke;
+    box-shadow: 0 3px 10px rgba(100, 116, 139, 0.327);
+    transition: transform 200ms ease-out;
+}
+
+input.toggle:hover::before {
+    box-shadow: 0 0 0px 4px rgba(0, 0, 0, .15)
+}
+
+input.toggle:checked:hover::before {
+    box-shadow: 0 0 0px 4px rgba(72, 219, 236, 0.15)
+}
+
+input.toggle:checked:before {
+    transform: translateX(100%);
+    border-color: var(--nav-color);
 }
 
 .error {
@@ -70,8 +116,13 @@ input.bg_glow_gradient:focus{
     display: flex;
     flex-direction: column;
     gap: 0.6rem;
+    max-width: 90%;
     padding: 2%;
     z-index: 3;
+}
+
+#share_link::after {
+    content: "⎘";
 }
 
 header {
@@ -83,7 +134,7 @@ header {
     padding: 0 2%;
 }
 .header_btn {
-    background-image: linear-gradient(to top, rgb(72, 72, 72) 50%, transparent 50%);
+    background-image: linear-gradient(to top, var(--light-background-color) 50%, transparent 50%);
     background-size: 200% 200%;
     border: 2px solid var(--text-color);
     border-radius: 5px;
