@@ -6,7 +6,6 @@ from types import SimpleNamespace
 from flask import send_from_directory
 from werkzeug.datastructures import FileStorage
 from werkzeug.security import safe_join
-from werkzeug.utils import secure_filename
 from werkzeug.wrappers.response import Response
 
 from . import CONFIG
@@ -30,6 +29,10 @@ EXTENSIONS = {
     ".7z": "icon-archive",
     ".rar": "icon-archive",
 }
+
+
+def secure_filename(filename: str) -> str:
+    return "".join(filter(lambda char: char not in "\\/?%*:|\"<>.", filename))
 
 
 def convert_size(size_bytes: int) -> str:
@@ -74,6 +77,7 @@ def save_file(directory: str | Path, file_obj: FileStorage) -> None:
     """Saves a file under directory."""
     directory = dot_re.sub(r".", str(directory))
     file_name = dot_re.sub(r".", str(file_obj.filename))
+    file_name = secure_filename(file_name)
     file_name = safe_join(directory, file_name)
     file_name = safe_join(str(Path(CONFIG.upload_directory).absolute()), str(file_name))
     if file_name is None:
@@ -99,6 +103,8 @@ def new_folder(current_directory: str | Path, folder_name: str) -> Path | None:
     """Creates a new folder under the file tree."""
     current_directory = dot_re.sub(r".", str(current_directory))
     folder_name = secure_filename(folder_name[:40])
+    if not folder_name:
+        return None
     new_path = safe_join(CONFIG.upload_directory, current_directory)
     if not new_path:
         return None
@@ -106,4 +112,6 @@ def new_folder(current_directory: str | Path, folder_name: str) -> Path | None:
     if new_path.exists():
         return None
     new_path.mkdir()
+    if not new_path.exists():
+        return None
     return new_path

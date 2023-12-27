@@ -39,7 +39,7 @@
                 {% if file_metadata.type == 'dir' %}
                 <a class="link" onclick="{{ onclick_func }}">
                 {% else %}
-                <a class="link" href="{{ url_for('retrieve_file', filename=file_metadata.path) }}" target="_blank">
+                <a class="link" href="{{ url_for('retrieve_file') }}/{{ file_metadata.path }}" target="_blank">
                 {% endif %}
                     <span>{{ file_name }}</span>
                 </a>

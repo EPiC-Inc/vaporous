@@ -153,7 +153,13 @@
         // {% if anchor_navigation %}
         window.location.hash = `#${path}`;
         // {% endif %}
-        let response = await fetch("{{ url_for('composer.compose_file_list') }}" + path).catch((e) => {
+        let response = await fetch("{{ url_for('composer.compose_file_list') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({"directory": path})
+        }).catch((e) => {
                 document.getElementById('file_list').innerHTML = '<span class="internet_disconnect"><span>X</span></span>';
             });
         if (response.redirected) {
@@ -227,6 +233,7 @@
     }
 
     function showNewFolderOverlay() {
+        document.getElementById("new_folder_errors").innerText = "";
         document.getElementById("new_folder_location").innerText = "Home/" + CURRENT_PATH;
         document.getElementById("new_folder_name").value = "";
         document.getElementById("new_folder_submit").disabled = false;

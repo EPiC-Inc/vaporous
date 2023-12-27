@@ -8,10 +8,12 @@ from .file_api import list_files, new_folder, retrieve, save_file
 composer = Blueprint("composer", __name__)
 
 
-@composer.route("/dir_view/")
+@composer.route("/dir_view/", methods=["GET", "POST"])
 @composer.route("/dir_view/<path:base_directory>")
-def compose_file_list(base_directory="") -> str | Response:
+def compose_file_list(base_directory: str = "") -> str | Response:
     # TODO - check if user has access
+    if request.method == "POST" and (data := request.json):
+        base_directory = data.get("directory", "")
     user = get_session(session.get("id", ""))
     if not user:
         return redirect(url_for("login_page"))
