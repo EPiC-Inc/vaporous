@@ -74,7 +74,7 @@ def retrieve_file(filename=None):
 
 @app.route("/logout")
 def logout():
-    session_id = session.get("id", "")
+    session_id = session.get("id")
     if session_id:
         del_session(session_id)
     session.clear()

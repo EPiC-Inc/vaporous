@@ -11,7 +11,8 @@ composer = Blueprint("composer", __name__)
 @composer.route("/dir_view/", methods=["GET", "POST"])
 @composer.route("/dir_view/<path:base_directory>")
 def compose_file_list(base_directory: str = "") -> str | Response:
-    # TODO - check if user has access
+    # TODO - check if user has access to the specific directory
+    #   (really only applies to admins since normal users are hardlocked to their own home folder)
     if request.method == "POST" and (data := request.json):
         base_directory = data.get("directory", "")
     user = get_session(session.get("id", ""))
