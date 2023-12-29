@@ -4,6 +4,9 @@ uploads/
 config.toml
 database.db
 
+# Text editor
+.obsidian
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -63,7 +63,7 @@ def add_new_folder():
     data = request.json
     if not data:
         return "Data in invalid format, must be JSON", 400
-    current_path = data.get("current_path")
+    current_path = data.get("current_path", "")
     folder_name = data.get("folder_name")
     if not folder_name:
         return [False, "Folder name cannot be blank"]
