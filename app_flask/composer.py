@@ -91,9 +91,7 @@ def delete_file_or_folder():
     if not user:
         return "Not authenticated", 401
     data = request.json
-    print(data)
     if not data:
-        print('no data')
         return "Data in invalid format, must be JSON", 400
     to_delete = data.get("to_delete")
     if not to_delete:

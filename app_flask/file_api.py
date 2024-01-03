@@ -3,7 +3,7 @@ from pathlib import Path
 from re import compile
 from types import SimpleNamespace
 
-from flask import send_from_directory
+from flask import send_from_directory, abort
 from werkzeug.datastructures import FileStorage
 from werkzeug.security import safe_join
 from werkzeug.wrappers.response import Response
@@ -62,7 +62,9 @@ def list_files(current_directory: str | Path, user_home: str | Path = "") -> dic
     full_directory = Path(CONFIG.upload_directory).absolute() / current_directory
     private_dir = False
     if user_home and (
-        not ((posix_dir := full_directory.as_posix()) + "/").startswith((Path(CONFIG.upload_directory).absolute() / user_home).as_posix() + "/")
+        not ((posix_dir := full_directory.as_posix()) + "/").startswith(
+            (Path(CONFIG.upload_directory).absolute() / user_home).as_posix() + "/"
+        )
     ):
         for private_path in PRIVATE_PATHS:
             if posix_dir.startswith(private_path.as_posix()):
@@ -140,9 +142,18 @@ def delete_file(file_path: str | Path) -> bool:
     return False
 
 
-def retrieve(file_path: str | Path) -> Response:
+def retrieve(file_path: str | Path, user_home: str | Path = ""):
     """Retrieves a file at file_path."""
     file_path = dot_re.sub(r".", str(file_path))
+    full_path = Path(CONFIG.upload_directory).absolute() / file_path
+    if user_home and (
+        not ((posix_dir := full_path.as_posix()) + "/").startswith(
+            (Path(CONFIG.upload_directory).absolute() / user_home).as_posix() + "/"
+        )
+    ):
+        for private_path in PRIVATE_PATHS:
+            if posix_dir.startswith(private_path.as_posix() + "/"):
+                abort(404)
     return send_from_directory(
         Path(CONFIG.upload_directory).absolute(), file_path, as_attachment=False
     )

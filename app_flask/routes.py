@@ -69,7 +69,7 @@ def retrieve_file(filename=None):
         return "Not implemented", 501
     if not filename:
         return "No file selected"
-    return retrieve(f"{user.base_dir}/{filename}")
+    return retrieve(f"{user.base_dir}/{filename}", user_home=user.home_dir)
 
 
 @app.route("/logout")
