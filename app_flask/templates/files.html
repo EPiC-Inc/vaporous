@@ -185,11 +185,11 @@
     }
 
     window.onload = () => {
-        composeFileList(window.location.hash.substring(1));
+        composeFileList(decodeURI(window.location.hash.substring(1)));
     };
     // {% if anchor_navigation %}
     window.addEventListener('hashchange', () => {
-        composeFileList(window.location.hash.substring(1));
+        composeFileList(decodeURI(window.location.hash.substring(1)));
     });
     // {% endif %}
 

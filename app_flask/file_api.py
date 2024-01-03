@@ -61,7 +61,6 @@ def list_files(current_directory: str | Path, user_home: str | Path = "") -> dic
     current_directory = dot_re.sub(r".", str(current_directory))
     full_directory = Path(CONFIG.upload_directory).absolute() / current_directory
     private_dir = False
-    print(full_directory)
     if user_home and (
         not ((posix_dir := full_directory.as_posix()) + "/").startswith(
             (Path(CONFIG.upload_directory).absolute() / user_home).as_posix() + "/"
