@@ -18,10 +18,10 @@ def compose_file_list(base_directory: str = "") -> str | Response:
     user = get_session(session.get("id", ""))
     if not user:
         return redirect(url_for("login_page"))
-    home = user.home if user.user_level > 0 else "."
+    home = user.base_dir if user.user_level > 0 else "."
     viewable_files = list_files(f"{home}/{base_directory}")
     for file_ in viewable_files.values():
-        file_.path = file_.path[len(user.home) :] if user.user_level > 0 else file_.path
+        file_.path = file_.path[len(user.base_dir) :] if user.user_level > 0 else file_.path
     paths = []
     current_path = ""
     for path in base_directory.split("/"):
@@ -51,7 +51,7 @@ def upload_file() -> tuple[str, int]:
         return "No file part!", 422
 
     for file in files:
-        save_file(f"{user.home}/{upload_path}", file)
+        save_file(f"{user.base_dir}/{upload_path}", file)
     return "Success", 200
 
 
@@ -67,7 +67,7 @@ def add_new_folder():
     folder_name = data.get("folder_name")
     if not folder_name:
         return [False, "Folder name cannot be blank"]
-    current_path = f"{user.home}/{current_path}"
+    current_path = f"{user.base_dir}/{current_path}"
     success = new_folder(current_path, folder_name)
     if success:
         return [True, "Success"]

@@ -14,8 +14,9 @@ from .objects import User
 class Session:
     username: str
     user_level: int
-    home: str
+    home_dir: str
     expires: datetime
+    base_dir: str = "public"
 
 
 valid_username_regex = compile(r"^\w+$")
@@ -55,8 +56,9 @@ def login(username: str, password: str | bytes):
     SESSIONS[id] = Session(
         username=username,
         user_level=user_level,
-        home=f"home/{username}" if user_level > 0 else ".",
+        home_dir=f"home/{username}",
         expires=datetime.now() + SESSION_EXPIRY,
+        base_dir=f"home/{username}" if user_level > 0 else ".",
     )
     return id
 

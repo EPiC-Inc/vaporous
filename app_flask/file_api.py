@@ -30,15 +30,19 @@ EXTENSIONS = {
     ".rar": "icon-archive",
 }
 
-PRIVATE_PATHS = [Path(CONFIG.upload_directory).absolute() / path for path in CONFIG.private_paths]
-PROTECTED_PATHS = [Path(CONFIG.upload_directory).absolute() / path for path in CONFIG.protected_paths]
+PRIVATE_PATHS = [
+    Path(CONFIG.upload_directory).absolute() / path for path in CONFIG.private_paths
+]
+PROTECTED_PATHS = [
+    Path(CONFIG.upload_directory).absolute() / path for path in CONFIG.protected_paths
+]
 
 
 def secure_filename(filename: str) -> str:
     filename = dot_re.sub(".", filename)
     if filename.startswith(".") and filename.endswith("."):
         filename = filename[:-1]
-    return "".join(filter(lambda char: char not in "\\/?%*:|\"<>", filename))
+    return "".join(filter(lambda char: char not in '\\/?%*:|"<>', filename))
 
 
 def convert_size(size_bytes: int) -> str:
@@ -56,6 +60,10 @@ def list_files(current_directory: str | Path, user_home: str | Path = "") -> dic
     """List the files under current_directory."""
     current_directory = dot_re.sub(r".", str(current_directory))
     full_directory = Path(CONFIG.upload_directory).absolute() / current_directory
+    if user_home and (
+        not full_directory.as_posix().startswith(Path(user_home).absolute().as_posix())
+    ):
+        pass
     # private_dir = False
     # for private_path in PRIVATE_PATHS:
     #     if full_directory.match(private_path):
