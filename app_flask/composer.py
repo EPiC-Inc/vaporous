@@ -3,7 +3,7 @@ from werkzeug.wrappers.response import Response
 
 from . import CONFIG
 from .auth import get_session
-from .file_api import list_files, new_folder, save_file
+from .file_api import list_files, new_folder, save_file, delete_file
 
 composer = Blueprint("composer", __name__)
 
@@ -85,12 +85,23 @@ def rename_file(to_rename: str = "") -> tuple[str, int]:
     return "", 501
 
 
-@composer.route("/delete", methods=["GET", "POST"])
-@composer.route("/delete/<path:to_delete>", methods=["GET", "POST"])
-def delete_file(to_delete: str = "") -> tuple[str, int]:
-    if not get_session(session.get("id", "")):
+@composer.route("/delete", methods=["POST"])
+def delete_file_or_folder():
+    user = get_session(session.get("id", ""))
+    if not user:
         return "Not authenticated", 401
-    return "", 501
+    data = request.json
+    print(data)
+    if not data:
+        print('no data')
+        return "Data in invalid format, must be JSON", 400
+    to_delete = data.get("to_delete")
+    if not to_delete:
+        return "Cannot delete nothing!", 400
+    to_delete = f"{user.base_dir}/{to_delete}"
+    if delete_file(to_delete):
+        return [True, "Success"]
+    return [False, "Cannot delete folder."]
 
 
 @composer.errorhandler(FileNotFoundError)

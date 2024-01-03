@@ -117,6 +117,29 @@ def save_file(directory: str | Path, file_obj: FileStorage) -> None:
     file_obj.save(file_name)
 
 
+def delete_file(file_path: str | Path) -> bool:
+    """Deletes a file, if it exists AND if it is not protected."""
+    file_path = dot_re.sub(r".", str(file_path))
+    full_path = Path(CONFIG.upload_directory).absolute() / file_path
+    if not full_path.exists():
+        return False
+    for protected_path in PROTECTED_PATHS:
+        if full_path.match(protected_path):
+            return False
+    if full_path.is_file():
+        full_path.unlink()
+        return True
+    elif full_path.is_dir():
+        for root, dirs, files in full_path.walk(top_down=False):
+            for name in files:
+                (root / name).unlink()
+            for name in dirs:
+                (root / name).rmdir()
+            full_path.rmdir()
+        return True
+    return False
+
+
 def retrieve(file_path: str | Path) -> Response:
     """Retrieves a file at file_path."""
     file_path = dot_re.sub(r".", str(file_path))

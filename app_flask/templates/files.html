@@ -239,8 +239,32 @@
     function deleteFile() {
         document.getElementById("delete_submit").disabled = true;
         var path = document.getElementById("to_delete").innerText;
-        console.log("Deleting");
-        console.log(path);
+        fetch("{{ url_for('composer.delete_file_or_folder') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                "to_delete": path
+            }),
+        }).then((response) => {
+            if (response.ok) {
+                response.json().then((body) => {
+                    if (body[0]) {
+                        composeFileList(CURRENT_PATH);
+                        document.getElementById("delete_file_overlay").style.display = "none";
+                    } else {
+                        document.getElementById("delete_errors").innerText = body[1];
+                        document.getElementById("delete_submit").disabled = false;
+                    }
+                });
+            } else {
+                throw new Error(response.statusText);
+            }
+        }).catch((e) => {
+            alert(e);
+            document.getElementById("delete_submit").disabled = false;
+        });
     }
 
     function showNewFolderOverlay() {
