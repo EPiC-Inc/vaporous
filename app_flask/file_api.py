@@ -60,23 +60,20 @@ def list_files(current_directory: str | Path, user_home: str | Path = "") -> dic
     """List the files under current_directory."""
     current_directory = dot_re.sub(r".", str(current_directory))
     full_directory = Path(CONFIG.upload_directory).absolute() / current_directory
+    private_dir = False
     if user_home and (
-        not full_directory.as_posix().startswith(Path(user_home).absolute().as_posix())
+        not ((posix_dir := full_directory.as_posix()) + "|").startswith((Path(CONFIG.upload_directory).absolute() / user_home).as_posix() + "|")
     ):
-        pass
-    # private_dir = False
-    # for private_path in PRIVATE_PATHS:
-    #     if full_directory.match(private_path):
-    #         private_dir = True
-    #         break
+        for private_path in PRIVATE_PATHS:
+            if posix_dir.startswith(private_path.as_posix()):
+                private_dir = True
+                return {}
     results = {}
     for entry in full_directory.iterdir():
         full_path = Path(current_directory).joinpath(entry.name)
         abs_path = Path(full_directory).joinpath(entry.name)
-        # print(full_directory / abs_path)#TEMP
         private = False
         for private_path in PRIVATE_PATHS:
-            # print(private_path)#TEMP
             if (full_directory / abs_path).match(private_path):
                 private = True
                 break

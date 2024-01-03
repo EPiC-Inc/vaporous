@@ -3,7 +3,7 @@ from werkzeug.wrappers.response import Response
 
 from . import CONFIG
 from .auth import get_session
-from .file_api import list_files, new_folder, retrieve, save_file
+from .file_api import list_files, new_folder, save_file
 
 composer = Blueprint("composer", __name__)
 
@@ -18,10 +18,13 @@ def compose_file_list(base_directory: str = "") -> str | Response:
     user = get_session(session.get("id", ""))
     if not user:
         return redirect(url_for("login_page"))
-    home = user.base_dir if user.user_level > 0 else "."
-    viewable_files = list_files(f"{home}/{base_directory}")
+    viewable_files = list_files(
+        f"{user.base_dir}/{base_directory}", user_home=user.home_dir
+    )
     for file_ in viewable_files.values():
-        file_.path = file_.path[len(user.base_dir) :] if user.user_level > 0 else file_.path
+        file_.path = (
+            file_.path[len(user.base_dir) :] if user.user_level > 0 else file_.path
+        )
     paths = []
     current_path = ""
     for path in base_directory.split("/"):
