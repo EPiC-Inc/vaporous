@@ -61,6 +61,7 @@ def list_files(current_directory: str | Path, user_home: str | Path = "") -> dic
     current_directory = dot_re.sub(r".", str(current_directory))
     full_directory = Path(CONFIG.upload_directory).absolute() / current_directory
     private_dir = False
+    print(full_directory)
     if user_home and (
         not ((posix_dir := full_directory.as_posix()) + "/").startswith(
             (Path(CONFIG.upload_directory).absolute() / user_home).as_posix() + "/"
@@ -157,6 +158,16 @@ def retrieve(file_path: str | Path, user_home: str | Path = ""):
     return send_from_directory(
         Path(CONFIG.upload_directory).absolute(), file_path, as_attachment=False
     )
+
+
+def sanitize(file_path: str | Path) -> str:
+    return dot_re.sub(r".", str(file_path))
+
+
+def check_exists(file_path: str | Path) -> Path | None:
+    file_path = dot_re.sub(r".", str(file_path))
+    file_path = Path(CONFIG.upload_directory).absolute() / file_path
+    return file_path if file_path.exists() else None
 
 
 def new_folder(current_directory: str | Path, folder_name: str) -> Path | None:
