@@ -1,9 +1,18 @@
 """This module contains routes for the application."""
-from flask import flash, redirect, render_template, request, session, url_for
+from flask import (
+    abort,
+    flash,
+    redirect,
+    render_template,
+    request,
+    send_from_directory,
+    session,
+    url_for,
+)
 
-from . import CONFIG, app
+from . import CONFIG, app, share_table
 from .auth import del_session, get_session, login, update_password
-from .file_api import retrieve
+from .file_api import check_exists, list_files, retrieve
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -70,6 +79,39 @@ def retrieve_file(filename=None):
     if not filename:
         return "No file selected"
     return retrieve(f"{user.base_dir}/{filename}", user_home=user.home_dir)
+
+
+@app.route("/s/<id>")
+@app.route("/s/<id>/<path:filename>")
+def show_share(id: str, filename=None):
+    if not id:
+        abort(404)
+    share = share_table.query(
+        "sub_path, anonymous_access", where_column="id", where_data=[id]
+    )
+    if not share:
+        abort(404)
+    share_path, anon_access_allowed = share[0]
+    original_share = share_path
+    if filename:
+        share_path = f"{share_path}/{filename}"
+    if anon_access_allowed or get_session(session.get("id", "")):
+        if (path := check_exists(share_path, absolute=False)) and (
+            abs_path := check_exists(share_path)
+        ):
+            print(path)
+            print(abs_path)
+            if abs_path.is_file():
+                return retrieve(path)
+            folder_contents = list_files(path)
+            return render_template(
+                "shared_folder.html",
+                share_id=id,
+                share_name=check_exists(original_share).name,  # type: ignore
+                folder_name=path.name,
+                files=folder_contents,
+            )
+    return abort(401)
 
 
 @app.route("/logout")

@@ -2,7 +2,7 @@ from flask import Blueprint, redirect, render_template, request, session, url_fo
 from werkzeug.wrappers.response import Response
 
 from . import CONFIG
-from .auth import add_share, get_session
+from .auth import add_share, delete_all_user_shares, get_session
 from .file_api import (
     check_exists,
     delete_file,
@@ -121,6 +121,7 @@ def rename_file_or_folder():
 
 @composer.route("/new_share", methods=["POST"])
 def generate_new_share():
+    # TODO - Ensure that the user has access to the file that's being shared
     user = get_session(session.get("id", ""))
     if not user:
         return "Not authenticated", 401
@@ -131,11 +132,20 @@ def generate_new_share():
     if not to_share:
         return [False, "Cannot share nothing!"]
     anonymous_access = data.get("anonymous_access", False)
-    if to_share := check_exists(f"{user.base_dir}/{to_share}"):
-        print("Yes")
-    if share_id := add_share(str(to_share), anonymous_access):
+    if check_exists((to_share := f"{user.base_dir}/{to_share}")):
+        print("Yes") #TEMP
+    if share_id := add_share(str(to_share), user.username, anonymous_access):
         return [True, share_id]
     return [False, "Cannot create share"]
+
+
+@composer.route("/clear_share_links", methods=["POST"])
+def clear_all_share_links():
+    user = get_session(session.get("id", ""))
+    if not user:
+        return "Not authenticated", 401
+    delete_all_user_shares(user.username)
+    return [True, "Success"]
 
 
 @composer.errorhandler(FileNotFoundError)
