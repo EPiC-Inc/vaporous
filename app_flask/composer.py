@@ -2,8 +2,8 @@ from flask import Blueprint, redirect, render_template, request, session, url_fo
 from werkzeug.wrappers.response import Response
 
 from . import CONFIG
-from .auth import get_session
-from .file_api import list_files, new_folder, save_file, delete_file
+from .auth import get_session, add_share
+from .file_api import delete_file, list_files, new_folder, save_file, check_exists
 
 composer = Blueprint("composer", __name__)
 
@@ -95,11 +95,30 @@ def delete_file_or_folder():
         return "Data in invalid format, must be JSON", 400
     to_delete = data.get("to_delete")
     if not to_delete:
-        return "Cannot delete nothing!", 400
+        return [False, "Cannot delete nothing!"]
     to_delete = f"{user.base_dir}/{to_delete}"
     if delete_file(to_delete):
         return [True, "Success"]
     return [False, "Cannot delete folder."]
+
+
+@composer.route("/new_share", methods=["POST"])
+def generate_new_share():
+    user = get_session(session.get("id", ""))
+    if not user:
+        return "Not authenticated", 401
+    data = request.json
+    if not data:
+        return "Data in invalid format, must be JSON", 400
+    to_share = data.get("to_share")
+    if not to_share:
+        return [False, "Cannot share nothing!"]
+    anonymous_access = data.get("anonymous_access", False)
+    if (to_share := check_exists(f"{user.base_dir}/{to_share}")):
+        print("Yes")
+    if (share_id := add_share(str(to_share), anonymous_access)):
+        return [True, share_id]
+    return [False, "Cannot create share"]
 
 
 @composer.errorhandler(FileNotFoundError)

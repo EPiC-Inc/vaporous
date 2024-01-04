@@ -15,12 +15,14 @@
 </div>
 <div id="share_file_overlay" class="overlay" onclick="this.style.display='none';" style="display: none;">
     <section onclick="event.stopPropagation();">
+        <span id="share_link" onclick="navigator.clipboard.writeText(this.innerText);"></span>
+        <span>&lt;Home/<span id="to_share"></span>&gt;</span>
         <span>Share link: <span id="share_link_disabled">disabled</span><span id="share_link" style="display: none;">test</span></span>
         <div style="align-items: center;display: flex;margin: 4% 0;">
             <label for="anonymous_access">Anonymous access:&nbsp;&nbsp;</label>
             <input class="toggle" type="checkbox" id="anonymous_access">
         </div>
-        <input type="submit" value="Create share link">
+        <input id="share_submit" type="submit" value="Create share link" onclick="shareFile();">
     </section>
 </div>
 <div id="rename_file_overlay" class="overlay" onclick="this.style.display='none';" style="display: none;">
@@ -224,10 +226,40 @@
         });
     }
 
-    function shareFile(self, path) {
-        self.parentNode.parentNode.blur();
-        console.log("Sharing")
-        console.log(path);
+    function shareFile(self) {
+        console.log("Sharing");
+        console.log(document.getElementById("to_share").innerText);
+        console.log("anon access:");
+        console.log(document.getElementById("anonymous_access").checked);
+        document.getElementById("share_submit").disabled = true;
+        var path = document.getElementById("to_share").innerText;
+        fetch("{{ url_for('composer.generate_new_share') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                "to_share": path,
+                "anonymous_access": document.getElementById("anonymous_access").checked
+            }),
+        }).then((response) => {
+            if (response.ok) {
+                response.json().then((body) => {
+                    if (body[0]) {
+                        composeFileList(CURRENT_PATH);
+                        document.getElementById("delete_file_overlay").style.display = "none";
+                    } else {
+                        // document.getElementById("delete_errors").innerText = body[1];
+                        document.getElementById("share_submit").disabled = false;
+                    }
+                });
+            } else {
+                throw new Error(response.statusText);
+            }
+        }).catch((e) => {
+            alert(e);
+            document.getElementById("share_submit").disabled = false;
+        });
     }
 
     function renameFile(self, path) {
@@ -274,9 +306,11 @@
         document.getElementById("new_folder_submit").disabled = false;
         document.getElementById("new_folder_overlay").style.display = "flex";
     }
-    function showShareFileOverlay() {
-        document.getElementById("new_folder_submit").disabled = false;
-        document.getElementById("new_folder_overlay").style.visibility = "visible";
+    function showShareFileOverlay(self, path) {
+        self.parentNode.parentNode.blur();
+        document.getElementById("to_share").innerText = path;
+        document.getElementById("anonymous_access").checked = false;
+        document.getElementById("share_file_overlay").style.display = "flex";
     }
     function showRenameFileOverlay() {
         document.getElementById("new_folder_submit").disabled = false;

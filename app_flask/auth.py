@@ -5,9 +5,9 @@ from hashlib import scrypt
 from re import compile
 from uuid import uuid4
 
-from . import user_table
+from . import share_table, user_table
 from .file_api import new_folder
-from .objects import User
+from .objects import Share, User
 
 
 @dataclass(slots=True)
@@ -123,5 +123,18 @@ def get_session(session_id: str) -> Session | None:
         return None
     return session
 
-def del_session(session_id:str) -> None:
+
+def add_share(share_path: str, username: str, anonymous_access: bool = False) -> str | None:
+    share_id = uuid4().hex
+    new_share = Share(
+        id=share_id,
+        user=username,
+        sub_path=share_path,
+        anonymous_access=anonymous_access,
+    )
+    share_table.insert_object(new_share)
+    return share_id
+
+
+def del_session(session_id: str) -> None:
     del SESSIONS[session_id]
