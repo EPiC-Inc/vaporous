@@ -26,14 +26,14 @@
     </section>
 </div>
 <div id="rename_file_overlay" class="overlay" onclick="this.style.display='none';" style="display: none;">
-    <form onclick="event.stopPropagation();" onsubmit="event.preventDefault();newFolder();">
+    <form onclick="event.stopPropagation();" onsubmit="event.preventDefault();renameFile();">
         <span id="rename_errors" class="error"></span>
         <span>Renaming &lt;Home/<span id="to_rename"></span>&gt;</span>
         <div>
             <label for="rename_target">New name:&nbsp;&nbsp;</label>
             <input class="bg_glow_gradient" type="text" id="rename_target" style="font-size: large;" autocomplete="off">
         </div>
-        <input type="submit" value="Rename" onclick="renameFile();" id="rename_submit">
+        <input type="submit" value="Rename" id="rename_submit">
     </form>
 </div>
 <div id="delete_file_overlay" class="overlay" onclick="this.style.display='none';" style="display: none;">
@@ -218,6 +218,7 @@
                     if (body[0]) {
                         composeFileList(CURRENT_PATH);
                         document.getElementById("new_folder_overlay").style.display = "none";
+                        document.getElementById("new_folder_name").value = "";
                     } else {
                         document.getElementById("new_folder_errors").innerText = body[1];
                         document.getElementById("new_folder_submit").disabled = false;
