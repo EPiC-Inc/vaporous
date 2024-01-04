@@ -26,9 +26,15 @@
     </section>
 </div>
 <div id="rename_file_overlay" class="overlay" onclick="this.style.display='none';" style="display: none;">
-    <section onclick="event.stopPropagation();">
-        test2
-    </section>
+    <form onclick="event.stopPropagation();" onsubmit="event.preventDefault();newFolder();">
+        <span id="rename_errors" class="error"></span>
+        <span>Renaming &lt;Home/<span id="to_rename"></span>&gt;</span>
+        <div>
+            <label for="rename_target">New name:&nbsp;&nbsp;</label>
+            <input class="bg_glow_gradient" type="text" id="rename_target" style="font-size: large;" autocomplete="off">
+        </div>
+        <input type="submit" value="Rename" onclick="renameFile();" id="rename_submit">
+    </form>
 </div>
 <div id="delete_file_overlay" class="overlay" onclick="this.style.display='none';" style="display: none;">
     <section onclick="event.stopPropagation();">
@@ -262,10 +268,36 @@
         });
     }
 
-    function renameFile(self, path) {
-        self.parentNode.parentNode.blur();
-        console.log('Renaming');
-        console.log(path);
+    function renameFile() {
+        document.getElementById("delete_submit").disabled = true;
+        var path = document.getElementById("to_rename").innerText;
+        fetch("{{ url_for('composer.rename_file_or_folder') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                "to_rename": path,
+                "new_name": document.getElementById("rename_target").value
+            }),
+        }).then((response) => {
+            if (response.ok) {
+                response.json().then((body) => {
+                    if (body[0]) {
+                        composeFileList(CURRENT_PATH);
+                        document.getElementById("rename_file_overlay").style.display = "none";
+                    } else {
+                        document.getElementById("rename_errors").innerText = body[1];
+                        document.getElementById("rename_submit").disabled = false;
+                    }
+                });
+            } else {
+                throw new Error(response.statusText);
+            }
+        }).catch((e) => {
+            alert(e);
+            document.getElementById("rename_submit").disabled = false;
+        });
     }
 
     function deleteFile() {
@@ -312,9 +344,12 @@
         document.getElementById("anonymous_access").checked = false;
         document.getElementById("share_file_overlay").style.display = "flex";
     }
-    function showRenameFileOverlay() {
-        document.getElementById("new_folder_submit").disabled = false;
-        document.getElementById("new_folder_overlay").style.visibility = "visible";
+    function showRenameFileOverlay(self, path) {
+        self.parentNode.parentNode.blur();
+        document.getElementById("to_rename").innerText = path;
+        document.getElementById("rename_target").value = "";
+        document.getElementById("rename_submit").disabled = false;
+        document.getElementById("rename_file_overlay").style.display = "flex";
     }
     function showDeleteFileOverlay(self, path, is_dir) {
         self.parentNode.parentNode.blur();

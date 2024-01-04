@@ -142,6 +142,21 @@ def delete_file(file_path: str | Path) -> bool:
     return False
 
 
+def rename(file_path: str | Path, new_name: str):
+    """Renames a file or folder."""
+    file_path = dot_re.sub(r".", str(file_path))
+    full_path = Path(CONFIG.upload_directory).absolute() / file_path
+    for protected_path in PROTECTED_PATHS:
+        if full_path.match(protected_path):
+            return False
+    new_name = secure_filename(new_name)
+    target = full_path.with_name(new_name)
+    if target.exists():
+        return False
+    full_path.rename(target).as_posix()
+    return True
+
+
 def retrieve(file_path: str | Path, user_home: str | Path = ""):
     """Retrieves a file at file_path."""
     file_path = dot_re.sub(r".", str(file_path))

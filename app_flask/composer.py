@@ -2,8 +2,15 @@ from flask import Blueprint, redirect, render_template, request, session, url_fo
 from werkzeug.wrappers.response import Response
 
 from . import CONFIG
-from .auth import get_session, add_share
-from .file_api import delete_file, list_files, new_folder, save_file, check_exists
+from .auth import add_share, get_session
+from .file_api import (
+    check_exists,
+    delete_file,
+    list_files,
+    new_folder,
+    rename,
+    save_file,
+)
 
 composer = Blueprint("composer", __name__)
 
@@ -77,14 +84,6 @@ def add_new_folder():
     return [False, "Unable to create folder"]
 
 
-@composer.route("/rename", methods=["POST"])
-@composer.route("/rename/<path:to_rename>", methods=["POST"])
-def rename_file(to_rename: str = "") -> tuple[str, int]:
-    if not get_session(session.get("id", "")):
-        return "Not authenticated", 401
-    return "", 501
-
-
 @composer.route("/delete", methods=["POST"])
 def delete_file_or_folder():
     user = get_session(session.get("id", ""))
@@ -99,7 +98,25 @@ def delete_file_or_folder():
     to_delete = f"{user.base_dir}/{to_delete}"
     if delete_file(to_delete):
         return [True, "Success"]
-    return [False, "Cannot delete folder."]
+    return [False, "Cannot delete file or folder."]
+
+
+@composer.route("/rename", methods=["POST"])
+def rename_file_or_folder():
+    user = get_session(session.get("id", ""))
+    if not user:
+        return "Not authenticated", 401
+    data = request.json
+    if not data:
+        return "Data in invalid format, must be JSON", 400
+    to_rename = data.get("to_rename")
+    new_name = data.get("new_name")
+    if not (to_rename and new_name):
+        return [False, "Please provide the new name."]
+    to_rename = f"{user.base_dir}/{to_rename}"
+    if rename(to_rename, new_name):
+        return [True, "Success"]
+    return [False, "Cannot rename file or folder."]
 
 
 @composer.route("/new_share", methods=["POST"])
@@ -114,9 +131,9 @@ def generate_new_share():
     if not to_share:
         return [False, "Cannot share nothing!"]
     anonymous_access = data.get("anonymous_access", False)
-    if (to_share := check_exists(f"{user.base_dir}/{to_share}")):
+    if to_share := check_exists(f"{user.base_dir}/{to_share}"):
         print("Yes")
-    if (share_id := add_share(str(to_share), anonymous_access)):
+    if share_id := add_share(str(to_share), anonymous_access):
         return [True, share_id]
     return [False, "Cannot create share"]
 
