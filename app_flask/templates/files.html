@@ -254,7 +254,7 @@
                 response.json().then((body) => {
                     if (body[0]) {
                         composeFileList(CURRENT_PATH);
-                        document.getElementById("share_link").innerText = "{{ url_for('show_share', id='', _external=True) }}"+body[1];
+                        document.getElementById("share_link").innerText = "https://files.opticor.digital{{ url_for('show_share', id='') }}"+body[1];
                         document.getElementById("share_link_display").style.display = "block";
                         // document.getElementById("delete_file_overlay").style.display = "none";
                     } else {
