@@ -38,7 +38,7 @@ def validate_password(password: str | bytes) -> bool:
 def login(username: str, password: str | bytes):
     if not (username and password):
         return False
-    username = username.lower()
+    username = username.strip().lower()
     if isinstance(password, str):
         password = password.encode()
     result = user_table.query(
@@ -100,7 +100,7 @@ def add_user(
         return False, "Invalid username"
     if not validate_password(password):
         return False, "Password not strong enough"
-    username = username.lower()
+    username = username.strip().lower()
     user_already_exists = user_table.query(
         "username", where_column="username", where_data=[username]
     )
