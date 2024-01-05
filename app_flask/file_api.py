@@ -171,7 +171,7 @@ def retrieve(file_path: str | Path, user_home: str | Path = ""):
             if posix_dir.startswith(private_path.as_posix() + "/"):
                 abort(404)
     return send_from_directory(
-        Path(CONFIG.upload_directory).absolute(), file_path, as_attachment=False
+        Path(CONFIG.upload_directory).absolute(), Path(file_path).as_posix(), as_attachment=False
     )
 
 
@@ -179,10 +179,15 @@ def sanitize(file_path: str | Path) -> str:
     return dot_re.sub(r".", str(file_path))
 
 
-def check_exists(file_path: str | Path) -> Path | None:
+def check_exists(file_path: str | Path, absolute: bool = True) -> Path | None:
     file_path = dot_re.sub(r".", str(file_path))
-    file_path = Path(CONFIG.upload_directory).absolute() / file_path
-    return file_path if file_path.exists() else None
+    if absolute:
+        file_path = Path(CONFIG.upload_directory).absolute() / file_path
+        exists = file_path.exists()
+    else:
+        file_path = Path(file_path)
+        exists = (Path(CONFIG.upload_directory) / file_path).exists()
+    return file_path if exists else None
 
 
 def new_folder(current_directory: str | Path, folder_name: str) -> Path | None:

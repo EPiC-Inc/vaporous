@@ -37,6 +37,7 @@
 <section>
     <form id="password_change" action="{{ url_for('user_settings') }}" method="post">
         <a href="{{ url_for('logout') }}" id="logout" class="link">logout</a>
+        <input type="button" onclick="this.disabled = true;clearShareLinks();" value="Clear all current share links">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -59,4 +60,14 @@
         <a class="link" href="/">home</a>
     </form>
 </section>
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript">
+    function clearShareLinks() {
+        fetch("{{ url_for('composer.clear_all_share_links') }}", {
+            method: "POST"
+        })
+    }
+</script>
 {% endblock %}

@@ -15,9 +15,8 @@
 </div>
 <div id="share_file_overlay" class="overlay" onclick="this.style.display='none';" style="display: none;">
     <section onclick="event.stopPropagation();">
-        <span id="share_link" onclick="navigator.clipboard.writeText(this.innerText);"></span>
-        <span>&lt;Home/<span id="to_share"></span>&gt;</span>
-        <span>Share link: <span id="share_link_disabled">disabled</span><span id="share_link" style="display: none;">test</span></span>
+        <div id="share_link_display" style="display: none;">Share link: <span id="share_link" onclick="navigator.clipboard.writeText(this.innerText);"></span></div>
+        <span>Sharing &lt;Home/<span id="to_share"></span>&gt;</span>
         <div style="align-items: center;display: flex;margin: 4% 0;">
             <label for="anonymous_access">Anonymous access:&nbsp;&nbsp;</label>
             <input class="toggle" type="checkbox" id="anonymous_access">
@@ -238,6 +237,7 @@
         console.log(document.getElementById("to_share").innerText);
         console.log("anon access:");
         console.log(document.getElementById("anonymous_access").checked);
+        document.getElementById("anonymous_access").disabled = true;
         document.getElementById("share_submit").disabled = true;
         var path = document.getElementById("to_share").innerText;
         fetch("{{ url_for('composer.generate_new_share') }}", {
@@ -254,7 +254,9 @@
                 response.json().then((body) => {
                     if (body[0]) {
                         composeFileList(CURRENT_PATH);
-                        document.getElementById("delete_file_overlay").style.display = "none";
+                        document.getElementById("share_link").innerText = "https://files.opticor.digital{{ url_for('show_share', id='') }}"+body[1];
+                        document.getElementById("share_link_display").style.display = "block";
+                        // document.getElementById("delete_file_overlay").style.display = "none";
                     } else {
                         // document.getElementById("delete_errors").innerText = body[1];
                         document.getElementById("share_submit").disabled = false;
@@ -341,8 +343,11 @@
     }
     function showShareFileOverlay(self, path) {
         self.parentNode.parentNode.blur();
+        document.getElementById("share_link_display").style.display = "none";
         document.getElementById("to_share").innerText = path;
+        document.getElementById("anonymous_access").disabled = false;
         document.getElementById("anonymous_access").checked = false;
+        document.getElementById("share_submit").disabled = false;
         document.getElementById("share_file_overlay").style.display = "flex";
     }
     function showRenameFileOverlay(self, path) {

@@ -61,11 +61,12 @@ input.toggle {
     background-color: var(--light-background-color);
     transition: background-color 200ms ease-out;
 }
-
+input.toggle:disabled {
+    opacity: 0.5;
+}
 input.toggle:checked {
     background-color: var(--nav-color);
 }
-
 input.toggle::before {
     position: absolute;
     content: "";
@@ -81,15 +82,12 @@ input.toggle::before {
     box-shadow: 0 3px 10px rgba(100, 116, 139, 0.327);
     transition: transform 200ms ease-out;
 }
-
 input.toggle:hover::before {
     box-shadow: 0 0 0px 4px rgba(0, 0, 0, .15)
 }
-
 input.toggle:checked:hover::before {
     box-shadow: 0 0 0px 4px rgba(72, 219, 236, 0.15)
 }
-
 input.toggle:checked:before {
     transform: translateX(100%);
     border-color: var(--nav-color);
@@ -121,8 +119,12 @@ input.toggle:checked:before {
     z-index: 3;
 }
 
+#share_link {
+    color: var(--nav-color);
+    cursor: pointer;
+}
 #share_link::after {
-    content: "⎘";
+    content: " ⎘";
 }
 
 header {

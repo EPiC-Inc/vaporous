@@ -135,6 +135,14 @@ def add_share(share_path: str, username: str, anonymous_access: bool = False) ->
     share_table.insert_object(new_share)
     return share_id
 
+def delete_share(share_id: str):
+    share_table.delete(where_column="id", where_data=[share_id])
+
+def delete_all_user_shares(username: str):
+    if not username:
+        return
+    share_table.delete(where_column="user", where_data=[username])
+
 
 def del_session(session_id: str) -> None:
     del SESSIONS[session_id]
