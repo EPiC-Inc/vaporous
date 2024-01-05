@@ -30,7 +30,7 @@ def compose_file_list(base_directory: str = "") -> str | Response:
     )
     for file_ in viewable_files.values():
         file_.path = (
-            file_.path[len(user.base_dir) :] if user.user_level > 0 else file_.path
+            file_.path[len(user.base_dir) :] if user.user_level > 1 else file_.path
         )
     paths = []
     current_path = ""
