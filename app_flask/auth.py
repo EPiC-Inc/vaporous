@@ -58,7 +58,7 @@ def login(username: str, password: str | bytes):
         user_level=user_level,
         home_dir=f"home/{username}",
         expires=datetime.now() + SESSION_EXPIRY,
-        base_dir=f"home/{username}" if user_level > 0 else ".",
+        base_dir=f"home/{username}" if user_level > 1 else ".",
     )
     return id
 
