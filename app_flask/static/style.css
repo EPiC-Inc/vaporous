@@ -412,7 +412,7 @@ td:first-child {
         grid-template-columns: 1fr;
     }
     #file_container {
-        width: 100%;
+        width: 100vw;
     }
     td:nth-of-type(4), th:nth-of-type(4) {
         display: none;
