@@ -411,7 +411,7 @@ td:first-child {
     }
     #file_container {
         margin: 0;
-        width: 80vw;
+        width: 50vw;
     }
     td:nth-of-type(4), th:nth-of-type(4) {
         display: none;
