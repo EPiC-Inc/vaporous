@@ -144,6 +144,7 @@ def delete_file(file_path: str | Path) -> bool:
 
 def rename(file_path: str | Path, new_name: str):
     """Renames a file or folder."""
+    #TODO - when shares are implemented, update all shares pointing to that path
     file_path = dot_re.sub(r".", str(file_path))
     full_path = Path(CONFIG.upload_directory).absolute() / file_path
     for protected_path in PROTECTED_PATHS:
