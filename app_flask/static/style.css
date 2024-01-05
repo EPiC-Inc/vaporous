@@ -406,16 +406,11 @@ td:first-child {
 
 /* ANCHOR: responsive stuff */
 @media only screen and (max-width: 600px) {
-    body {
-        margin: 8px;
-    }
     #fields {
         grid-template-columns: 1fr;
     }
-    #drop_zone {
-        border: none;
-    }
     #file_container {
+        margin: 0;
         width: 90vw;
     }
     td:nth-of-type(4), th:nth-of-type(4) {
