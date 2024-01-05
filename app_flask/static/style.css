@@ -390,7 +390,6 @@ td:first-child {
 /* ANCHOR: responsive stuff */
 @media only screen and (orientation: portrait) {
     body {
-        font-size: 3.3em;
         width: 100%;
     }
     #file_container {
