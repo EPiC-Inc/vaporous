@@ -410,6 +410,7 @@ td:first-child {
         grid-template-columns: 1fr;
     }
     #file_container {
+        background-color: aqua;
         margin: 0;
         width: 90%;
     }
