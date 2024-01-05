@@ -47,7 +47,7 @@ body {
 input {
     font-family: "Aldrich";
     font-size: 1.6rem;
-    max-width: 100vw;
+    max-width: 80vw;
 }
 input[type="submit"] {
     cursor: pointer;
@@ -411,7 +411,7 @@ td:first-child {
     }
     #file_container {
         margin: 0;
-        width: 90vw;
+        width: 80vw;
     }
     td:nth-of-type(4), th:nth-of-type(4) {
         display: none;
