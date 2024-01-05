@@ -48,7 +48,7 @@ body {
 input {
     font-family: "Aldrich";
     font-size: 1.6rem;
-    max-width: 100%;
+    max-width: 100vw;
 }
 input[type="submit"] {
     cursor: pointer;
