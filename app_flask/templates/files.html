@@ -53,10 +53,12 @@
         {% else %}
         <span class="header_btn">Not Authenticated</span>
         {% endif %}
-        {% if user_level <= 1 %}
+        {% if user_level <= 0 %}
         <a class="header_btn">
             Control Panel
         </a>
+        {% endif %}
+        {% if user_level <= 1 %}
         <span class="header_btn" onclick="composeFileList('{{ user_home }}')">My Home Folder</span>
         {% endif %}
         <label class="header_btn" for="upload_button" id="upload_label">Upload</label>
