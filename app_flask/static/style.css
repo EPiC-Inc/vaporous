@@ -14,8 +14,13 @@
     --light-background-color: rgb(72, 72, 72);
     --nav-color: #008b9d;
     --text-color: darkgrey;
+    box-sizing: border-box;
     color: var(--text-color);
     font-family: "Aldrich";
+}
+
+*, *::before, *::after {
+    box-sizing: inherit;
 }
 
 body {
@@ -24,12 +29,29 @@ body {
     height: 100vh;
 }
 
+#login {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    height: 100vh;
+    justify-content: center;
+}
+#fields {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    font-size: 1.4rem;
+    gap: 2rem;
+    justify-items: center;
+}
+
 input {
     font-family: "Aldrich";
+    font-size: 1.6rem;
+    max-width: 100%;
 }
 input[type="submit"] {
     cursor: pointer;
-    font-size: inherit;
     padding: 0.3rem 0.3rem 0.1rem 0.3rem;
 }
 form label {
@@ -140,7 +162,6 @@ header {
     background-size: 200% 200%;
     border: 2px solid var(--text-color);
     border-radius: 5px;
-    box-sizing: border-box;
     cursor: pointer;
     padding: 0.3rem 0.3rem 0.2rem 0.3rem;
     transition: background-position 200ms ease-out;
@@ -177,7 +198,6 @@ span:hover a::after, tr:hover a::after, a:hover::after {
 
 #drop_zone {
     border: 10px solid #0000;
-    box-sizing: border-box;
     min-height: 100%;
 }
 #drop_zone.dragging {
@@ -203,7 +223,6 @@ span:hover a::after, tr:hover a::after, a:hover::after {
     animation: fadeIn 400ms;
 }
 .file_select a {
-    box-sizing: border-box;
     height: 100%;
     line-height: 190%;
     vertical-align: middle;
@@ -211,7 +230,6 @@ span:hover a::after, tr:hover a::after, a:hover::after {
 }
 
 .location_select {
-    box-sizing: border-box;
     display: inline-block;
     padding: 0.3rem;
 }
@@ -255,7 +273,6 @@ span:hover a::after, tr:hover a::after, a:hover::after {
     animation: prixClipFix 2s linear infinite;
     border-radius: 50%;
     border: 5px solid var(--text-color);
-    box-sizing: border-box;
     content: "";
     inset: 0px;
     position: absolute;
@@ -281,7 +298,6 @@ span:hover a::after, tr:hover a::after, a:hover::after {
 
 
 #file_container {
-    box-sizing: border-box;
     margin: 0 auto;
     padding: 1% 0 10% 0;
     width: 60%
@@ -394,6 +410,9 @@ td:first-child {
     }
     #file_container {
         width: 100%;
+    }
+    #fields {
+        grid-template-columns: 1fr;
     }
 }
 @media only screen and (min-width: 2000px) {

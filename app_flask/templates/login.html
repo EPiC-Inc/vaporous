@@ -1,24 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}log in{% endblock %}
 
-{% block head %}
-<style>
-    #login {
-        align-items: center;
-        display: flex;
-        flex-direction: column;
-        font-size: 1.4rem;
-        gap: 2rem;
-        height: 100vh;
-        justify-content: center;
-    }
-    #login input {
-        font-size: 1.6rem;
-        font-family: "Aldrich";
-    }
-</style>
-{% endblock %}
-
 {% block body %}
 <section>
     <form id="login" action="{{ url_for('login_page') }}" method="post">
@@ -29,11 +11,9 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
-        <div>
+        <div id="fields">
             <label for="user">username&nbsp;&nbsp;</label>
             <input id="user" class="bg_glow_gradient" name="username" type="text" maxlength="40" autofocus>
-        </div>
-        <div>
             <label for="pass">password&nbsp;&nbsp;</label>
             <input id="pass" class="bg_glow_gradient" name="password" type="password" maxlength="100">
         </div>
