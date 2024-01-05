@@ -347,6 +347,7 @@ span:hover a::after, tr:hover a::after, a:hover::after {
     flex-grow: 6; */
     position: relative;
     width: auto;
+    word-break: break-all;
 }
 .file_size {
     min-width: max-content;
@@ -410,9 +411,11 @@ td:first-child {
         grid-template-columns: 1fr;
     }
     #file_container {
-        background-color: aqua;
         margin: 0;
-        width: 90%;
+        width: 100%;
+    }
+    .file_select * * {
+        padding: 0.1rem;
     }
     td:nth-of-type(4), th:nth-of-type(4) {
         display: none;
