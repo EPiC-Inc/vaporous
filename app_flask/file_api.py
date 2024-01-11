@@ -38,6 +38,26 @@ PROTECTED_PATHS = [
 ]
 
 
+def verify_private_validity(path_to_check: str | Path, user_home = "") -> bool:
+    path_to_check = dot_re.sub(".", str(path_to_check))
+    if user_home and (
+        not ((posix_dir := Path(path_to_check).as_posix()) + "/").startswith(
+            (Path(CONFIG.upload_directory).absolute() / user_home).as_posix() + "/"
+        )
+    ):
+        for private_path in PRIVATE_PATHS:
+            if posix_dir.startswith(private_path.as_posix() + "/"):
+                return False
+    return True
+
+
+def verify_protected_validity(path_to_check: Path) -> bool:
+    for protected_path in PROTECTED_PATHS:
+        if path_to_check.match(protected_path):
+            return False
+    return True
+
+
 def secure_filename(filename: str) -> str:
     filename = dot_re.sub(".", filename)
     if filename.startswith(".") and filename.endswith("."):
@@ -125,9 +145,8 @@ def delete_file(file_path: str | Path) -> bool:
     full_path = Path(CONFIG.upload_directory).absolute() / file_path
     if not full_path.exists():
         return False
-    for protected_path in PROTECTED_PATHS:
-        if full_path.match(protected_path):
-            return False
+    if not verify_protected_validity(full_path):
+        return False
     if full_path.is_file():
         full_path.unlink()
         return True
@@ -147,9 +166,8 @@ def rename(file_path: str | Path, new_name: str):
     #TODO - when shares are implemented, update all shares pointing to that path
     file_path = dot_re.sub(r".", str(file_path))
     full_path = Path(CONFIG.upload_directory).absolute() / file_path
-    for protected_path in PROTECTED_PATHS:
-        if full_path.match(protected_path):
-            return False
+    if not verify_protected_validity(full_path):
+        return False
     new_name = secure_filename(new_name)
     target = full_path.with_name(new_name)
     if target.exists():

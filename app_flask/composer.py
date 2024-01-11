@@ -134,7 +134,7 @@ def generate_new_share():
     anonymous_access = data.get("anonymous_access", False)
     if check_exists((to_share := f"{user.base_dir}/{to_share}")):
         print("Yes") #TEMP
-    if share_id := add_share(str(to_share), user.username, anonymous_access):
+    if share_id := add_share(str(to_share), user.username, anonymous_access, user.home_dir):
         return [True, share_id]
     return [False, "Cannot create share"]
 

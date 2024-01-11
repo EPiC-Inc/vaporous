@@ -84,6 +84,7 @@ def retrieve_file(filename=None):
 @app.route("/s/<id>")
 @app.route("/s/<id>/<path:filename>")
 def show_share(id: str, filename=None):
+    print("SHARE")#TEMP
     if not id:
         abort(404)
     share = share_table.query(

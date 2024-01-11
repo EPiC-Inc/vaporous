@@ -6,7 +6,7 @@ from re import compile
 from uuid import uuid4
 
 from . import share_table, user_table
-from .file_api import new_folder
+from .file_api import new_folder, verify_private_validity
 from .objects import Share, User
 
 
@@ -124,7 +124,9 @@ def get_session(session_id: str) -> Session | None:
     return session
 
 
-def add_share(share_path: str, username: str, anonymous_access: bool = False) -> str | None:
+def add_share(share_path: str, username: str, anonymous_access: bool = False, user_home = "") -> str | None:
+    if not verify_private_validity(share_path, user_home):
+        return None
     share_id = uuid4().hex
     new_share = Share(
         id=share_id,
