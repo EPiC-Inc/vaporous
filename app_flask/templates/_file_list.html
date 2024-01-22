@@ -26,9 +26,9 @@
         {% endif %}
         {% for file_name, file_metadata in files.items() %}
         {% if anchor_navigation %}
-            {% set onclick_func = "window.location.hash = '" + tojson(file_metadata.path) + "';" %}
+            {% set onclick_func = "window.location.hash = '" + file_metadata.path + "';" %}
         {% else %}
-            {% set onclick_func = "composeFileList('" + tojson(file_metadata.path) + "');" %}
+            {% set onclick_func = "composeFileList('" + file_metadata.path + "');" %}
         {% endif %}
         <tr class="file_select">
             <td class="file_icon">
