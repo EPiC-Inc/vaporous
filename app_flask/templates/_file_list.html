@@ -50,9 +50,9 @@
             <td class="file_properties">
                 <button>···
                     <div class="file_menu">
-                        <div onclick="showShareFileOverlay(this, '{{ file_metadata.path | tojson }}');">Sharing</div>
-                        <div onclick="showRenameFileOverlay(this, '{{ file_metadata.path | tojson }}');">Rename</div>
-                        <div style="color: crimson;" onclick="showDeleteFileOverlay(this, '{{ file_metadata.path | tojson }}', '{{ file_metadata.type }}');">Delete</div>
+                        <div onclick='showShareFileOverlay(this, {{ file_metadata.path | tojson }});'>Sharing</div>
+                        <div onclick='showRenameFileOverlay(this, {{ file_metadata.path | tojson }});'>Rename</div>
+                        <div style="color: crimson;" onclick='showDeleteFileOverlay(this, {{ file_metadata.path | tojson }}, "{{ file_metadata.type }}");'>Delete</div>
                     </div>
                 </button>
             </td>
