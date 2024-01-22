@@ -39,7 +39,7 @@
                 {% if file_metadata.type == 'dir' %}
                 <a class="link" onclick="{{ onclick_func }}">
                 {% else %}
-                <a class="link" href='{{ url_for("retrieve_file") }}/{{ file_metadata.path | tojson }}' target="_blank">
+                <a class="link" href='{{ url_for("retrieve_file") }}/{{ file_metadata.path | forceescape }}' target="_blank">
                 {% endif %}
                     <span>{{ file_name }}</span>
                 </a>
