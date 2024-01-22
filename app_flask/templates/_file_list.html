@@ -26,9 +26,9 @@
         {% endif %}
         {% for file_name, file_metadata in files.items() %}
         {% if anchor_navigation %}
-            {% set onclick_func = "window.location.hash = '" + file_metadata.path + "';" %}
+            {% set onclick_func = "window.location.hash = '" + tojson(file_metadata.path) + "';" %}
         {% else %}
-            {% set onclick_func = "composeFileList('" + file_metadata.path + "');" %}
+            {% set onclick_func = "composeFileList('" + tojson(file_metadata.path) + "');" %}
         {% endif %}
         <tr class="file_select">
             <td class="file_icon">
@@ -39,7 +39,7 @@
                 {% if file_metadata.type == 'dir' %}
                 <a class="link" onclick="{{ onclick_func }}">
                 {% else %}
-                <a class="link" href="{{ url_for('retrieve_file') }}/{{ file_metadata.path }}" target="_blank">
+                <a class="link" href='{{ url_for("retrieve_file") }}/{{ file_metadata.path | tojson }}' target="_blank">
                 {% endif %}
                     <span>{{ file_name }}</span>
                 </a>
@@ -50,9 +50,9 @@
             <td class="file_properties">
                 <button>···
                     <div class="file_menu">
-                        <div onclick="showShareFileOverlay(this, '{{ file_metadata.path }}');">Sharing</div>
-                        <div onclick="showRenameFileOverlay(this, '{{ file_metadata.path }}');">Rename</div>
-                        <div style="color: crimson;" onclick="showDeleteFileOverlay(this, '{{ file_metadata.path }}', '{{ file_metadata.type }}');">Delete</div>
+                        <div onclick="showShareFileOverlay(this, '{{ file_metadata.path | tojson }}');">Sharing</div>
+                        <div onclick="showRenameFileOverlay(this, '{{ file_metadata.path | tojson }}');">Rename</div>
+                        <div style="color: crimson;" onclick="showDeleteFileOverlay(this, '{{ file_metadata.path | tojson }}', '{{ file_metadata.type }}');">Delete</div>
                     </div>
                 </button>
             </td>
