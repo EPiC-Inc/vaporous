@@ -12,7 +12,7 @@ app = web.Application([
             "path": r"static"
         })
     ],
-    template_path = r'app/templates',
+    template_path = r'app_tornado/templates',
     default_handler_class = handlers.ErrorHandler,
     debug = True
 )
