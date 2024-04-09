@@ -2,9 +2,6 @@
 Vaporous Terms of Service
 =========================
 
-By default, this program does log information, specifically ip addresses and uploaded or accessed file names.
-
-
 Production Environment
 ======================
 In the environment accessed at `vaporous.net<https://vaporous.net>`_, identifying details are obfuscated or not logged.
