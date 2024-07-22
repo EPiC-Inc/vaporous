@@ -26,7 +26,7 @@ class PublicKey(Base):
 class User(Base):
     __tablename__ = "Users"
 
-    username: Mapped[str] = mapped_column(String(32))
+    username: Mapped[str] = mapped_column(String(32), unique=True)
     password: Mapped[bytes | None] = mapped_column(BLOB(64), nullable=True, default=None)
     # public_keys: Mapped[list[PublicKey]] = relationship(back_populates="owner", default_factory=list)
     id: Mapped[bytes] = mapped_column(BLOB(16), primary_key=True, default_factory=lambda: uuid1().bytes)

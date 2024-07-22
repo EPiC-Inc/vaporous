@@ -1,7 +1,6 @@
 from pathlib import Path
-from sys import exit as sys_exit
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from objects import Base
