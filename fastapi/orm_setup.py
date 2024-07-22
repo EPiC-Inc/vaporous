@@ -6,17 +6,16 @@ from sqlalchemy.orm import Session
 
 from objects import Base, User, PublicKey
 
-DATABASE_PATH = r"database.db"
+DATABASE_PATH = r"fastapi/database.db"
 URL = r"sqlite+pysqlite:///" + DATABASE_PATH
 
 if (db_path := Path(DATABASE_PATH)).exists():
     if (
-        not input("Database already exits!!! Clear database? > ")
+        input("Database already exits!!! Clear database? > ")
         .casefold()
         .startswith("y")
     ):
-        sys_exit()
-    db_path.unlink()
+        db_path.unlink()
 
 engine = create_engine(URL, echo=True)
 Base.metadata.create_all(engine)

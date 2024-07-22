@@ -1,6 +1,7 @@
+from datetime import datetime
 from uuid import uuid1
 
-from sqlalchemy import BLOB, String, ForeignKey
+from sqlalchemy import BLOB, Boolean, DateTime, String, ForeignKey
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
@@ -28,4 +29,15 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(32))
     password: Mapped[bytes] = mapped_column(BLOB(64))
     public_keys: Mapped[list[PublicKey]] = relationship(back_populates="owner", default_factory=list)
+    id: Mapped[bytes] = mapped_column(BLOB(16), primary_key=True, default_factory=lambda: uuid1().bytes)
+
+
+class Share(Base):
+    __tablename__ = "Shares"
+
+    owner: Mapped[bytes] = mapped_column(ForeignKey("Users.id"))
+    expires: Mapped[datetime] = mapped_column(DateTime())
+    path: Mapped[str] = mapped_column(String(1024))
+    anonymous_access: Mapped[bool] = mapped_column(Boolean())
+    user_whitelist: Mapped[list[User.id]] = relationship(back_populates="id", default_factory=list)
     id: Mapped[bytes] = mapped_column(BLOB(16), primary_key=True, default_factory=lambda: uuid1().bytes)
