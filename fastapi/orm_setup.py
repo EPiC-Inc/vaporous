@@ -4,7 +4,7 @@ from sys import exit as sys_exit
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
 
-from objects import Base, User, PublicKey
+from objects import Base
 
 DATABASE_PATH = r"fastapi/database.db"
 URL = r"sqlite+pysqlite:///" + DATABASE_PATH

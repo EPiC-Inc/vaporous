@@ -27,8 +27,8 @@ class User(Base):
     __tablename__ = "Users"
 
     username: Mapped[str] = mapped_column(String(32))
-    password: Mapped[bytes] = mapped_column(BLOB(64))
-    public_keys: Mapped[list[PublicKey]] = relationship(back_populates="owner", default_factory=list)
+    password: Mapped[bytes | None] = mapped_column(BLOB(64), nullable=True, default=None)
+    # public_keys: Mapped[list[PublicKey]] = relationship(back_populates="owner", default_factory=list)
     id: Mapped[bytes] = mapped_column(BLOB(16), primary_key=True, default_factory=lambda: uuid1().bytes)
 
 
@@ -39,5 +39,5 @@ class Share(Base):
     expires: Mapped[datetime] = mapped_column(DateTime())
     path: Mapped[str] = mapped_column(String(1024))
     anonymous_access: Mapped[bool] = mapped_column(Boolean())
-    user_whitelist: Mapped[list[User.id]] = relationship(back_populates="id", default_factory=list)
+    # user_whitelist: Mapped[list[User.id]] = relationship(back_populates="id", default_factory=list)
     id: Mapped[bytes] = mapped_column(BLOB(16), primary_key=True, default_factory=lambda: uuid1().bytes)
