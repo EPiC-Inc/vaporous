@@ -10,12 +10,13 @@
             {% endfor %}
         {% endif %}
         <div id="fields">
-            <label for="user">username&nbsp;&nbsp;</label>
+            <label for="user">username</label>
             <input id="user" class="bg_glow_gradient" name="username" type="text" maxlength="40" autofocus>
-            <label for="pass">password&nbsp;&nbsp;</label>
+            <label for="pass">password</label>
             <input id="pass" class="bg_glow_gradient" name="password" type="password" maxlength="100">
         </div>
         <input type="submit" value="log in" style="cursor: pointer;">
+        <input id="passkey" type="button" value="🗝 use passkey" style="cursor: pointer;">
     </form>
 </section>
 {% endblock %}

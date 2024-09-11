@@ -43,6 +43,15 @@ body {
     gap: 2rem;
     justify-items: center;
 }
+#passkey {
+    background-color: rgb(221, 221, 221);
+    border-radius: 0.3rem;
+    line-height: 100%;
+    padding: 0.2rem 0.4rem 0.4rem 0.4rem;
+}
+#passkey:hover {
+    background-color: rgb(165, 180, 196);
+}
 
 input {
     font-family: "Aldrich";

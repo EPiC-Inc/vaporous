@@ -50,6 +50,16 @@ async def login(request: Request):
     # response.setcookie(key="session", value="test", secure=True)
     # return RedirectResponse(url=request.url_for("root"))
 
+@app.post("/login/passkey")
+async def login_passkey(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="login.html",
+        context={"messages": [("error", "Not implemented yet :V")]},
+    )
+    # response.setcookie(key="session", value="test", secure=True)
+    # return RedirectResponse(url=request.url_for("root"))
+
 
 app.mount("/api/v0", api_v0)
 

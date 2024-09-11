@@ -20,7 +20,6 @@ class PublicKey(Base):
 
     owner: Mapped[bytes] = mapped_column(ForeignKey("Users.id"))
     key: Mapped[bytes] = mapped_column(BLOB(), primary_key=True)
-    reset_token: Mapped[str] = mapped_column(String(36))
     name: Mapped[str] = mapped_column(String(32))
 
 
@@ -41,5 +40,6 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(32), unique=True)
     password: Mapped[bytes | None] = mapped_column(BLOB(64), nullable=True, default=None)
     public_keys: Mapped[list[PublicKey]] = relationship("PublicKey", default_factory=list)
+    reset_token: Mapped[str] = mapped_column(String(36), nullable=True, default=None)
     shares: Mapped[list[Share]] = relationship("Share", default_factory=list)
     id: Mapped[bytes] = mapped_column(BLOB(16), primary_key=True, default_factory=lambda: uuid1().bytes)
