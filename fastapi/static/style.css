@@ -36,6 +36,10 @@ body {
     height: 100vh;
     justify-content: center;
 }
+#login input {
+    line-height: 100%;
+    padding: 0.2rem;
+}
 #fields {
     display: grid;
     grid-template-columns: 1fr 2fr;
@@ -46,7 +50,6 @@ body {
 #passkey {
     background-color: rgb(221, 221, 221);
     border-radius: 0.3rem;
-    line-height: 100%;
     padding: 0.2rem 0.4rem 0.4rem 0.4rem;
 }
 #passkey:hover {
