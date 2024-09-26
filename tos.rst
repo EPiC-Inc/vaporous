@@ -4,7 +4,7 @@ Vaporous Terms of Service
 
 Production Environment
 ======================
-In the environment accessed at `vaporous.net<https://vaporous.net>`_, identifying details such as IP are obfuscated or not logged.
+In the environment accessed at `vaporous.net <https://vaporous.net>`_, identifying details such as IP are obfuscated or not logged.
 This environment makes no guarantee of availability and may go offline without notice for any length of time.
 All files uploaded, however, will still be retained unless extraneous circumstances occur such as flooding.
 Best efforts are made to ensure data availability.
