@@ -5,7 +5,7 @@ from tomllib import load as toml_load
 from types import SimpleNamespace
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import create_engine
@@ -20,6 +20,7 @@ with open(Path(__file__).parent / "config.toml", "rb") as config_file:
 
 app = FastAPI(openapi_url=None)
 app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/.well-known", StaticFiles(directory=".well-known"), name=".well-known")
 templates = Jinja2Templates("templates")
 
 # ANCHOR - SQLAlchemy engine
@@ -59,6 +60,19 @@ async def login_passkey(request: Request):
     )
     # response.setcookie(key="session", value="test", secure=True)
     # return RedirectResponse(url=request.url_for("root"))
+
+
+@app.get("/robots.txt")
+async def robots_txt():
+    return FileResponse(Path(__file__).parent / "static/robots.txt")
+
+@app.get("/privacy-policy", response_class=HTMLResponse)
+async def privacy_policy(request: Request):
+    return templates.TemplateResponse(request=request, name="privacy-policy.html")
+
+@app.get("/vulnerability-disclosure-policy", response_class=HTMLResponse)
+async def security_policy(request: Request):
+    return templates.TemplateResponse(request=request, name="security-policy.html")
 
 
 app.mount("/api/v0", api_v0)

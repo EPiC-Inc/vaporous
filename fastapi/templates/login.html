@@ -1,22 +1,30 @@
 {% extends 'base.html' %}
 {% block title %}log in{% endblock %}
 
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', path='login_style.css') }}">
+{% endblock %}
+
 {% block body %}
 <section>
-    <form id="login" action="{{ url_for('login') }}" method="post">
+    <div id="login">
         {% if messages %}
             {% for category, message in messages %}
                 <div class="{{ category }}">{{ message }}</div>
             {% endfor %}
         {% endif %}
-        <div id="fields">
-            <label for="user">username</label>
-            <input id="user" class="bg_glow_gradient" name="username" type="text" maxlength="40" autofocus>
-            <label for="pass">password</label>
-            <input id="pass" class="bg_glow_gradient" name="password" type="password" maxlength="100">
-        </div>
-        <input type="submit" value="log in" style="cursor: pointer;">
-        <input id="passkey" type="button" value="🗝 use passkey" style="cursor: pointer;">
-    </form>
+        <form action="{{ url_for('login') }}" method="post">
+            <div id="fields">
+                <label for="user">username</label>
+                <input id="user" class="bg_glow_gradient" name="username" type="text" maxlength="40" autofocus autocomplete="username">
+                <label for="pass">password</label>
+                <input id="pass" class="bg_glow_gradient" name="password" type="password" maxlength="100" autocomplete="current-password">
+            </div>
+            <input type="submit" value="log in">
+        </form>
+        <form action="{{ url_for('login_passkey') }} " method="post">
+            <input id="passkey" type="submit" value="🗝 use passkey">
+        </form>
+    </div>
 </section>
 {% endblock %}
