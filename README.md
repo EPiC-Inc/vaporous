@@ -1,5 +1,9 @@
 # vaporous
 
+This is a file server written in Python, created since Google Drive does not provide the necessary space for videos for my friends.
+
+[Check out their channel on YouTube](https://www.youtube.com/@ricebomb)
+
 ## setup
 Once everything is downloaded, you'll need to add an initial user with `add_user.py`.
 
