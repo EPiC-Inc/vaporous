@@ -1,6 +1,7 @@
 # vaporous
 
 This is a file server written in Python, created since Google Drive does not provide the necessary space for videos for my friends.
+(Also, I wanted to challenge myself and not use an off-the-shelf file server)
 
 [Check out their channel on YouTube](https://www.youtube.com/@ricebomb) (profanity abound)
 
