@@ -13,10 +13,10 @@ from database import engine
 from config import CONFIG
 
 app = FastAPI(openapi_url=None)
-templates = Jinja2Templates("templates")
+templates = Jinja2Templates(Path(__file__).parent / "templates")
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
-app.mount("/.well-known", StaticFiles(directory=".well-known"), name=".well-known")
+app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
+app.mount("/.well-known", StaticFiles(directory=Path(__file__).parent / ".well-known"), name=".well-known")
 
 
 @app.get("/")
@@ -41,6 +41,7 @@ async def login(request: Request):
     # response.setcookie(key="session", value="test", secure=True)
     # return RedirectResponse(url=request.url_for("root"))
 
+
 @app.post("/login/passkey")
 async def login_passkey(request: Request):
     return templates.TemplateResponse(
@@ -51,22 +52,26 @@ async def login_passkey(request: Request):
     # response.setcookie(key="session", value="test", secure=True)
     # return RedirectResponse(url=request.url_for("root"))
 
-# @app.get("/login/passkey/challenge")
-# async def passkey_challenge():
-#     return Response(content=auth.passkey_challenge())
+
+@app.get("/login/passkey/challenge")
+async def passkey_challenge():
+    return Response(content=auth.passkey_challenge())
 
 
 @app.get("/robots.txt")
 async def robots_txt():
     return FileResponse(Path(__file__).parent / "static/robots.txt")
 
+
 @app.get("/favicon.ico")
 async def favicon():
     return
 
+
 @app.get("/privacy-policy", response_class=HTMLResponse)
 async def privacy_policy(request: Request):
     return templates.TemplateResponse(request=request, name="privacy-policy.html")
+
 
 @app.get("/vulnerability-disclosure-policy", response_class=HTMLResponse)
 async def security_policy(request: Request):

@@ -1,16 +1,18 @@
 """Initializes the database with the proper columns."""
-from sys import path
+
 from pathlib import Path
 from sqlite3 import connect
+from sys import path
+from typing import Optional
 
 path.append("app_flask")
 
-from objects import User, Share  # type: ignore
+from objects import Share, User  # type: ignore
 
 DB_LOCATION: str = str(Path("database.db"))
 
 
-def gen_command(object_: object, object_name: str, alterations: dict | None = None):
+def gen_command(object_: object, object_name: str, alterations: Optional[dict] = None):
     cols = {}
     try:
         attributes = object_.__slots__  # type: ignore
