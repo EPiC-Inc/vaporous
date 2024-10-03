@@ -8,23 +8,25 @@ from typing import Optional
 from database import engine
 from objects import User
 
-invalid_username_characters = regex_compile(r'<|>|:|"|\?|\/|\\|\||\*')
+INVALID_USERNAME_CHARACTERS = regex_compile(r'<|>|:|"|\?|\/|\\|\||\*')
+USERNAME_LENGTH: int = 24
 
-cost_parameter: int = 2**3
-block_size: int = 8
-parallelization: int = 4
-
+COST_PARAMETER: int = 2**3
+BLOCK_SIZE: int = 8
+PARALLELIZATION: int = 4
 
 def passkey_challenge() -> bytes:
     return token_bytes(14)
 
 
 def validate_username(username: str) -> bool:
-    return not bool(invalid_username_characters.search(username))
+    if len(username) > USERNAME_LENGTH:
+        return False
+    return not bool(INVALID_USERNAME_CHARACTERS.search(username))
 
 
 def add_user(username: str, /, password: Optional[str] = None, passkey_token=None) -> tuple[bool, str | set[str]]:
-    username = username[:24]
+    username = username[:USERNAME_LENGTH]
 
     if not passkey_token and not password:
         return (False, "No way for the user to log in!")
@@ -37,9 +39,9 @@ def add_user(username: str, /, password: Optional[str] = None, passkey_token=Non
         password_hash = scrypt(
             password.encode(),
             salt=username.encode(),
-            n=cost_parameter,
-            r=block_size,
-            p=parallelization,
+            n=COST_PARAMETER,
+            r=BLOCK_SIZE,
+            p=PARALLELIZATION,
             dklen=64,
         )
         print(password_hash)
