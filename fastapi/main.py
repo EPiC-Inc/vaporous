@@ -1,34 +1,22 @@
 """The main server monolith."""
 
 from pathlib import Path
-from tomllib import load as toml_load
-from types import SimpleNamespace
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
 import auth
 from api import api_v0
-from objects import Base
-
-
-with open(Path(__file__).parent / "config.toml", "rb") as config_file:
-    CONFIG = SimpleNamespace(**toml_load(config_file))
+from database import engine
+from config import CONFIG
 
 app = FastAPI(openapi_url=None)
 templates = Jinja2Templates("templates")
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/.well-known", StaticFiles(directory=".well-known"), name=".well-known")
-
-# ANCHOR - SQLAlchemy engine
-engine = create_engine(CONFIG.database_uri, connect_args={"check_same_thread": False})
-SessionMaker = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base.metadata.create_all(bind=engine)
 
 
 @app.get("/")
