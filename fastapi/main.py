@@ -5,12 +5,13 @@ from tomllib import load as toml_load
 from types import SimpleNamespace
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+import auth
 from api import api_v0
 from objects import Base
 
@@ -19,9 +20,10 @@ with open(Path(__file__).parent / "config.toml", "rb") as config_file:
     CONFIG = SimpleNamespace(**toml_load(config_file))
 
 app = FastAPI(openapi_url=None)
+templates = Jinja2Templates("templates")
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/.well-known", StaticFiles(directory=".well-known"), name=".well-known")
-templates = Jinja2Templates("templates")
 
 # ANCHOR - SQLAlchemy engine
 engine = create_engine(CONFIG.database_uri, connect_args={"check_same_thread": False})
@@ -61,10 +63,18 @@ async def login_passkey(request: Request):
     # response.setcookie(key="session", value="test", secure=True)
     # return RedirectResponse(url=request.url_for("root"))
 
+# @app.get("/login/passkey/challenge")
+# async def passkey_challenge():
+#     return Response(content=auth.passkey_challenge())
+
 
 @app.get("/robots.txt")
 async def robots_txt():
     return FileResponse(Path(__file__).parent / "static/robots.txt")
+
+@app.get("/favicon.ico")
+async def favicon():
+    return
 
 @app.get("/privacy-policy", response_class=HTMLResponse)
 async def privacy_policy(request: Request):
