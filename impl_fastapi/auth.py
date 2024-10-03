@@ -25,7 +25,7 @@ def validate_username(username: str) -> bool:
     return not bool(INVALID_USERNAME_CHARACTERS.search(username))
 
 
-def add_user(username: str, /, password: Optional[str] = None, passkey_token=None) -> tuple[bool, str | set[str]]:
+def add_user(username: str, *, password: Optional[str] = None, passkey_token=None) -> tuple[bool, str | set[str]]:
     username = username[:USERNAME_LENGTH]
 
     if not passkey_token and not password:
