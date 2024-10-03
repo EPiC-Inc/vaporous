@@ -37,7 +37,7 @@ class Share(Base):
 class User(Base):
     __tablename__ = "Users"
 
-    username: Mapped[str] = mapped_column(String(32), unique=True)
+    username: Mapped[str] = mapped_column(String(24), unique=True)
     password: Mapped[bytes | None] = mapped_column(BLOB(64), nullable=True, default=None)
     public_keys: Mapped[list[PublicKey]] = relationship("PublicKey", default_factory=list)
     reset_token: Mapped[str] = mapped_column(String(36), nullable=True, default=None)
