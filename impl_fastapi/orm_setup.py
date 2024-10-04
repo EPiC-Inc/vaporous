@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from objects import Base
 
-DATABASE_PATH = r"fastapi/database.db"
+DATABASE_PATH = r"impl_fastapi/database.db"
 URL = r"sqlite+pysqlite:///" + DATABASE_PATH
 
 if (db_path := Path(DATABASE_PATH)).exists():
