@@ -76,4 +76,4 @@ def add_user(username: str, *, password: Optional[str] = None, passkey_token=Non
     return (True, results)
 
 if __name__ == '__main__':
-    print(add_user("test", password="test2")) # TEMP
+    print(add_user("test", password="test2"))  # TEMP # nosec

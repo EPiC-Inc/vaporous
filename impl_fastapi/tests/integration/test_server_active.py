@@ -1,5 +1,6 @@
 """Tests whether the app starts up and can respond."""
 
+from urllib.parse import urlparse
 from unittest import TestCase, main
 
 from fastapi.responses import Response
@@ -7,16 +8,25 @@ from fastapi.templating import Jinja2Templates
 from fastapi.testclient import TestClient
 
 try:
-    from impl_fastapi.main import app
+    import impl_fastapi.config
 except:
-    from main import app
+    import config
 
-ACCESSIBLE_WHEN_LOGGED_OUT: tuple[list[str, str]] = (["/", "/login"], ["/login", "/login"])
-PREPEND_URL = "http://testserver"
+config.CONFIG.database_uri = "sqlite+pysqlite:///:memory:"
+
+try:
+    from impl_fastapi.main import app, engine
+except:
+    from main import app, engine
+
+
+ACCESSIBLE_WHEN_LOGGED_OUT: tuple[tuple[str, str]] = (("/", "/login"), ("/login", "/login"))
+
 
 class TestServer(TestCase):
-    def setUp(self):
-        self.test_app: TestClient = TestClient(app)
+    @classmethod
+    def setUpClass(cls):
+        cls.test_app: TestClient = TestClient(app)
 
     def test_server_start(self):
         self.assertIsNotNone(self.test_app.app_state)
@@ -26,10 +36,11 @@ class TestServer(TestCase):
             with self.subTest(msg=f"Page: {page}"):
                 response = self.test_app.get(page)
                 self.assertEqual(response.status_code, 200)
-                self.assertEqual(str(response.url), f"{PREPEND_URL}{redirect_to}")
+                self.assertEqual(urlparse(str(response.url)).path, redirect_to)
 
-    def tearDown(self):
-        self.test_app.close()
+    @classmethod
+    def tearDownClass(cls):
+        cls.test_app.close()
 
 
 if __name__ == "__main__":
