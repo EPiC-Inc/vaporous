@@ -20,7 +20,7 @@ except:
     from main import app, engine
 
 
-ACCESSIBLE_WHEN_LOGGED_OUT: tuple[tuple[str, str]] = (("/", "/login"), ("/login", "/login"))
+ACCESSIBLE_WHEN_LOGGED_OUT: tuple[tuple[str, str], ...] = (("/", "/login"), ("/login", "/login"))
 
 
 class TestServer(TestCase):

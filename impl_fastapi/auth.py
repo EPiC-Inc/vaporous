@@ -16,6 +16,7 @@ BLOCK_SIZE: int = 8
 PARALLELIZATION: int = 4
 HASH_LENGTH: int = 32
 
+
 def passkey_challenge() -> bytes:
     return token_bytes(14)
 
@@ -33,7 +34,7 @@ def checkpw(password: str, stored_hash: str) -> bool:
         stored_block_size,
         stored_parallelization,
         stored_hash,
-    ) = stored_hash.split('$', 4)
+    ) = stored_hash.split("$", 4)
 
     computed_hash = scrypt(
         password.encode(),
@@ -41,7 +42,7 @@ def checkpw(password: str, stored_hash: str) -> bool:
         n=int(stored_cost_parameter),
         r=int(stored_block_size),
         p=int(stored_parallelization),
-        dklen=len(stored_hash) // 2
+        dklen=len(stored_hash) // 2,
     )
     return stored_hash == computed_hash.hex()
 
@@ -67,13 +68,14 @@ def add_user(username: str, *, password: Optional[str] = None, passkey_token=Non
             dklen=HASH_LENGTH,
         )
         stored_hash = f"{salt.hex()}${COST_PARAMETER}${BLOCK_SIZE}${PARALLELIZATION}${password_hash.hex()}"
-        print(stored_hash) #TEMP
-        print(checkpw(password, stored_hash)) #TEMP
+        print(stored_hash)  # TEMP
+        print(checkpw(password, stored_hash))  # TEMP
         results.add("password")
     if passkey_token:
         results.add("passkey")
     # TODO - create User object and add it to database
     return (True, results)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     print(add_user("test", password="test2"))  # TEMP # nosec
