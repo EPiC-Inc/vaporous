@@ -5,8 +5,10 @@ from re import compile as regex_compile
 from secrets import token_bytes
 from typing import Optional
 
-from database import engine
-from objects import User
+from sqlalchemy import select
+
+from database import SessionMaker
+from objects import User, PublicKey
 
 INVALID_USERNAME_CHARACTERS = regex_compile(r'<|>|:|"|\?|\/|\\|\||\*')
 USERNAME_LENGTH: int = 24
@@ -27,35 +29,66 @@ def validate_username(username: str) -> bool:
     return not bool(INVALID_USERNAME_CHARACTERS.search(username))
 
 
-def checkpw(password: str, stored_hash: str) -> bool:
-    (
-        stored_salt,
-        stored_cost_parameter,
-        stored_block_size,
-        stored_parallelization,
-        stored_hash,
-    ) = stored_hash.split("$", 4)
+def checkpw(password: str, stored_hash: str | None = None) -> bool:
+    """Checks a password against an already computed hash.
+    Will check even if stored_hash is None to avoid timing attacks.
+    """
+    if stored_hash:
+        (
+            stored_salt,
+            stored_cost_parameter,
+            stored_block_size,
+            stored_parallelization,
+            stored_hash,
+        ) = stored_hash.split("$", 4)
+    else:
+        stored_salt = None
+        stored_cost_parameter = None
+        stored_block_size = None
+        stored_parallelization = None
 
     computed_hash = scrypt(
         password.encode(),
-        salt=bytes.fromhex(stored_salt),
-        n=int(stored_cost_parameter),
-        r=int(stored_block_size),
-        p=int(stored_parallelization),
-        dklen=len(stored_hash) // 2,
+        salt=bytes.fromhex(stored_salt) if stored_salt else b"",
+        n=int(stored_cost_parameter) if stored_cost_parameter else 2,
+        r=int(stored_block_size) if stored_block_size else 2,
+        p=int(stored_parallelization) if stored_parallelization else 2,
+        dklen=len(stored_hash) // 2 if stored_hash else 2,
     )
     return stored_hash == computed_hash.hex()
 
 
+def login_with_password(username: str, password: str) -> bool:
+    """Used for password authentication."""
+    username = username[:USERNAME_LENGTH]
+    stored_hash: str | None = None
+    with SessionMaker() as session:
+        result = session.execute(select(User).where(User.username == username))
+        for row in result:
+            if len(row) > 1:
+                print("THIS SHOULD NEVER OCCUR IF CONSTRAINTS ARE PROPERLY SET.")
+                return False
+            user: User = row[0]
+            stored_hash = user.password
+    return checkpw(password, stored_hash)
+
+
 def add_user(username: str, *, password: Optional[str] = None, passkey_token=None) -> tuple[bool, str | set[str]]:
     username = username[:USERNAME_LENGTH]
+    # TODO - check if username already exists
+    with SessionMaker() as session:
+        result = session.execute(select(User).where(User.username == username))
+        for _ in result:
+            return (False, "Username already exists!")
 
     if not passkey_token and not password:
         return (False, "No way for the user to log in!")
     if not validate_username(username):
         return (False, "Username is not valid!")
 
-    results: set[str] = set()
+    authentication_methods: set[str] = set()
+    stored_hash = None
+    passkeys: list[PublicKey] = []
     if password:
         password = password[:512]
         salt = token_bytes(16)
@@ -68,14 +101,15 @@ def add_user(username: str, *, password: Optional[str] = None, passkey_token=Non
             dklen=HASH_LENGTH,
         )
         stored_hash = f"{salt.hex()}${COST_PARAMETER}${BLOCK_SIZE}${PARALLELIZATION}${password_hash.hex()}"
-        print(stored_hash)  # TEMP
-        print(checkpw(password, stored_hash))  # TEMP
-        results.add("password")
+        authentication_methods.add("password")
+    new_user = User(username=username, password=stored_hash)
     if passkey_token:
-        results.add("passkey")
-    # TODO - create User object and add it to database
-    return (True, results)
-
-
-if __name__ == "__main__":
-    print(add_user("test", password="test2"))  # TEMP # nosec
+        authentication_methods.add("passkey")
+        passkeys.append(PublicKey(owner=new_user.user_id, key=passkey_token, name="Initial Passkey"))
+    # TODO - if passkey add and associate passkey
+    with SessionMaker() as session:
+        session.add(new_user)
+        for key in passkeys:
+            session.add(key)
+        session.commit()
+    return (True, authentication_methods)
