@@ -124,8 +124,11 @@ def add_user(username: str, *, password: Optional[str] = None, passkey_token=Non
         session.commit()
     return (True, authentication_methods)
 
-def new_session(username: str):
-    # TODO - check previous sessions for same username and invalidate them
+def new_session(username: str, *, invalidate: bool = True):
+    if invalidate:
+        for session_id, session in sessions.items():
+            if session.username == username:
+                del sessions[session_id]
     session_id = uuid1().hex
     sessions[session_id] = Session(username=username, expires=datetime.now() + SESSION_EXPIRY)
     return session_id
@@ -162,6 +165,9 @@ def change_username(old_username: str, new_username: str) -> tuple[bool, str]:
             return (False, "User does not exist!")
         user.username = new_username
         session.commit()
+    for session_id in sessions:
+        if sessions[session_id].username == old_username:
+            sessions[session_id].username = new_username
     return (True, "Username changed")
 
 if __name__ == '__main__':
