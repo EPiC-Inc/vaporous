@@ -1,9 +1,12 @@
 """Handles authentication and updating users in the DB."""
 
+from dataclasses import dataclass
+from datetime import datetime, timedelta
 from hashlib import scrypt
 from re import compile as regex_compile
 from secrets import token_bytes
 from typing import Optional
+from uuid import uuid1
 
 from sqlalchemy import select
 
@@ -17,6 +20,16 @@ COST_PARAMETER: int = 2**12
 BLOCK_SIZE: int = 8
 PARALLELIZATION: int = 4
 HASH_LENGTH: int = 32
+
+SESSION_EXPIRY: timedelta = timedelta(days=3)
+
+@dataclass(slots=True)
+class Session:
+    username: str
+    expires: datetime
+
+
+sessions: dict[str, Session] = {}
 
 
 def passkey_challenge() -> bytes:
@@ -55,27 +68,34 @@ def checkpw(password: str, stored_hash: str | None = None) -> bool:
         p=int(stored_parallelization) if stored_parallelization else 2,
         dklen=len(stored_hash) // 2 if stored_hash else 2,
     )
-    return stored_hash == computed_hash.hex()
+    return str(stored_hash) == computed_hash.hex()
 
+def hashpw(password: str) -> str:
+    password = password[:512]
+    salt = token_bytes(16)
+    password_hash = scrypt(
+        password.encode(),
+        salt=salt,
+        n=COST_PARAMETER,
+        r=BLOCK_SIZE,
+        p=PARALLELIZATION,
+        dklen=HASH_LENGTH,
+    )
+    return f"{salt.hex()}${COST_PARAMETER}${BLOCK_SIZE}${PARALLELIZATION}${password_hash.hex()}"
 
 def login_with_password(username: str, password: str) -> bool:
     """Used for password authentication."""
     username = username[:USERNAME_LENGTH]
     stored_hash: str | None = None
     with SessionMaker() as session:
-        result = session.execute(select(User).where(User.username == username))
-        for row in result:
-            if len(row) > 1:
-                print("THIS SHOULD NEVER OCCUR IF CONSTRAINTS ARE PROPERLY SET.")
-                return False
-            user: User = row[0]
+        user: User | None = session.execute(select(User).filter_by(username=username)).scalar_one_or_none()
+        if user:
             stored_hash = user.password
     return checkpw(password, stored_hash)
 
 
 def add_user(username: str, *, password: Optional[str] = None, passkey_token=None) -> tuple[bool, str | set[str]]:
     username = username[:USERNAME_LENGTH]
-    # TODO - check if username already exists
     with SessionMaker() as session:
         result = session.execute(select(User).where(User.username == username))
         for _ in result:
@@ -90,17 +110,7 @@ def add_user(username: str, *, password: Optional[str] = None, passkey_token=Non
     stored_hash = None
     passkeys: list[PublicKey] = []
     if password:
-        password = password[:512]
-        salt = token_bytes(16)
-        password_hash = scrypt(
-            password.encode(),
-            salt=salt,
-            n=COST_PARAMETER,
-            r=BLOCK_SIZE,
-            p=PARALLELIZATION,
-            dklen=HASH_LENGTH,
-        )
-        stored_hash = f"{salt.hex()}${COST_PARAMETER}${BLOCK_SIZE}${PARALLELIZATION}${password_hash.hex()}"
+        stored_hash = hashpw(password)
         authentication_methods.add("password")
     new_user = User(username=username, password=stored_hash)
     if passkey_token:
@@ -113,3 +123,94 @@ def add_user(username: str, *, password: Optional[str] = None, passkey_token=Non
             session.add(key)
         session.commit()
     return (True, authentication_methods)
+
+def new_session(username: str):
+    # TODO - check previous sessions for same username and invalidate them
+    session_id = uuid1().hex
+    sessions[session_id] = Session(username=username, expires=datetime.now() + SESSION_EXPIRY)
+    return session_id
+
+def check_session(session_id) -> str | None:
+    if (session := sessions.get(session_id)):
+        if datetime.now() > session.expires:
+            del sessions[session_id]
+        else:
+            return session.username
+    return None
+
+def change_password(username: str, *, new_password: str, old_password: Optional[str] = None) -> tuple[bool, str]:
+    with SessionMaker() as session:
+        user: User | None = session.execute(select(User).filter_by(username=username)).scalar_one_or_none()
+        if user is not None:
+            if (old_password is not None) and (not checkpw(old_password, user.password)):
+                return (False, "Existing password is incorrect!")
+        else:
+            return (False, "User does not exist!")
+        user.password = hashpw(new_password)
+        session.commit()
+    return (True, "Password changed")
+    # with SessionMaker() as session:
+    #     session.execute()
+
+def change_username(old_username: str, new_username: str) -> tuple[bool, str]:
+    with SessionMaker() as session:
+        user_already_exists: User | None = session.execute(select(User).filter_by(username=new_username)).scalar_one_or_none()
+        if user_already_exists:
+            return (False, "New username is already in use!")
+        user: User | None = session.execute(select(User).filter_by(username=old_username)).scalar_one_or_none()
+        if not user:
+            return (False, "User does not exist!")
+        user.username = new_username
+        session.commit()
+    return (True, "Username changed")
+
+if __name__ == '__main__':
+    choice = "choice"
+    while choice:
+        print("")
+        print("Authentication Menu")
+        print("1. Add user")
+        print("2. Reset password")
+        print("3. Change username")
+        print("q. Quit")
+        print("")
+        choice = input("> ")
+        match choice:
+            case "1":
+                new_username = input("Please provide the new username: ")
+                new_password = token_bytes(8).hex()
+                success, message = add_user(new_username, password=new_password)
+                if success:
+                    print("User added successfully")
+                    print(f"New password: {new_password}")
+                else:
+                    print("Unable to add a new user!")
+                    print(f"Reason: {message}")
+            case "2":
+                username = str(input("Please provide the username to reset: "))
+                new_password = token_bytes(8).hex()
+                success, message = change_password(username, new_password=new_password)
+                if success:
+                    print(f"Password reset to: {new_password}")
+                else:
+                    print("Unable to reset password!")
+                    print(f"Reason: {message}")
+            case "3":
+                old = input("Old username: ")
+                new = input("New username: ")
+                success, message = change_username(old, new)
+                if success:
+                    print("Username changed")
+                else:
+                    print("Unable to change username!")
+                    print(f"Reason: {message}")
+            case _:
+                break
+
+        print("")
+        print("Authentication Menu")
+        print("1. Add user")
+        print("2. Reset password")
+        print("3. Change username")
+        print("q. Quit")
+        print("")

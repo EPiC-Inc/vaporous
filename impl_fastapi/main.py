@@ -1,8 +1,9 @@
 """The main server monolith."""
 
 from pathlib import Path
+from typing import Annotated
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Form, status, Cookie
 from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -20,9 +21,10 @@ app.mount("/.well-known", StaticFiles(directory=Path(__file__).parent / ".well-k
 
 
 @app.get("/")
-async def root(request: Request):
-    if session_id := request.cookies.get("session_id"):
-        return str(session_id)
+async def root(request: Request, session: Annotated[str | None, Cookie()] = None):
+    if (session_id := session):
+        if (username := auth.check_session(session_id)):
+            return {"username": username, "session": session_id}
     return RedirectResponse(url=request.url_for("login_page"))
 
 
@@ -32,14 +34,17 @@ async def login_page(request: Request):
 
 
 @app.post("/login")
-async def login(request: Request):
-    return templates.TemplateResponse(
-        request=request,
-        name="login.html",
-        context={"messages": [("error", "Not implemented yet :V")]},
-    )
-    # response.setcookie(key="session", value="test", secure=True)
-    # return RedirectResponse(url=request.url_for("root"))
+async def login(request: Request, username: Annotated[str, Form()], password: Annotated[str, Form()]):
+    login_success = auth.login_with_password(username, password)
+    if not login_success:
+        return templates.TemplateResponse(
+            request=request,
+            name="login.html",
+            context={"messages": [("error", "Username or password is incorrect")]},
+        )
+    response = RedirectResponse(url=request.url_for("root"), status_code=status.HTTP_303_SEE_OTHER)
+    response.set_cookie(key="session", value=auth.new_session(username), secure=True)
+    return response
 
 
 @app.post("/login/passkey")
