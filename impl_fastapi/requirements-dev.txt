@@ -3,4 +3,5 @@ fastapi>=0.115.0
 httpx>=0.27.2
 hypercorn[h3]>=0.17.3
 jinja2>=3.1.4
+python-multipart>=0.0.12
 sqlalchemy[asyncio]>=2.0.35

@@ -21,10 +21,12 @@ app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), na
 app.mount("/.well-known", StaticFiles(directory=Path(__file__).parent / ".well-known"), name=".well-known")
 # oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
+
 def get_session(session_id: Annotated[Optional[str], Cookie()] = None) -> auth.Session | None:
     if session_id and (session := auth.check_session(session_id)):
         return session
     return None
+
 
 @app.get("/")
 async def root(request: Request, session: Annotated[Optional[auth.Session], Security(get_session)]):
@@ -45,7 +47,12 @@ async def login(request: Request, form: Annotated[OAuth2PasswordRequestForm, Sec
     success = auth.login_with_password(username, password)
     if success:
         response = RedirectResponse(url=request.url_for("root"), status_code=status.HTTP_303_SEE_OTHER)
-        response.set_cookie(key="session_id", value=auth.new_session(username), secure=True, max_age=int(auth.SESSION_EXPIRY.total_seconds()))
+        response.set_cookie(
+            key="session_id",
+            value=auth.new_session(username),
+            secure=True,
+            max_age=int(auth.SESSION_EXPIRY.total_seconds()),
+        )
         return response
     return templates.TemplateResponse(
         request=request,

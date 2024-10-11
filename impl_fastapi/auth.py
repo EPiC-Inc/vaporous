@@ -26,6 +26,7 @@ HASH_LENGTH: int = 32
 SECRET_KEY = environ.get("VAPOROUS_SECRET_KEY") or token_bytes(32).hex()
 SESSION_EXPIRY: timedelta = timedelta(days=3)
 
+
 @dataclass(slots=True)
 class Session:
     username: str
@@ -75,6 +76,7 @@ def checkpw(password: str, stored_hash: str | None = None) -> bool:
     )
     return str(stored_hash) == computed_hash.hex()
 
+
 def hashpw(password: str) -> str:
     password = password[:512]
     salt = token_bytes(16)
@@ -87,6 +89,7 @@ def hashpw(password: str) -> str:
         dklen=HASH_LENGTH,
     )
     return f"{salt.hex()}${COST_PARAMETER}${BLOCK_SIZE}${PARALLELIZATION}${password_hash.hex()}"
+
 
 def login_with_password(username: str, password: str) -> bool:
     """Used for password authentication."""
@@ -101,7 +104,9 @@ def login_with_password(username: str, password: str) -> bool:
     return False
 
 
-def add_user(username: str, *, password: Optional[str] = None, passkey_token=None, user_level: Optional[int] = None) -> tuple[bool, str | set[str]]:
+def add_user(
+    username: str, *, password: Optional[str] = None, passkey_token=None, user_level: Optional[int] = None
+) -> tuple[bool, str | set[str]]:
     username = username[:USERNAME_LENGTH]
     with SessionMaker() as session:
         result = session.execute(select(User).where(User.username == username))
@@ -133,6 +138,33 @@ def add_user(username: str, *, password: Optional[str] = None, passkey_token=Non
         session.commit()
     return (True, authentication_methods)
 
+
+def remove_user(username: str) -> tuple[bool, str]:
+    with SessionMaker() as session:
+        user: User | None = session.execute(select(User).filter_by(username=username)).scalar_one_or_none()
+        if not user:
+            return (False, "User does not exist to be deleted!")
+        session.delete(user)
+        session.commit()
+    with sessions_lock:
+        sessions_to_delete: list = []
+        for session_id, session in sessions.items():
+            if session.username == username:
+                sessions_to_delete.append(session_id)
+        for session_id in sessions_to_delete:
+            del sessions[session_id]
+    return (True, "User has been deleted")
+
+
+def list_users() -> list[str]:
+    users = []
+    with SessionMaker() as session:
+        result = session.execute(select(User)).scalars()
+        for user in result:
+            users.append(user.username)
+    return users
+
+
 def new_session(username: str, *, invalidate_previous_sessions: bool = True):
     if invalidate_previous_sessions:
         with sessions_lock:
@@ -148,19 +180,21 @@ def new_session(username: str, *, invalidate_previous_sessions: bool = True):
         with sessions_lock:
             sessions[session_id] = Session(
                 username=username,
-                access_level = user.user_level,
+                access_level=user.user_level,
                 expires=datetime.now() + SESSION_EXPIRY,
             )
     return session_id
 
+
 def check_session(session_id) -> Session | None:
     with sessions_lock:
-        if (session := sessions.get(session_id)):
+        if session := sessions.get(session_id):
             if datetime.now() > session.expires:
                 del sessions[session_id]
             else:
                 return session
     return None
+
 
 def change_password(username: str, *, new_password: str, old_password: Optional[str] = None) -> tuple[bool, str]:
     with SessionMaker() as session:
@@ -175,9 +209,12 @@ def change_password(username: str, *, new_password: str, old_password: Optional[
     return (True, "Password changed")
     # TODO - invalidate other sessions?
 
+
 def change_username(old_username: str, new_username: str) -> tuple[bool, str]:
     with SessionMaker() as session:
-        user_already_exists: User | None = session.execute(select(User).filter_by(username=new_username)).scalar_one_or_none()
+        user_already_exists: User | None = session.execute(
+            select(User).filter_by(username=new_username)
+        ).scalar_one_or_none()
         if user_already_exists:
             return (False, "New username is already in use!")
         session.expunge(user_already_exists)
@@ -187,10 +224,11 @@ def change_username(old_username: str, new_username: str) -> tuple[bool, str]:
         user.username = new_username
         session.commit()
     with sessions_lock:
-        for session in session.values():
+        for session in sessions.values():
             if session.username == old_username:
                 session.username = new_username
     return (True, "Username changed")
+
 
 def change_access_level(username: str, access_level: int) -> tuple[bool, str]:
     try:
@@ -207,7 +245,8 @@ def change_access_level(username: str, access_level: int) -> tuple[bool, str]:
                 session.access_level = access_level
     return (True, "User access level has changed")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     choice = "choice"
     while choice:
         print("")
@@ -216,6 +255,8 @@ if __name__ == '__main__':
         print("2. Reset password")
         print("3. Change username")
         print("4. Change user access level")
+        print("5. List users")
+        print("6. Delete user")
         print("q. Quit")
         print("")
         choice = input("> ")
@@ -261,6 +302,18 @@ if __name__ == '__main__':
                     print("Access level changed")
                 else:
                     print("Cannot change access level!")
+                    print(f"Reason: {message}")
+            case "5":
+                print("Users:")
+                for user in list_users():
+                    print(user)
+            case "6":
+                to_delete = input("Username to delete: ")
+                success, message = remove_user(to_delete)
+                if success:
+                    print("User deleted")
+                else:
+                    print("Cannot delete user!")
                     print(f"Reason: {message}")
             case _:
                 break
