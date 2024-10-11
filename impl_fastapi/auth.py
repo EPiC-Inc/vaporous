@@ -13,7 +13,7 @@ from uuid import uuid1
 from sqlalchemy import select
 
 from database import SessionMaker
-from objects import User, PublicKey
+from objects import PublicKey, User
 
 INVALID_USERNAME_CHARACTERS = regex_compile(r'<|>|:|"|\?|\/|\\|\||\*')
 USERNAME_LENGTH: int = 24

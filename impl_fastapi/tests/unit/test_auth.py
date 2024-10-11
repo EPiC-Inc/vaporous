@@ -2,6 +2,12 @@
 
 from unittest import TestCase, main
 
+import config
+
+IN_MEMORY_URI = r"sqlite+pysqlite:///:memory:"
+config.CONFIG["database_uri"] = IN_MEMORY_URI
+
+import database
 import auth
 
 CLEARTEXT: str = "test2"
@@ -45,6 +51,43 @@ class TestUsernameValidity(TestCase):
     def test_invalid_password_hashing(self):
         for hash_ in HASHES_INVALID:
             self.assertFalse(auth.checkpw(CLEARTEXT, hash_))
+
+
+class TestUserOperations(TestCase):
+    def setUp(self) -> None:
+        self.assertEqual(str(database.engine.url), IN_MEMORY_URI)
+        database.Base.metadata.create_all(bind=database.engine)
+
+    def test_bad_add_user(self):
+        success, _ = auth.add_user("test2")
+        self.assertFalse(success)
+        success, _ = auth.remove_user("test_does_not_exist")
+        self.assertFalse(success)
+
+    def test_add_user(self, _username="test"):
+        success, _ = auth.add_user(_username, password=CLEARTEXT)
+        self.assertTrue(success)
+        success, _ = auth.add_user(_username, password=CLEARTEXT)
+        self.assertFalse(success)
+
+    def test_add_remove_user(self):
+        self.test_add_user("rem_test")
+        success, _ = auth.remove_user("rem_test")
+        self.assertTrue(success)
+        success, _ = auth.remove_user("rem_test")
+        self.assertFalse(success)
+
+    def test_password_changing(self):
+        self.test_add_user("pw_test")
+        success, _ = auth.change_password("pw_test", new_password=CLEARTEXT + "1", old_password=CLEARTEXT)
+        self.assertTrue(success)
+        success, _ = auth.change_password("pw_test", new_password=CLEARTEXT + "1")
+        self.assertTrue(success)
+        success, _ = auth.change_password("pw_test", new_password=CLEARTEXT + "2", old_password=CLEARTEXT + "bad")
+        self.assertFalse(success)
+
+    def tearDown(self) -> None:
+        database.Base.metadata.drop_all(bind=database.engine)
 
 
 if __name__ == "__main__":

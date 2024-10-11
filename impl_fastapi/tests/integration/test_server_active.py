@@ -3,21 +3,13 @@
 from urllib.parse import urlparse
 from unittest import TestCase, main
 
-from fastapi.responses import Response
-from fastapi.templating import Jinja2Templates
 from fastapi.testclient import TestClient
 
-try:
-    import impl_fastapi.config
-except:
-    import config
+import config
 
-config.CONFIG.database_uri = "sqlite+pysqlite:///:memory:"
+config.CONFIG["database_uri"] = "sqlite+pysqlite:///:memory:"
 
-try:
-    from impl_fastapi.main import app
-except:
-    from main import app
+from main import app
 
 
 ACCESSIBLE_WHEN_LOGGED_OUT: tuple[tuple[str, str], ...] = (("/", "/login"), ("/login", "/login"))
