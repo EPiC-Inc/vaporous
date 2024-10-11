@@ -15,9 +15,9 @@ except:
 config.CONFIG.database_uri = "sqlite+pysqlite:///:memory:"
 
 try:
-    from impl_fastapi.main import app, engine
+    from impl_fastapi.main import app
 except:
-    from main import app, engine
+    from main import app
 
 
 ACCESSIBLE_WHEN_LOGGED_OUT: tuple[tuple[str, str], ...] = (("/", "/login"), ("/login", "/login"))
