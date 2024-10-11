@@ -193,10 +193,12 @@ def change_username(old_username: str, new_username: str) -> tuple[bool, str]:
     return (True, "Username changed")
 
 def change_access_level(username: str, access_level: int) -> tuple[bool, str]:
+    try:
+        access_level = int(access_level)
+    except ValueError:
+        return (False, "Invalid access level - must be an integer")
     with SessionMaker() as session:
-        user: User | None = session.execute(select(User).filter_by(username=username)).scalar_one_or_none()
-        if not user:
-            return (False, "User does not exist!")
+        user: User | None = session.execute(select(User).filter_by(username=username)).scalar_one()
         user.user_level = access_level
         session.commit()
     with sessions_lock:
