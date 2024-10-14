@@ -107,7 +107,7 @@ def login_with_password(username: str, password: str) -> bool:
 def add_user(
     username: str, *, password: Optional[str] = None, passkey_token=None, user_level: Optional[int] = None
 ) -> tuple[bool, str | set[str]]:
-    username = username[:USERNAME_LENGTH]
+    username = username.strip()[:USERNAME_LENGTH]
     with SessionMaker() as session:
         result = session.execute(select(User).where(User.username == username))
         for _ in result:
@@ -116,7 +116,7 @@ def add_user(
     if not passkey_token and not password:
         return (False, "No way for the user to log in!")
     if not validate_username(username):
-        return (False, "Username is not valid!")
+        return (False, f"Username must be between 3 and {USERNAME_LENGTH} characters and must not contain filesystem-reserved characters!")
 
     authentication_methods: set[str] = set()
     stored_hash = None
@@ -156,12 +156,16 @@ def remove_user(username: str) -> tuple[bool, str]:
     return (True, "User has been deleted")
 
 
-def list_users() -> list[str]:
-    users = []
+def list_users() -> dict[str, dict[str, any, ...]]:
+    users = {}
     with SessionMaker() as session:
         result = session.execute(select(User)).scalars()
         for user in result:
-            users.append(user.username)
+            users[user.username] = {
+                "Access level": user.user_level,
+                "# public keys": len(user.public_keys),
+                "# shares": len(user.shares),
+            }
     return users
 
 
@@ -247,6 +251,13 @@ def change_access_level(username: str, access_level: int) -> tuple[bool, str]:
 
 
 if __name__ == "__main__":
+    @dataclass(slots=True)
+    class Colors:
+        reset = "\033[0m"
+        green = "\033[32m"
+        orange = "\033[33m"
+        blue = "\033[34m"
+
     choice = "choice"
     while choice:
         print("")
@@ -266,10 +277,10 @@ if __name__ == "__main__":
                 new_password = token_bytes(8).hex()
                 success, message = add_user(new_username, password=new_password)
                 if success:
-                    print("User added successfully")
+                    print(f"{Colors.green}User added successfully{Colors.reset}")
                     print(f"New password: {new_password}")
                 else:
-                    print("Unable to add a new user!")
+                    print(f"{Colors.orange}Unable to add a new user!{Colors.reset}")
                     print(f"Reason: {message}")
             case "2":
                 username = str(input("Please provide the username to reset: "))
@@ -278,16 +289,16 @@ if __name__ == "__main__":
                 if success:
                     print(f"Password reset to: {new_password}")
                 else:
-                    print("Unable to reset password!")
+                    print(f"{Colors.orange}Unable to reset password!{Colors.reset}")
                     print(f"Reason: {message}")
             case "3":
                 old = input("Old username: ")
                 new = input("New username: ")
                 success, message = change_username(old, new)
                 if success:
-                    print("Username changed")
+                    print(f"{Colors.green}Username changed{Colors.reset}")
                 else:
-                    print("Unable to change username!")
+                    print(f"{Colors.orange}Unable to change username!{Colors.reset}")
                     print(f"Reason: {message}")
             case "4":
                 username = input("Username: ")
@@ -299,21 +310,24 @@ if __name__ == "__main__":
                     success = False
                     message = "Invalid access level (must be an integer)"
                 if success:
-                    print("Access level changed")
+                    print(f"{Colors.green}Access level changed{Colors.reset}")
                 else:
-                    print("Cannot change access level!")
+                    print(f"{Colors.orange}Cannot change access level!{Colors.reset}")
                     print(f"Reason: {message}")
             case "5":
-                print("Users:")
-                for user in list_users():
-                    print(user)
+                print("\nUsers:")
+                for user, info in list_users().items():
+                    print()
+                    print(f"{Colors.blue}Name:{Colors.reset} {user}")
+                    for data_name, data in info.items():
+                        print(f"{Colors.blue}*{Colors.reset} {data_name}: {data}")
             case "6":
                 to_delete = input("Username to delete: ")
                 success, message = remove_user(to_delete)
                 if success:
-                    print("User deleted")
+                    print(f"{Colors.green}User deleted{Colors.reset}")
                 else:
-                    print("Cannot delete user!")
+                    print(f"{Colors.orange}Cannot delete user!{Colors.reset}")
                     print(f"Reason: {message}")
             case _:
                 break
