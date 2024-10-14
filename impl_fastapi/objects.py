@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from uuid import uuid1
+from uuid import uuid4
 
 from sqlalchemy import BLOB, Boolean, DateTime, ForeignKey, String, Integer
 from sqlalchemy.orm import DeclarativeBase, Mapped, MappedAsDataclass, mapped_column, relationship
@@ -28,7 +28,7 @@ class Share(Base):
     user_whitelist: Mapped[Optional[str]] = mapped_column(
         String(), nullable=True
     )  # TODO - Maybe make it an "association" class?
-    share_id: Mapped[bytes] = mapped_column(BLOB(16), primary_key=True, default_factory=lambda: uuid1().bytes)
+    share_id: Mapped[bytes] = mapped_column(BLOB(16), primary_key=True, default_factory=lambda: uuid4().bytes)
 
 
 class User(Base):
@@ -40,4 +40,4 @@ class User(Base):
     public_keys: Mapped[list[PublicKey]] = relationship("PublicKey", default_factory=list, cascade="all, delete-orphan")
     reset_token: Mapped[Optional[str]] = mapped_column(String(36), nullable=True, default=None)
     shares: Mapped[list[Share]] = relationship("Share", default_factory=list, cascade="all, delete-orphan")
-    user_id: Mapped[bytes] = mapped_column(BLOB(16), primary_key=True, default_factory=lambda: uuid1().bytes)
+    user_id: Mapped[bytes] = mapped_column(BLOB(16), primary_key=True, default_factory=lambda: uuid4().bytes)
