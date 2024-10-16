@@ -6,6 +6,11 @@
 {% endblock %}
 
 {% block body %}
+{% if banner %}
+<div id="login_banner">
+    {{ banner }}
+</div>
+{% endif %}
 <section>
     <div id="login">
         {% if messages %}
@@ -13,7 +18,11 @@
                 <div class="{{ category }}">{{ message }}</div>
             {% endfor %}
         {% endif %}
+        {% if next %}
+        <form action="{{ url_for('login').include_query_params(next=next) }}" method="post">
+        {% else %}
         <form action="{{ url_for('login') }}" method="post">
+        {% endif %}
             <div id="fields">
                 <label for="user">username</label>
                 <input id="user" class="bg_glow_gradient" name="username" type="text" maxlength="40" autofocus autocomplete="username">
@@ -27,4 +36,11 @@
         </form>
     </div>
 </section>
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript">
+    var CHALLENGE_URL = "{{ url_for('passkey_challenge') }}"
+</script>
+<script type="text/javascript" src="{{ url_for('static', path='login_passkey.js') }}"></script>
 {% endblock %}

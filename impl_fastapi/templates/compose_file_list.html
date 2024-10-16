@@ -1,0 +1,29 @@
+{% macro list_files(files, current_directory_url, public_directory_url) %}
+<ul>
+	{% for file in files %}
+	<li>
+		{% if file["type"] == "public_directory" %}
+		<a>{{ file["name"] }}</a>
+		{% else %}
+		<a href="{{ file['path'] }}">{{ file["name"] }}</a>
+		{% endif %}
+	</li>
+	{% endfor %}
+</ul>
+{% endmacro %}
+
+{% macro list_files_no_js(files, current_directory_url, public_directory_url) %}
+<ul>
+	{% for file in files %}
+	<li>NO JS
+		{% if file["type"] == "public_directory" %}
+		<a href="{{ public_directory_url }}">{{ file["name"] }}</a>
+		{% else %}
+		<a href="{{ current_directory_url }}/{{ file['path'] }}">{{ file["name"] }}</a>
+		{% endif %}
+	</li>
+	{% endfor %}
+</ul>
+{% endmacro %}
+
+{{ list_files(files, current_directory_url, public_directory_url) }}

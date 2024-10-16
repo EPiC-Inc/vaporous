@@ -31,9 +31,5 @@
     </body>
 
     {% block scripts %}
-    <script type="text/javascript">
-        var CHALLENGE_URL = "{{ url_for('passkey_challenge') }}"
-    </script>
-    <script type="text/javascript" src="{{ url_for('static', path='login_passkey.js') }}"></script>
     {% endblock %}
 </html>

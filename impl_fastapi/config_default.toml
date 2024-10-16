@@ -1,5 +1,7 @@
 host = "0.0.0.0"
 port = 8080
 database_uri = "sqlite+pysqlite:///database.db"
+banner = ""
 upload_directory = "./uploads"
 public_directory = "public"
+public_access_requires_login = true

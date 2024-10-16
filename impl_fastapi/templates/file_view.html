@@ -1,0 +1,28 @@
+{% from "compose_file_list.html" import list_files, list_files_no_js %}
+
+{% extends "base.html" %}
+{% block title %}files{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', path='file_view_style.css') }}">
+{% endblock %}
+
+{% block body %}
+[ PATH ]
+{% if files %}
+<div id="file_container">
+    <!-- <noscript> -->
+    {{ list_files_no_js(files, current_directory_url, url_for("get_public_files")) }}
+    <!-- </noscript> -->
+</div>
+{% else %}
+<p>[ Empty folder ]</p>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript">
+    var COMPOSER_URL = "{{ url_for('compose_file_view') }}"
+</script>
+<!-- <script type="text/javascript" src="{{ url_for('static', path='file_view.js') }}"></script> -->
+{% endblock %}

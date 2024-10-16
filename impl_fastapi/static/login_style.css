@@ -1,3 +1,16 @@
+#login_banner {
+    --banner-background: darkcyan;
+    --banner-foreground: lightgrey;
+    background-color: var(--banner-background);
+    color: var(--banner-foreground);
+    display: flex;
+    font-size: 150%;
+    justify-content: center;
+    padding: 5%;
+    position: absolute;
+    width: 100%;
+}
+
 #login {
     align-items: center;
     display: flex;
@@ -23,12 +36,12 @@
     gap: 2rem;
     justify-items: center;
 }
-#passkey {
+#login form #passkey {
     background-color: rgb(221, 221, 221);
     border-radius: 0.3rem;
-    padding: 0.2rem 0.4rem 0.4rem 0.4rem;
+    padding: 0.4rem;
     transition: background-color 200ms ease-out;
 }
-#passkey:hover {
+#login form #passkey:hover {
     background-color: rgb(165, 180, 196);
 }

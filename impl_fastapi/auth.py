@@ -1,6 +1,6 @@
 """Handles authentication and updating users in the DB."""
 
-from dataclasses import dataclass
+from collections import namedtuple
 from datetime import datetime, timedelta
 from hashlib import scrypt
 from os import environ
@@ -13,6 +13,7 @@ from uuid import uuid1
 from sqlalchemy import select
 
 from database import SessionMaker
+from file_handler import create_home_folder
 from objects import PublicKey, User
 
 INVALID_USERNAME_CHARACTERS = regex_compile(r'<|>|:|"|\?|\/|\\|\||\*')
@@ -27,11 +28,12 @@ SECRET_KEY = environ.get("VAPOROUS_SECRET_KEY") or token_bytes(32).hex()
 SESSION_EXPIRY: timedelta = timedelta(days=3)
 
 
-@dataclass(slots=True)
-class Session:
-    username: str
-    access_level: int
-    expires: datetime
+Session = namedtuple("Session", ("username", "user_id", "access_level", "expires"))
+# @dataclass(slots=True)
+# class Session:
+#     username: str
+#     access_level: int
+#     expires: datetime
 
 
 sessions_lock = Lock()
@@ -130,6 +132,7 @@ def add_user(
     if passkey_token:
         authentication_methods.add("passkey")
         passkeys.append(PublicKey(owner=new_user.user_id, key=passkey_token, name="Initial Passkey"))
+    create_home_folder(new_user.user_id.hex())
     # TODO - if passkey add and associate passkey
     with SessionMaker() as session:
         session.add(new_user)
@@ -184,6 +187,7 @@ def new_session(username: str, *, invalidate_previous_sessions: bool = True):
         with sessions_lock:
             sessions[session_id] = Session(
                 username=username,
+                user_id=user.user_id.hex(),
                 access_level=user.user_level,
                 expires=datetime.now() + SESSION_EXPIRY,
             )
@@ -240,94 +244,13 @@ def change_access_level(username: str, access_level: int) -> tuple[bool, str]:
     except ValueError:
         return (False, "Invalid access level - must be an integer")
     with SessionMaker() as session:
-        user: User | None = session.execute(select(User).filter_by(username=username)).scalar_one()
-        user.user_level = access_level
+        user: User | None = session.execute(select(User).filter_by(username=username)).scalar_one_or_none()
+        if not user:
+            return (False, "User does not exist!")
+        user.user_level = max(access_level, 0)
         session.commit()
     with sessions_lock:
         for session in sessions.values():
             if session.username == username:
                 session.access_level = access_level
     return (True, "User access level has changed")
-
-
-if __name__ == "__main__":
-    @dataclass(slots=True)
-    class Colors:
-        reset = "\033[0m"
-        green = "\033[32m"
-        orange = "\033[33m"
-        blue = "\033[34m"
-
-    choice = "choice"
-    while choice:
-        print("")
-        print("Authentication Menu")
-        print("1. Add user")
-        print("2. Reset password")
-        print("3. Change username")
-        print("4. Change user access level")
-        print("5. List users")
-        print("6. Delete user")
-        print("q. Quit")
-        print("")
-        choice = input("> ")
-        match choice:
-            case "1":
-                new_username = input("Please provide the new username: ")
-                new_password = token_bytes(8).hex()
-                success, message = add_user(new_username, password=new_password)
-                if success:
-                    print(f"{Colors.green}User added successfully{Colors.reset}")
-                    print(f"New password: {new_password}")
-                else:
-                    print(f"{Colors.orange}Unable to add a new user!{Colors.reset}")
-                    print(f"Reason: {message}")
-            case "2":
-                username = str(input("Please provide the username to reset: "))
-                new_password = token_bytes(8).hex()
-                success, message = change_password(username, new_password=new_password)
-                if success:
-                    print(f"Password reset to: {new_password}")
-                else:
-                    print(f"{Colors.orange}Unable to reset password!{Colors.reset}")
-                    print(f"Reason: {message}")
-            case "3":
-                old = input("Old username: ")
-                new = input("New username: ")
-                success, message = change_username(old, new)
-                if success:
-                    print(f"{Colors.green}Username changed{Colors.reset}")
-                else:
-                    print(f"{Colors.orange}Unable to change username!{Colors.reset}")
-                    print(f"Reason: {message}")
-            case "4":
-                username = input("Username: ")
-                access_level = input("New access level (0 being lowest access): ")
-                try:
-                    access_level = int(access_level)
-                    success, message = change_access_level(username, access_level)
-                except ValueError:
-                    success = False
-                    message = "Invalid access level (must be an integer)"
-                if success:
-                    print(f"{Colors.green}Access level changed{Colors.reset}")
-                else:
-                    print(f"{Colors.orange}Cannot change access level!{Colors.reset}")
-                    print(f"Reason: {message}")
-            case "5":
-                print("\nUsers:")
-                for user, info in list_users().items():
-                    print()
-                    print(f"{Colors.blue}Name:{Colors.reset} {user}")
-                    for data_name, data in info.items():
-                        print(f"{Colors.blue}*{Colors.reset} {data_name}: {data}")
-            case "6":
-                to_delete = input("Username to delete: ")
-                success, message = remove_user(to_delete)
-                if success:
-                    print(f"{Colors.green}User deleted{Colors.reset}")
-                else:
-                    print(f"{Colors.orange}Cannot delete user!{Colors.reset}")
-                    print(f"Reason: {message}")
-            case _:
-                break
