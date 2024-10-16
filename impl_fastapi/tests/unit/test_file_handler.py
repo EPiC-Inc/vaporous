@@ -22,6 +22,7 @@ class TestFileHandlingWithPublic(TestCase):
     def tearDown(self) -> None:
         file_handler.FileHandler.PUBLIC_DIRECTORY = None
 
+
 class TestFileHandlingWithOutPublic(TestCase):
     def setUp(self) -> None:
         file_handler.FileHandler.PUBLIC_DIRECTORY = None
@@ -30,6 +31,7 @@ class TestFileHandlingWithOutPublic(TestCase):
         test_file_handler = file_handler.FileHandler("")
         self.assertIsInstance(test_file_handler.list_files(), Generator)
         self.assertEqual(len(list(test_file_handler.list_files())), 0)
+
 
 if __name__ == "__main__":
     main()

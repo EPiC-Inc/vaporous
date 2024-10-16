@@ -1,6 +1,6 @@
 """Handles authentication and updating users in the DB."""
 
-from collections import namedtuple
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from hashlib import scrypt
 from os import environ
@@ -28,12 +28,12 @@ SECRET_KEY = environ.get("VAPOROUS_SECRET_KEY") or token_bytes(32).hex()
 SESSION_EXPIRY: timedelta = timedelta(days=3)
 
 
-Session = namedtuple("Session", ("username", "user_id", "access_level", "expires"))
-# @dataclass(slots=True)
-# class Session:
-#     username: str
-#     access_level: int
-#     expires: datetime
+@dataclass(slots=True)
+class Session:
+    username: str
+    user_id: str
+    access_level: int
+    expires: datetime
 
 
 sessions_lock = Lock()
@@ -118,7 +118,10 @@ def add_user(
     if not passkey_token and not password:
         return (False, "No way for the user to log in!")
     if not validate_username(username):
-        return (False, f"Username must be between 3 and {USERNAME_LENGTH} characters and must not contain filesystem-reserved characters!")
+        return (
+            False,
+            f"Username must be between 3 and {USERNAME_LENGTH} characters and must not contain filesystem-reserved characters!",
+        )
 
     authentication_methods: set[str] = set()
     stored_hash = None
@@ -159,7 +162,7 @@ def remove_user(username: str) -> tuple[bool, str]:
     return (True, "User has been deleted")
 
 
-def list_users() -> dict[str, dict[str, any, ...]]:
+def list_users() -> dict[str, dict]:
     users = {}
     with SessionMaker() as session:
         result = session.execute(select(User)).scalars()

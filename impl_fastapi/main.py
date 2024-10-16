@@ -15,6 +15,7 @@ import auth
 import file_handler
 from api import api_v0
 from config import CONFIG
+
 # from database import SessionMaker
 
 app = FastAPI(openapi_url=None)
@@ -29,13 +30,17 @@ async def get_session(session_id: Annotated[Optional[str], Cookie()] = None) -> 
         return session
     return None
 
-async def get_file_response(request: Request, base: str, file_path: Optional[str], current_directory_url: str):
+
+async def get_file_response(request: Request, base: PathLike[str] | str, file_path: Optional[PathLike[str] | str], current_directory_url: str):
     files = file_handler.list_files(base=base, subfolder=file_path)
     if files is None:
-        if (file_contents := file_handler.get_file(base=base, file_path=file_path)):
+        if file_contents := file_handler.get_file(base=base, file_path=file_path):
             return file_contents
         raise HTTPException(status_code=404, detail="Unable to get files")
-    return templates.TemplateResponse(request=request, name="file_view.html", context={"files": files, "current_directory_url": current_directory_url})
+    return templates.TemplateResponse(
+        request=request, name="file_view.html", context={"files": files, "current_directory_url": current_directory_url}
+    )
+
 
 @app.exception_handler(404)
 async def not_found(request: Request, exception: HTTPException):
@@ -48,36 +53,67 @@ async def root(request: Request, session: Annotated[Optional[auth.Session], Secu
         return RedirectResponse(url=request.url_for("login_page"))
     return RedirectResponse(url=request.url_for("get_files"))
 
+
 @app.get("/f")
 @app.get("/f/{file_path:path}")
-async def get_files(request: Request, session: Annotated[Optional[auth.Session], Security(get_session)], file_path: Optional[PathLike[str]] = None):
+async def get_files(
+    request: Request,
+    session: Annotated[Optional[auth.Session], Security(get_session)],
+    file_path: Optional[PathLike[str]] = None,
+):
     if session is None:
         return RedirectResponse(url=request.url_for("login_page").include_query_params(next=request.url.path))
-    return await get_file_response(request=request, base=session.user_id, file_path=file_path, current_directory_url=request.url_for("get_files"))
+    return await get_file_response(
+        request=request, base=session.user_id, file_path=file_path, current_directory_url=request.url_for("get_files")
+    )
 
 
 @app.get("/public")
 @app.get("/public/{file_path:path}")
-async def get_public_files(request: Request, session: Annotated[Optional[auth.Session], Security(get_session)], file_path: Optional[PathLike[str]] = None):
+async def get_public_files(
+    request: Request,
+    session: Annotated[Optional[auth.Session], Security(get_session)],
+    file_path: Optional[PathLike[str]] = None,
+):
     if not CONFIG.get("public_directory"):
         raise HTTPException(status_code=404, detail="Public directory not enabled.")
     if session is None:
         if CONFIG.get("public_access_requires_login"):
             return RedirectResponse(url=request.url_for("login_page").include_query_params(next=request.url.path))
-    return await get_file_response(request=request, base=CONFIG.get("public_directory"), file_path=file_path, current_directory_url=request.url_for("get_public_files"))
+    return await get_file_response(
+        request=request,
+        base=str(CONFIG.get("public_directory")),
+        file_path=file_path,
+        current_directory_url=request.url_for("get_public_files"),
+    )
+
 
 @app.post("/compose")
-async def compose_file_view(request: Request, session: Annotated[Optional[auth.Session], Security(get_session)], file_path: Annotated[PathLike[str], Body()], public: Annotated[bool, Body()]):
+async def compose_file_view(
+    request: Request,
+    session: Annotated[Optional[auth.Session], Security(get_session)],
+    file_path: Annotated[PathLike[str], Body()],
+    public: Annotated[bool, Body()],
+):
     if session is None:
         return RedirectResponse(url=request.url_for("login_page").include_query_params(next=request.url.path))
     if public:
         base = CONFIG.get("public_directory")
     else:
         base = session.user_id
-    files = file_handler.list_files(base=base, subfolder=file_path)
+    files = file_handler.list_files(base=str(base), subfolder=file_path)
     if files is None:
         raise HTTPException(status_code=404, detail="Unable to get files")
-    return templates.TemplateResponse(request=request, name="compose_file_list.html", context={"files": files, "current_directory_url": file_path, "public_directory_url": request.url_for("get_public_files")})
+    return templates.TemplateResponse(
+        request=request,
+        name="compose_file_list.html",
+        context={
+            "files": files,
+            "current_directory_url": file_path,
+            "public_directory_url": request.url_for("get_public_files"),
+        },
+    )
+
 
 @app.get("/login")
 async def login_page(request: Request, next: Optional[str] = None, messages: Optional[list] = None):
@@ -123,7 +159,7 @@ async def login_passkey(request: Request, next: Optional[str] = None):
     #     max_age=int(auth.SESSION_EXPIRY.total_seconds()),
     # )
     # return response
-    return await login_page(request=request, next=next, messages={[("error", "Not yet implemented!")]})
+    return await login_page(request=request, next=next, messages=[("error", "Not yet implemented!")])
 
 
 @app.get("/login/passkey/challenge")
