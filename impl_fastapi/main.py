@@ -31,15 +31,30 @@ async def get_session(session_id: Annotated[Optional[str], Cookie()] = None) -> 
     return None
 
 
-async def get_file_response(request: Request, base: PathLike[str] | str, file_path: Optional[PathLike[str] | str], current_directory_url: str):
-    files = file_handler.list_files(base=base, subfolder=file_path)
+async def get_file_response(request: Request, base: PathLike[str] | str, file_path: Optional[PathLike[str] | str], current_directory_url: str, username: Optional[str] = None, access_level: int = 0, public: bool = False):
+    if file_path is not None:
+        file_path = file_handler.safe_path_regex.sub(".", str(file_path))
+    files = file_handler.list_files(base=base, subfolder=file_path, access_level=access_level)
     if files is None:
         if file_contents := file_handler.get_file(base=base, file_path=file_path):
             return file_contents
         raise HTTPException(status_code=404, detail="Unable to get files")
+    path_segments = [{"path": "", "name": "Public Files"}] if public else []
+    current_path = []
+    if file_path:
+        for segment in Path(file_path).parts:
+            current_path.append(segment)
+            path_segments.append({
+                "path": "/".join(current_path),
+                "name": segment
+            })
     return templates.TemplateResponse(
-        request=request, name="file_view.html", context={"files": files, "current_directory_url": current_directory_url}
-    )
+        request=request, name="file_view.html", context={
+            "files": files,
+            "current_directory_url": current_directory_url,
+            "username": username,
+            "path_segments": path_segments,
+        })
 
 
 @app.exception_handler(404)
@@ -64,7 +79,7 @@ async def get_files(
     if session is None:
         return RedirectResponse(url=request.url_for("login_page").include_query_params(next=request.url.path))
     return await get_file_response(
-        request=request, base=session.user_id, file_path=file_path, current_directory_url=request.url_for("get_files")
+        request=request, base=session.user_id, file_path=file_path, current_directory_url=request.url_for("get_files"), username=session.username, access_level=session.access_level
     )
 
 
@@ -80,11 +95,16 @@ async def get_public_files(
     if session is None:
         if CONFIG.get("public_access_requires_login"):
             return RedirectResponse(url=request.url_for("login_page").include_query_params(next=request.url.path))
+    else:
+        if session.access_level < CONFIG.get("public_access_level", -1):
+            raise HTTPException(status_code=403, detail="User level insufficient.")
     return await get_file_response(
         request=request,
         base=str(CONFIG.get("public_directory")),
         file_path=file_path,
         current_directory_url=request.url_for("get_public_files"),
+        username=session.username if session else None,
+        public=True
     )
 
 

@@ -37,7 +37,7 @@ def create_home_folder(uuid: str) -> None:
     new_folder.mkdir()
 
 
-def list_files(base: PathLike[str] | str, subfolder: Optional[PathLike[str] | str] = None) -> list[dict] | None:
+def list_files(base: PathLike[str] | str, subfolder: Optional[PathLike[str] | str] = None, access_level: int = 0) -> list[dict] | None:
     UPLOAD_DIRECTORY = get_upload_directory()
     base = UPLOAD_DIRECTORY / base
     PUBLIC_DIRECTORY: Path | None = CONFIG.get("public_directory")
@@ -52,32 +52,41 @@ def list_files(base: PathLike[str] | str, subfolder: Optional[PathLike[str] | st
         subfolder = safe_path_regex.sub(".", str(subfolder))
         base = base / subfolder
     else:
-        if (base != UPLOAD_DIRECTORY) and PUBLIC_DIRECTORY and (base != PUBLIC_DIRECTORY):
-            if PUBLIC_DIRECTORY.exists(follow_symlinks=False) and (PUBLIC_DIRECTORY.is_dir()):
-                files.append(
-                    {
-                        "name": PUBLIC_DIRECTORY.name,
-                        "path": r"/".join(PUBLIC_DIRECTORY.parts[1:]),
-                        "is_directory": True,
-                        "type": "public_directory",
-                    }
-                )
+        if (base != UPLOAD_DIRECTORY) and PUBLIC_DIRECTORY and (base != PUBLIC_DIRECTORY) and PUBLIC_DIRECTORY.exists(follow_symlinks=False) and (PUBLIC_DIRECTORY.is_dir()) and access_level >= CONFIG.get("public_access_level", -1):
+            files.append(
+                {
+                    "name": PUBLIC_DIRECTORY.name,
+                    "path": r"/".join(PUBLIC_DIRECTORY.parts[1:]),
+                    "is_directory": True,
+                    "type": "public_directory",
+                }
+            )
     if not base.exists() or not base.is_dir():
         return None
     for child in base.iterdir():
-        if is_directory := child.is_dir():
-            type_ = "directory"
+        if child.is_dir():
+            type_ = "dir"
         else:
             match child.suffix:
-                case ".txt":
+                case ".txt" | ".pdf" | ".md" | ".rtf" | ".rst" |".odt" | ".doc" | ".docx" | ".xls" | ".xlsx":
                     type_ = "document"
+                case ".jpg" | ".jpeg" | ".png" | ".webp" | ".gif" | ".bmp" | ".tiff" | ".avif" | ".apng":
+                    type_ = "image"
+                case ".mp3" | ".wav" | ".flac" | ".ogg" | ".aiff" | ".aac" | ".alac" | ".pcm" | ".dsd":
+                    type_ = "audio"
+                case ".mp4" | ".wmv" | ".webm" | ".mov" | ".avi" | ".mkv":
+                    type_ = "video"
+                case ".zip" | ".7z" | ".xz" | ".rar" | ".gz" | ".bz2":
+                    type_ = "archive"
                 case _:
                     type_ = "file"
-        files.append(
-            {"name": child.name, "path": r"/".join(child.parts[2:]), "is_directory": is_directory, "type": type_}
-        )
+        files.append({
+            "name": child.name,
+            "path": r"/".join(child.parts[2:]),
+            "type": type_
+        })
     files.sort(key=lambda f: f.get("name"))
-    files.sort(key=lambda f: f.get("is_directory"))
+    files.sort(key=lambda f: f.get("type") == "dir", reverse=True)
     files.sort(key=lambda f: f.get("type") == "public_directory", reverse=True)
     return files
 

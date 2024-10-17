@@ -5,3 +5,4 @@ banner = ""
 upload_directory = "./uploads"
 public_directory = "public"
 public_access_requires_login = true
+public_access_level = 0

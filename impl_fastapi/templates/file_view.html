@@ -1,24 +1,22 @@
-{% from "compose_file_list.html" import list_files, list_files_no_js %}
-
+{% from "header.html" import header %}
 {% extends "base.html" %}
-{% block title %}files{% endblock %}
 
+{% block title %}files{% endblock %}
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', path='file_view_style.css') }}">
 {% endblock %}
 
+
 {% block body %}
-[ PATH ]
-{% if files %}
+{{ header(request, username) }}
+
 <div id="file_container">
-    <!-- <noscript> -->
-    {{ list_files_no_js(files, current_directory_url, url_for("get_public_files")) }}
-    <!-- </noscript> -->
+    <div id="file_list">
+    {{ list_files(files, current_directory_url, path_segments) }}
+    </div>
 </div>
-{% else %}
-<p>[ Empty folder ]</p>
-{% endif %}
 {% endblock %}
+
 
 {% block scripts %}
 <script type="text/javascript">
@@ -26,3 +24,42 @@
 </script>
 <!-- <script type="text/javascript" src="{{ url_for('static', path='file_view.js') }}"></script> -->
 {% endblock %}
+
+
+{% macro create_path(current_directory_url, path_segments) %}
+<div class="file_navigate">
+    <a class="link location_select" href="/">HOME</a>
+    {% if path_segments %}
+    {% for segment in path_segments %}
+    <span>/</span>
+        <a class="link location_select" href="{{ current_directory_url }}/{{ segment['path'] }}">{{ segment["name"] }}</a>
+    {% endfor %}
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro list_files(files, current_directory_url, path_segments) %}
+{{ create_path(current_directory_url, path_segments) }}
+{% if files %}
+    {% for file in files %}
+    <div class="file_select">
+        {% if file["type"] == "public_directory" %}
+        <a class="link" href="{{ url_for('get_public_files') }}">
+        {% else %}
+        <a class="link" href="{{ current_directory_url }}/{{ file['path'] }}">
+        {% endif %}
+            <img class="file_icon" src="{{ url_for('static', path='icons/icon-' + file['type'] + '.png') }}">
+            <div class="file_name">{{ file["name"] }}</div>
+            <div class="file_size">{{ file["size"] }}</div>
+        </a>
+        {% if file["type"] != "public_directory" %}
+        <div class="file_properties">
+            <button>...</button>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+{% else %}
+<div>[ Empty folder ]</div>
+{% endif %}
+{% endmacro %}
