@@ -23,7 +23,7 @@ class Share(Base):
 
     owner: Mapped[bytes] = mapped_column(ForeignKey("Users.user_id"))
     expires: Mapped[Optional[datetime]] = mapped_column(DateTime(), nullable=True)
-    path: Mapped[str] = mapped_column(String(1024))
+    path: Mapped[str] = mapped_column(String(32760))  # https://en.wikipedia.org/wiki/Comparison_of_file_systems#Limits
     anonymous_access: Mapped[bool] = mapped_column(Boolean())
     user_whitelist: Mapped[Optional[str]] = mapped_column(
         String(), nullable=True

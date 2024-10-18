@@ -53,6 +53,7 @@ async def get_file_response(request: Request, base: PathLike[str] | str, file_pa
             "files": files,
             "current_directory_url": current_directory_url,
             "username": username,
+            "access_level": access_level,
             "path_segments": path_segments,
         })
 
@@ -104,35 +105,36 @@ async def get_public_files(
         file_path=file_path,
         current_directory_url=request.url_for("get_public_files"),
         username=session.username if session else None,
+        access_level=session.access_level if session else -1,
         public=True
     )
 
 
-@app.post("/compose")
-async def compose_file_view(
-    request: Request,
-    session: Annotated[Optional[auth.Session], Security(get_session)],
-    file_path: Annotated[PathLike[str], Body()],
-    public: Annotated[bool, Body()],
-):
-    if session is None:
-        return RedirectResponse(url=request.url_for("login_page").include_query_params(next=request.url.path))
-    if public:
-        base = CONFIG.get("public_directory")
-    else:
-        base = session.user_id
-    files = file_handler.list_files(base=str(base), subfolder=file_path)
-    if files is None:
-        raise HTTPException(status_code=404, detail="Unable to get files")
-    return templates.TemplateResponse(
-        request=request,
-        name="compose_file_list.html",
-        context={
-            "files": files,
-            "current_directory_url": file_path,
-            "public_directory_url": request.url_for("get_public_files"),
-        },
-    )
+# @app.post("/compose")
+# async def compose_file_view(
+#     request: Request,
+#     session: Annotated[Optional[auth.Session], Security(get_session)],
+#     file_path: Annotated[PathLike[str], Body()],
+#     public: Annotated[bool, Body()],
+# ):
+#     if session is None:
+#         return RedirectResponse(url=request.url_for("login_page").include_query_params(next=request.url.path))
+#     if public:
+#         base = CONFIG.get("public_directory")
+#     else:
+#         base = session.user_id
+#     files = file_handler.list_files(base=str(base), subfolder=file_path)
+#     if files is None:
+#         raise HTTPException(status_code=404, detail="Unable to get files")
+#     return templates.TemplateResponse(
+#         request=request,
+#         name="compose_file_list.html",
+#         context={
+#             "files": files,
+#             "current_directory_url": file_path,
+#             "public_directory_url": request.url_for("get_public_files"),
+#         },
+#     )
 
 
 @app.get("/login")
@@ -185,6 +187,16 @@ async def login_passkey(request: Request, next: Optional[str] = None):
 @app.get("/login/passkey/challenge")
 async def passkey_challenge():
     return Response(content=auth.passkey_challenge())
+
+
+# TODO - finish this
+@app.get("/logout")
+async def logout(request: Request, session: Annotated[Optional[auth.Session], Security(get_session)]):
+    response = RedirectResponse(url=request.url_for("root"))
+    if session:
+    #     auth.invalidate_session(session)
+        response.delete_cookie(key="session_id")
+    return response
 
 
 @app.get("/robots.txt")

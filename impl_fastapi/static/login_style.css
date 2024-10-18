@@ -45,3 +45,10 @@
 #login form #passkey:hover {
     background-color: rgb(165, 180, 196);
 }
+
+/* ANCHOR: responsive stuff */
+@media only screen and (max-width: 600px) {
+    #fields {
+        grid-template-columns: 1fr;
+    }
+}

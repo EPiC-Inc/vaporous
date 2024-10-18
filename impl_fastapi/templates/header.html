@@ -1,15 +1,23 @@
-{% macro header(request, username, highlight) %}
+{% macro header(request, username, access_level, highlight) %}
 <header>
 	{% if username %}
-	<div>Logged in as {{ username }}</div>
+	<a href="{{ request.url_for('logout') }}">
+		<div class="header_btn">Log Out</div>
+	</a>
+	<a href="">
+		<div class="{% if highlight == 'settings' %}selected{% endif %} header_btn">Logged in as {{ username }}</div>
+	</a>
+		{% if access_level and access_level >= 2 %}
+		<a href="">
+			<div class="{% if highlight == 'control_panel' %}selected{% endif %} header_btn">Control Panel</div>
+		</a>
+		{% endif %}
+	<div class="{% if highlight == 'upload' %}selected{% endif %} header_btn">Upload</div>
+	<div class="{% if highlight == 'new_folder' %}selected{% endif %} header_btn">New Folder</div>
 	{% else %}
-	<div>
-		<a href="{{ request.url_for('login') }}?next={{ request.url.path }}">Not logged in</a>
-	</div>
+	<a href="{{ request.url_for('login') }}?next={{ request.url.path }}">
+		<div class="header_btn">Not logged in</div>
+	</a>
 	{% endif %}
-	<div class="{% if highlight == 'settings' %}selected{% endif %}">
-		<a href="">Settings</a>
-	</div>
-	<div>idk</div>
 </header>
 {% endmacro %}
