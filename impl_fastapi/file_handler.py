@@ -1,5 +1,6 @@
 """Module to handle file manipulation, usable from the main server as well as APIs."""
 
+from datetime import datetime
 from os import PathLike
 from pathlib import Path
 from re import compile as regex_compile
@@ -7,8 +8,8 @@ from typing import Generator, Optional
 
 from config import CONFIG
 
-# from database import SessionMaker
-# from objects import Share
+from database import SessionMaker
+from objects import Share
 
 from fastapi.responses import FileResponse
 
@@ -102,6 +103,32 @@ def get_file(base: PathLike[str] | str, file_path: PathLike[str] | str) -> FileR
     if not file_path.exists() or not file_path.is_file():
         return None
     return FileResponse(file_path)
+
+
+def create_share(
+    user_id: str,
+    file_path: PathLike[str] | str,
+    expires: Optional[datetime] = None,
+    anonymous_access: bool = False,
+    whitelist: Optional[list] = None,
+) -> tuple[bool, str]:
+    file_path = safe_path_regex.sub(".", str(file_path))
+    file_path_to_save = Path(user_id) / file_path
+    file_path = get_upload_directory() / user_id / file_path
+    if not file_path.exists():
+        return (False, "File does not seem to exist!")
+    new_share = Share(
+        owner=bytes.fromhex(user_id),
+        expires=expires,
+        path=str(file_path_to_save),
+        anonymous_access=False,
+        user_whitelist=None,
+    )
+    new_share_link = new_share.share_id.hex()
+    with SessionMaker() as engine:
+        engine.add(new_share)
+        engine.commit()
+    return (True, new_share_link)
 
 
 class FileHandler:
