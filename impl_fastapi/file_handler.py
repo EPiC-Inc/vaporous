@@ -112,8 +112,13 @@ def create_share(
     anonymous_access: bool = False,
     whitelist: Optional[list] = None,
 ) -> tuple[bool, str]:
+    # NOTE - since this method forces the share to be created under the user's home folder,
+    #   remember to have anything shared from /public to return that canonical url
+    #   I.E. DO NOT USE THIS METHOD FOR THE PUBLIC FOLDER
     file_path = safe_path_regex.sub(".", str(file_path))
     file_path_to_save = Path(user_id) / file_path
+    if file_path == Path(user_id):
+        return (False, "You cannot share your whole home folder!")
     file_path = get_upload_directory() / user_id / file_path
     if not file_path.exists():
         return (False, "File does not seem to exist!")
