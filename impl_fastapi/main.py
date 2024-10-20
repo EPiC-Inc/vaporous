@@ -10,13 +10,14 @@ from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Resp
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from sqlalchemy import select
 
 import auth
 import file_handler
 from api import api_v0
 from config import CONFIG
-
-# from database import SessionMaker
+from database import SessionMaker
+from objects import Share
 
 app = FastAPI(openapi_url=None)
 templates = Jinja2Templates(Path(__file__).parent / "templates")
@@ -151,6 +152,37 @@ async def get_public_files(
         access_level=session.access_level if session else -1,
         public=True,
     )
+
+
+@app.get("/s/{share_id}/{file_path:path}")
+async def get_share(
+    request: Request,
+    session: Annotated[Optional[auth.Session], Security(get_session)],
+    share_id: str,
+    file_path: PathLike[str] | str,
+):
+    file_path = file_handler.safe_path_regex.sub(".", str(file_path))
+    try:
+        share_id_bytes = bytes.fromhex(share_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid share ID.")
+
+    with SessionMaker() as engine:
+        share: Share | None = engine.execute(select(Share).filter_by(share_id=share_id_bytes)).scalar_one_or_none()
+        if not share:
+            raise HTTPException(status_code=404, detail="Share ID not found.")
+        if allow_list := share.user_whitelist:
+            if not (session and session.user_id in allow_list.split("$")):
+                raise HTTPException(status_code=403, detail="Not on share list.")
+        elif not (share.anonymous_access or session):
+            raise HTTPException(status_code=401, detail="Share not publicly accessible.")
+        share_path = Path(share.path)
+        owner_id = share_path.parts[0]
+        share_subpath = share_path.relative_to(owner_id) / file_path
+        return (
+            owner_id,
+            str(share_subpath),
+        )
 
 
 # FIXME

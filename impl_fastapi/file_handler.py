@@ -50,7 +50,7 @@ def list_files(
             ".", str(PUBLIC_DIRECTORY)
         )  # NOTE - may be unnecessary?
 
-    files = []
+    files: list[dict] = []
     if subfolder:
         subfolder = safe_path_regex.sub(".", str(subfolder))
         base = base / subfolder
@@ -91,7 +91,7 @@ def list_files(
                 case _:
                     type_ = "file"
         files.append({"name": child.name, "path": r"/".join(child.parts[2:]), "type": type_})
-    files.sort(key=lambda f: f.get("name"))
+    files.sort(key=lambda f: f.get("name", ''))
     files.sort(key=lambda f: f.get("type") == "dir", reverse=True)
     files.sort(key=lambda f: f.get("type") == "public_directory", reverse=True)
     return files
@@ -109,12 +109,13 @@ def create_share(
     user_id: str,
     file_path: PathLike[str] | str,
     expires: Optional[datetime] = None,
-    anonymous_access: bool = False,
-    whitelist: Optional[list] = None,
+    anonymous_access: bool = True,
+    whitelist: Optional[list[str]] = None,
 ) -> tuple[bool, str]:
     # NOTE - since this method forces the share to be created under the user's home folder,
     #   remember to have anything shared from /public to return that canonical url
     #   I.E. DO NOT USE THIS METHOD FOR THE PUBLIC FOLDER
+    # NOTE - The allow list overrides anonymous_access=True
     file_path = safe_path_regex.sub(".", str(file_path))
     file_path_to_save = Path(user_id) / file_path
     if file_path == Path(user_id):
@@ -126,8 +127,8 @@ def create_share(
         owner=bytes.fromhex(user_id),
         expires=expires,
         path=str(file_path_to_save),
-        anonymous_access=False,
-        user_whitelist=None,
+        anonymous_access=anonymous_access,
+        user_whitelist="$".join(whitelist) if whitelist else None,
     )
     new_share_link = new_share.share_id.hex()
     with SessionMaker() as engine:
