@@ -155,8 +155,8 @@ def remove_user(username: str) -> tuple[bool, str]:
         engine.commit()
     with sessions_lock:
         sessions_to_delete: list = []
-        for session_id, engine in sessions.items():
-            if engine.username == username:
+        for session_id, session in sessions.items():
+            if session.username == username:
                 sessions_to_delete.append(session_id)
         for session_id in sessions_to_delete:
             del sessions[session_id]
@@ -180,8 +180,8 @@ def new_session(username: str, *, invalidate_previous_sessions: bool = True):
     if invalidate_previous_sessions:
         with sessions_lock:
             sessions_to_delete: list = []
-            for session_id, engine in sessions.items():
-                if engine.username == username:
+            for session_id, session in sessions.items():
+                if session.username == username:
                     sessions_to_delete.append(session_id)
             for session_id in sessions_to_delete:
                 del sessions[session_id]
@@ -236,9 +236,9 @@ def change_username(old_username: str, new_username: str) -> tuple[bool, str]:
         user.username = new_username
         engine.commit()
     with sessions_lock:
-        for engine in sessions.values():
-            if engine.username == old_username:
-                engine.username = new_username
+        for session in sessions.values():
+            if session.username == old_username:
+                session.username = new_username
     return (True, "Username changed")
 
 
@@ -254,7 +254,7 @@ def change_access_level(username: str, access_level: int) -> tuple[bool, str]:
         user.user_level = max(access_level, 0)
         engine.commit()
     with sessions_lock:
-        for engine in sessions.values():
-            if engine.username == username:
-                engine.access_level = access_level
+        for session in sessions.values():
+            if session.username == username:
+                session.access_level = access_level
     return (True, "User access level has changed")
