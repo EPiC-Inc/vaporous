@@ -69,6 +69,25 @@ async def root(request: Request, session: Annotated[Optional[auth.Session], Secu
         return RedirectResponse(url=request.url_for("login_page"))
     return RedirectResponse(url=request.url_for("get_files"))
 
+@app.get("/settings")
+async def settings(request: Request, session: Annotated[Optional[auth.Session], Security(get_session)]):
+    if session is None:
+        return RedirectResponse(url=request.url_for("login_page").include_query_params(next=request.url.path))
+    return templates.TemplateResponse(request=request, name="settings.html", context={
+        "username": session.username,
+        "access_level": session.access_level,
+    })
+
+@app.get("/control_panel")
+async def control_panel(request: Request, session: Annotated[Optional[auth.Session], Security(get_session)]):
+    if session is None:
+        return RedirectResponse(url=request.url_for("login_page").include_query_params(next=request.url.path))
+    if session.access_level < 2:
+        raise HTTPException(status_code=403, detail="Access level insufficient.")
+    return templates.TemplateResponse(request=request, name="control_panel.html", context={
+        "username": session.username,
+        "access_level": session.access_level,
+    })
 
 @app.get("/f")
 @app.get("/f/{file_path:path}")
@@ -110,31 +129,32 @@ async def get_public_files(
     )
 
 
-# @app.post("/compose")
-# async def compose_file_view(
-#     request: Request,
-#     session: Annotated[Optional[auth.Session], Security(get_session)],
-#     file_path: Annotated[PathLike[str], Body()],
-#     public: Annotated[bool, Body()],
-# ):
-#     if session is None:
-#         return RedirectResponse(url=request.url_for("login_page").include_query_params(next=request.url.path))
-#     if public:
-#         base = CONFIG.get("public_directory")
-#     else:
-#         base = session.user_id
-#     files = file_handler.list_files(base=str(base), subfolder=file_path)
-#     if files is None:
-#         raise HTTPException(status_code=404, detail="Unable to get files")
-#     return templates.TemplateResponse(
-#         request=request,
-#         name="compose_file_list.html",
-#         context={
-#             "files": files,
-#             "current_directory_url": file_path,
-#             "public_directory_url": request.url_for("get_public_files"),
-#         },
-#     )
+#FIXME
+@app.post("/compose")
+async def compose_file_view(
+    request: Request,
+    session: Annotated[Optional[auth.Session], Security(get_session)],
+    file_path: Annotated[PathLike[str], Body()],
+    public: Annotated[bool, Body()],
+):
+    if session is None:
+        return RedirectResponse(url=request.url_for("login_page").include_query_params(next=request.url.path))
+    if public:
+        base = CONFIG.get("public_directory")
+    else:
+        base = session.user_id
+    files = file_handler.list_files(base=str(base), subfolder=file_path)
+    if files is None:
+        raise HTTPException(status_code=404, detail="Unable to get files")
+    return templates.TemplateResponse(
+        request=request,
+        name="compose_file_list.html",
+        context={
+            "files": files,
+            "current_directory_url": file_path,
+            "public_directory_url": request.url_for("get_public_files"),
+        },
+    )
 
 
 @app.get("/login")

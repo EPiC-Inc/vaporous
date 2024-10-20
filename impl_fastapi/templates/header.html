@@ -2,18 +2,27 @@
 <header>
 	{% if username %}
 	<a href="{{ request.url_for('logout') }}">
-		<div class="header_btn">Log Out</div>
+		<div class="header_btn logout_btn">Log Out</div>
 	</a>
-	<a href="">
-		<div class="{% if highlight == 'settings' %}selected{% endif %} header_btn">Logged in as {{ username }}</div>
+	<a href="{{ request.url_for('settings') }}#settings">
+		<div class="{% if highlight == 'settings' %}selected{% endif %} header_btn">
+			Logged in as {{ username }}
+		</div>
 	</a>
 		{% if access_level and access_level >= 2 %}
-		<a href="">
+		<a href="{{ request.url_for('control_panel') }}">
 			<div class="{% if highlight == 'control_panel' %}selected{% endif %} header_btn">Control Panel</div>
 		</a>
 		{% endif %}
-	<div class="{% if highlight == 'upload' %}selected{% endif %} header_btn">Upload</div>
-	<div class="{% if highlight == 'new_folder' %}selected{% endif %} header_btn">New Folder</div>
+	<a href="{{ request.url_for('root') }}">
+		<div class="{% if highlight == 'files' %}selected{% endif %} header_btn">
+		Files
+		</div>
+	</a>
+	{% if highlight == 'files' %}
+	<div class="header_btn">Upload</div>
+	<div class="header_btn">New Folder</div>
+	{% endif %}
 	{% else %}
 	<a href="{{ request.url_for('login') }}?next={{ request.url.path }}">
 		<div class="header_btn">Not logged in</div>

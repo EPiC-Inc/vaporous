@@ -3,8 +3,13 @@
     --drop-zone-color: darkcyan;
     --hover-background-color: rgb(36, 36, 36);
     --light-background-color: rgb(62, 62, 62);
+    --header-hover-color: rgb(200, 200, 200);
+    --header-selected-color: rgb(200, 200, 200);
+    --header-selected-hover-color: white;
     --nav-color: #008b9d;
     --text-color: darkgrey;
+    --logout-color: darkred;
+    --logout-hover-color: crimson;
     box-sizing: border-box;
     color: var(--text-color);
 }
@@ -28,12 +33,49 @@ header {
     border-radius: 5px;
     cursor: pointer;
     padding: 0.3rem 0.3rem 0.2rem 0.3rem;
-    transition: background-position 200ms ease-out;
+    transition: background-position 200ms ease-out, color 200ms ease;
+    min-width: max-content;
 }
 .header_btn:hover {
+    color: var(--header-hover-color);
     background-position: 0 100%;
 }
+header .selected {
+    color: var(--header-selected-color);
+    background-color: var(--light-background-color);
+    background-image: linear-gradient(to top, var(--hover-background-color) 50%, transparent 50%);
+}
+header .selected:hover {
+    color: var(--header-selected-hover-color);
+}
+.logout_btn {
+    color: var(--logout-color);
+}
+.logout_btn:hover {
+    color: var(--logout-hover-color);
+}
 
+a {
+    color: var(--text-color);
+    text-decoration: none;
+}
+a.link {
+    color: var(--nav-color);
+    display: inline-block;
+    position: relative;
+}
+a.link::after {
+    content: '';
+    display: inline-block;
+    position: absolute;
+    width: 100%;
+    height: 3px;
+    transform: scaleX(0);
+    transition: transform 0.3s ease-out;
+    bottom: 0;
+    left: 0;
+    background-color: var(--nav-color);
+}
 
 body {
     background-color: var(--background-color);

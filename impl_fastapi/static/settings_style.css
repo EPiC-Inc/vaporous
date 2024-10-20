@@ -1,0 +1,32 @@
+#settings_container {
+	width: 25%;
+	margin: 5% 8%;
+}
+#settings_nav {
+	display: flex;
+	flex-direction: column;
+	gap: 3rem;
+}
+
+.collapsed {
+	display: none;
+}
+.settings_section a {
+	border: 2px solid #0000;
+	border-radius: 6px;
+	outline: none;
+	padding: 5% 4%;
+	width: min-content;
+	text-wrap: nowrap;
+}
+.settings_section:target a {
+	border: 2px solid var(--nav-color);
+}
+.settings_section:target .collapsed {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	position: absolute;
+	left: 35%;
+	top: 15%;
+}

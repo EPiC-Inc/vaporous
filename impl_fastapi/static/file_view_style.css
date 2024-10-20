@@ -28,27 +28,6 @@
     content: " ⎘";
 }
 
-a {
-    color: var(--text-color);
-    text-decoration: none;
-}
-a.link {
-    color: var(--nav-color);
-    display: inline-block;
-    position: relative;
-}
-a.link::after {
-    content: '';
-    display: inline-block;
-    position: absolute;
-    width: 100%;
-    height: 3px;
-    transform: scaleX(0);
-    transition: transform 0.3s ease-out;
-    bottom: 0;
-    left: 0;
-    background-color: var(--nav-color);
-}
 span:hover a::after, tr:hover a::after, a:hover::after {
   transform: scaleX(1);
   transform-origin: bottom left;
@@ -153,7 +132,7 @@ span:hover a::after, tr:hover a::after, a:hover::after {
 
 
 #file_container {
-    margin: 0 auto;
+    margin: 3% auto 0 auto;
     width: 60%
 }
 #file_navigate {
@@ -168,8 +147,7 @@ span:hover a::after, tr:hover a::after, a:hover::after {
     flex-direction: column;
     font-size: 110%;
     height: 95%;
-    margin-top: 4%;
-    padding: 1% 0 7rem 0;
+    padding: 2% 0 7rem 0;
     overflow-y: auto;
     width: 100%;
 }
@@ -249,17 +227,15 @@ span:hover a::after, tr:hover a::after, a:hover::after {
 }
 .file_menu span {
     font-weight: bold;
-    padding: 0;
+    padding: 5% 0;
 }
 
 /* ANCHOR: responsive stuff */
 @media only screen and (max-width: 600px) {
     #file_container {
-        margin: 0;
+        margin: 2% 0;
+        padding: 0 4%;
         width: 100%;
-    }
-    #file_list {
-        padding: 0 3%;
     }
     .file_properties button {
         color: var(--text-color);

@@ -1,0 +1,18 @@
+{% from "header.html" import header %}
+{% extends "base.html" %}
+
+{% block title %}control panel{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', path='control_panel_style.css') }}">
+{% endblock %}
+
+
+{% block body %}
+{{ header(request, username, access_level, "control_panel") }}
+put things here
+{% endblock %}
+
+
+{% block scripts %}
+<!-- <script type="text/javascript" src="{{ url_for('static', path='control_panel.js') }}"></script> -->
+{% endblock %}
