@@ -98,8 +98,8 @@ def login_with_password(username: str, password: str) -> bool:
     """Used for password authentication."""
     username = username[:USERNAME_LENGTH]
     stored_hash: str | None = None
-    with SessionMaker() as session:
-        user: User | None = session.execute(select(User).filter_by(username=username)).scalar_one_or_none()
+    with SessionMaker() as engine:
+        user: User | None = engine.execute(select(User).filter_by(username=username)).scalar_one_or_none()
         if user:
             stored_hash = user.password
     if user and checkpw(password, stored_hash):
@@ -111,8 +111,8 @@ def add_user(
     username: str, *, password: Optional[str] = None, passkey_token=None, user_level: Optional[int] = None
 ) -> tuple[bool, str | set[str]]:
     username = username.strip()[:USERNAME_LENGTH]
-    with SessionMaker() as session:
-        result = session.execute(select(User).where(User.username == username))
+    with SessionMaker() as engine:
+        result = engine.execute(select(User).where(User.username == username))
         for _ in result:
             return (False, "Username already exists!")
 
@@ -138,25 +138,25 @@ def add_user(
         passkeys.append(PublicKey(owner=new_user.user_id, key=passkey_token, name="Initial Passkey"))
     create_home_folder(new_user.user_id.hex())
     # TODO - if passkey add and associate passkey
-    with SessionMaker() as session:
-        session.add(new_user)
+    with SessionMaker() as engine:
+        engine.add(new_user)
         for key in passkeys:
-            session.add(key)
-        session.commit()
+            engine.add(key)
+        engine.commit()
     return (True, authentication_methods)
 
 
 def remove_user(username: str) -> tuple[bool, str]:
-    with SessionMaker() as session:
-        user: User | None = session.execute(select(User).filter_by(username=username)).scalar_one_or_none()
+    with SessionMaker() as engine:
+        user: User | None = engine.execute(select(User).filter_by(username=username)).scalar_one_or_none()
         if not user:
             return (False, "User does not exist to be deleted!")
-        session.delete(user)
-        session.commit()
+        engine.delete(user)
+        engine.commit()
     with sessions_lock:
         sessions_to_delete: list = []
-        for session_id, session in sessions.items():
-            if session.username == username:
+        for session_id, engine in sessions.items():
+            if engine.username == username:
                 sessions_to_delete.append(session_id)
         for session_id in sessions_to_delete:
             del sessions[session_id]
@@ -165,8 +165,8 @@ def remove_user(username: str) -> tuple[bool, str]:
 
 def list_users() -> dict[str, dict]:
     users = {}
-    with SessionMaker() as session:
-        result = session.execute(select(User)).scalars()
+    with SessionMaker() as engine:
+        result = engine.execute(select(User)).scalars()
         for user in result:
             users[user.username] = {
                 "Access level": user.user_level,
@@ -180,13 +180,13 @@ def new_session(username: str, *, invalidate_previous_sessions: bool = True):
     if invalidate_previous_sessions:
         with sessions_lock:
             sessions_to_delete: list = []
-            for session_id, session in sessions.items():
-                if session.username == username:
+            for session_id, engine in sessions.items():
+                if engine.username == username:
                     sessions_to_delete.append(session_id)
             for session_id in sessions_to_delete:
                 del sessions[session_id]
-    with SessionMaker() as session:
-        user = session.execute(select(User).where(User.username == username)).scalar_one()
+    with SessionMaker() as engine:
+        user = engine.execute(select(User).where(User.username == username)).scalar_one()
         session_id = uuid1().hex
         with sessions_lock:
             sessions[session_id] = Session(
@@ -209,36 +209,36 @@ def check_session(session_id) -> Session | None:
 
 
 def change_password(username: str, *, new_password: str, old_password: Optional[str] = None) -> tuple[bool, str]:
-    with SessionMaker() as session:
-        user: User | None = session.execute(select(User).filter_by(username=username)).scalar_one_or_none()
+    with SessionMaker() as engine:
+        user: User | None = engine.execute(select(User).filter_by(username=username)).scalar_one_or_none()
         if user is not None:
             if (old_password is not None) and (not checkpw(old_password, user.password)):
                 return (False, "Existing password is incorrect!")
         else:
             return (False, "User does not exist!")
         user.password = hashpw(new_password)
-        session.commit()
+        engine.commit()
     return (True, "Password changed")
     # TODO - invalidate other sessions?
 
 
 def change_username(old_username: str, new_username: str) -> tuple[bool, str]:
-    with SessionMaker() as session:
-        user_already_exists: User | None = session.execute(
+    with SessionMaker() as engine:
+        user_already_exists: User | None = engine.execute(
             select(User).filter_by(username=new_username)
         ).scalar_one_or_none()
         if user_already_exists:
             return (False, "New username is already in use!")
-        session.expunge(user_already_exists)
-        user: User | None = session.execute(select(User).filter_by(username=old_username)).scalar_one_or_none()
+        engine.expunge(user_already_exists)
+        user: User | None = engine.execute(select(User).filter_by(username=old_username)).scalar_one_or_none()
         if not user:
             return (False, "User does not exist!")
         user.username = new_username
-        session.commit()
+        engine.commit()
     with sessions_lock:
-        for session in sessions.values():
-            if session.username == old_username:
-                session.username = new_username
+        for engine in sessions.values():
+            if engine.username == old_username:
+                engine.username = new_username
     return (True, "Username changed")
 
 
@@ -247,14 +247,14 @@ def change_access_level(username: str, access_level: int) -> tuple[bool, str]:
         access_level = int(access_level)
     except ValueError:
         return (False, "Invalid access level - must be an integer")
-    with SessionMaker() as session:
-        user: User | None = session.execute(select(User).filter_by(username=username)).scalar_one_or_none()
+    with SessionMaker() as engine:
+        user: User | None = engine.execute(select(User).filter_by(username=username)).scalar_one_or_none()
         if not user:
             return (False, "User does not exist!")
         user.user_level = max(access_level, 0)
-        session.commit()
+        engine.commit()
     with sessions_lock:
-        for session in sessions.values():
-            if session.username == username:
-                session.access_level = access_level
+        for engine in sessions.values():
+            if engine.username == username:
+                engine.access_level = access_level
     return (True, "User access level has changed")
