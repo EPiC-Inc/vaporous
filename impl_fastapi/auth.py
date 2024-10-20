@@ -16,6 +16,7 @@ from database import SessionMaker
 from file_handler import create_home_folder
 from objects import PublicKey, User
 
+# REVIEW - Now that we're using uuids as folder names, this should be fine to remove?
 INVALID_USERNAME_CHARACTERS = regex_compile(r'<|>|:|"|\?|\/|\\|\||\*')
 USERNAME_LENGTH: int = 24
 
@@ -120,7 +121,7 @@ def add_user(
     if not validate_username(username):
         return (
             False,
-            f"Username must be between 3 and {USERNAME_LENGTH} characters and must not contain filesystem-reserved characters!",
+            f"Username must be between 3 and {USERNAME_LENGTH} characters!",
         )
 
     authentication_methods: set[str] = set()

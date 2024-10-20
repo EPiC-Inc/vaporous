@@ -31,11 +31,19 @@ async def get_session(session_id: Annotated[Optional[str], Cookie()] = None) -> 
     return None
 
 
-async def get_file_response(request: Request, base: PathLike[str] | str, file_path: Optional[PathLike[str] | str], current_directory_url: str, username: Optional[str] = None, access_level: int = 0, public: bool = False):
+async def get_file_response(
+    request: Request,
+    base: PathLike[str] | str,
+    file_path: Optional[PathLike[str] | str],
+    current_directory_url: str,
+    username: Optional[str] = None,
+    access_level: int = 0,
+    public: bool = False,
+):
     if file_path is not None:
         file_path = file_handler.safe_path_regex.sub(".", str(file_path))
     files = file_handler.list_files(base=base, subfolder=file_path, access_level=access_level)
-    if files is None:
+    if files is None and file_path is not None:  # NOTE - I smell a possible bug here?
         if file_contents := file_handler.get_file(base=base, file_path=file_path):
             return file_contents
         raise HTTPException(status_code=404, detail="Unable to get files")
@@ -44,18 +52,18 @@ async def get_file_response(request: Request, base: PathLike[str] | str, file_pa
     if file_path:
         for segment in Path(file_path).parts:
             current_path.append(segment)
-            path_segments.append({
-                "path": "/".join(current_path),
-                "name": segment
-            })
+            path_segments.append({"path": "/".join(current_path), "name": segment})
     return templates.TemplateResponse(
-        request=request, name="file_view.html", context={
+        request=request,
+        name="file_view.html",
+        context={
             "files": files,
             "current_directory_url": current_directory_url,
             "username": username,
             "access_level": access_level,
             "path_segments": path_segments,
-        })
+        },
+    )
 
 
 @app.exception_handler(404)
@@ -69,14 +77,20 @@ async def root(request: Request, session: Annotated[Optional[auth.Session], Secu
         return RedirectResponse(url=request.url_for("login_page"))
     return RedirectResponse(url=request.url_for("get_files"))
 
+
 @app.get("/settings")
 async def settings(request: Request, session: Annotated[Optional[auth.Session], Security(get_session)]):
     if session is None:
         return RedirectResponse(url=request.url_for("login_page").include_query_params(next=request.url.path))
-    return templates.TemplateResponse(request=request, name="settings.html", context={
-        "username": session.username,
-        "access_level": session.access_level,
-    })
+    return templates.TemplateResponse(
+        request=request,
+        name="settings.html",
+        context={
+            "username": session.username,
+            "access_level": session.access_level,
+        },
+    )
+
 
 @app.get("/control_panel")
 async def control_panel(request: Request, session: Annotated[Optional[auth.Session], Security(get_session)]):
@@ -84,10 +98,15 @@ async def control_panel(request: Request, session: Annotated[Optional[auth.Sessi
         return RedirectResponse(url=request.url_for("login_page").include_query_params(next=request.url.path))
     if session.access_level < 2:
         raise HTTPException(status_code=403, detail="Access level insufficient.")
-    return templates.TemplateResponse(request=request, name="control_panel.html", context={
-        "username": session.username,
-        "access_level": session.access_level,
-    })
+    return templates.TemplateResponse(
+        request=request,
+        name="control_panel.html",
+        context={
+            "username": session.username,
+            "access_level": session.access_level,
+        },
+    )
+
 
 @app.get("/f")
 @app.get("/f/{file_path:path}")
@@ -99,7 +118,12 @@ async def get_files(
     if session is None:
         return RedirectResponse(url=request.url_for("login_page").include_query_params(next=request.url.path))
     return await get_file_response(
-        request=request, base=session.user_id, file_path=file_path, current_directory_url=request.url_for("get_files"), username=session.username, access_level=session.access_level
+        request=request,
+        base=session.user_id,
+        file_path=file_path,
+        current_directory_url=str(request.url_for("get_files")),
+        username=session.username,
+        access_level=session.access_level,
     )
 
 
@@ -122,14 +146,14 @@ async def get_public_files(
         request=request,
         base=str(CONFIG.get("public_directory")),
         file_path=file_path,
-        current_directory_url=request.url_for("get_public_files"),
+        current_directory_url=str(request.url_for("get_public_files")),
         username=session.username if session else None,
         access_level=session.access_level if session else -1,
-        public=True
+        public=True,
     )
 
 
-#FIXME
+# FIXME
 @app.post("/compose")
 async def compose_file_view(
     request: Request,
@@ -177,10 +201,10 @@ async def login(request: Request, form: Annotated[OAuth2PasswordRequestForm, Sec
         # Get rid of any unexpected redirects
         if next:
             next = urlparse(next).path
-        # The above branch breaks everything if next was maliciously set, so let's properly unbreak it
+        # The above branch breaks everything if next was maliciously set, so let's properly un-break it
         if not next:
-            next = request.url_for("root")
-        response = RedirectResponse(url=next, status_code=status.HTTP_303_SEE_OTHER)
+            next = request.url_for("root")  # type:ignore
+        response = RedirectResponse(url=next, status_code=status.HTTP_303_SEE_OTHER)  # type:ignore
         response.set_cookie(
             key="session_id",
             value=auth.new_session(username),
@@ -214,7 +238,7 @@ async def passkey_challenge():
 async def logout(request: Request, session: Annotated[Optional[auth.Session], Security(get_session)]):
     response = RedirectResponse(url=request.url_for("root"))
     if session:
-    #     auth.invalidate_session(session)
+        # auth.invalidate_session(session)
         response.delete_cookie(key="session_id")
     return response
 

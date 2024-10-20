@@ -3,12 +3,14 @@ from dataclasses import dataclass
 from auth import *
 from database import engine
 
+
 @dataclass(slots=True)
 class Colors:
     reset = "\033[0m"
     green = "\033[32m"
     orange = "\033[33m"
     blue = "\033[34m"
+
 
 choice = "choice"
 while choice:

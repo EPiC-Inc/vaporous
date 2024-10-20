@@ -37,7 +37,9 @@ def create_home_folder(uuid: str) -> None:
     new_folder.mkdir()
 
 
-def list_files(base: PathLike[str] | str, subfolder: Optional[PathLike[str] | str] = None, access_level: int = 0) -> list[dict] | None:
+def list_files(
+    base: PathLike[str] | str, subfolder: Optional[PathLike[str] | str] = None, access_level: int = 0
+) -> list[dict] | None:
     UPLOAD_DIRECTORY = get_upload_directory()
     base = UPLOAD_DIRECTORY / base
     PUBLIC_DIRECTORY: Path | None = CONFIG.get("public_directory")
@@ -52,7 +54,14 @@ def list_files(base: PathLike[str] | str, subfolder: Optional[PathLike[str] | st
         subfolder = safe_path_regex.sub(".", str(subfolder))
         base = base / subfolder
     else:
-        if (base != UPLOAD_DIRECTORY) and PUBLIC_DIRECTORY and (base != PUBLIC_DIRECTORY) and PUBLIC_DIRECTORY.exists(follow_symlinks=False) and (PUBLIC_DIRECTORY.is_dir()) and access_level >= CONFIG.get("public_access_level", -1):
+        if (
+            (base != UPLOAD_DIRECTORY)
+            and PUBLIC_DIRECTORY
+            and (base != PUBLIC_DIRECTORY)
+            and PUBLIC_DIRECTORY.exists(follow_symlinks=False)
+            and (PUBLIC_DIRECTORY.is_dir())
+            and access_level >= CONFIG.get("public_access_level", -1)
+        ):
             files.append(
                 {
                     "name": PUBLIC_DIRECTORY.name,
@@ -68,7 +77,7 @@ def list_files(base: PathLike[str] | str, subfolder: Optional[PathLike[str] | st
             type_ = "dir"
         else:
             match child.suffix:
-                case ".txt" | ".pdf" | ".md" | ".rtf" | ".rst" |".odt" | ".doc" | ".docx" | ".xls" | ".xlsx":
+                case ".txt" | ".pdf" | ".md" | ".rtf" | ".rst" | ".odt" | ".doc" | ".docx" | ".xls" | ".xlsx":
                     type_ = "document"
                 case ".jpg" | ".jpeg" | ".png" | ".webp" | ".gif" | ".bmp" | ".tiff" | ".avif" | ".apng":
                     type_ = "image"
@@ -80,11 +89,7 @@ def list_files(base: PathLike[str] | str, subfolder: Optional[PathLike[str] | st
                     type_ = "archive"
                 case _:
                     type_ = "file"
-        files.append({
-            "name": child.name,
-            "path": r"/".join(child.parts[2:]),
-            "type": type_
-        })
+        files.append({"name": child.name, "path": r"/".join(child.parts[2:]), "type": type_})
     files.sort(key=lambda f: f.get("name"))
     files.sort(key=lambda f: f.get("type") == "dir", reverse=True)
     files.sort(key=lambda f: f.get("type") == "public_directory", reverse=True)
