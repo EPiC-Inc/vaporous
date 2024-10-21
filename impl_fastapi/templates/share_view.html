@@ -1,0 +1,72 @@
+{% from "header.html" import header %}
+{% extends "base.html" %}
+
+{% block title %}files{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', path='file_view_style.css') }}">
+{% endblock %}
+
+
+{% block body %}
+{{ header(request, username, access_level, "files") }}
+
+<div id="file_container">
+{{ list_files(files, current_directory_url, path_segments, access_level) }}
+</div>
+{% endblock %}
+
+
+{% block scripts %}
+<script type="text/javascript">
+    var COMPOSER_URL = "{{ url_for('compose_file_view') }}"
+</script>
+<!-- <script type="text/javascript" src="{{ url_for('static', path='file_view.js') }}"></script> -->
+{% endblock %}
+
+
+{% macro create_path(current_directory_url, path_segments) %}
+<div class="file_navigate">
+    <a class="link location_select" href="/">HOME</a>
+    {% if path_segments %}
+    {% for segment in path_segments %}
+    <span>/</span>
+        <a class="link location_select" href="{{ current_directory_url }}{% if segment['path'] %}/{{ segment['path'] }}{% endif %}">{{ segment["name"] }}</a>
+    {% endfor %}
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro list_files(files, current_directory_url, path_segments, access_level) %}
+{{ create_path(current_directory_url, path_segments) }}
+<div id="file_list">
+{% if files %}
+    {% for file in files %}
+    <div class="file_select">
+        {% if file["type"] == "public_directory" %}
+        <a class="link" href="{{ url_for('get_public_files') }}">
+        {% else %}
+        <a class="link" href="{{ current_directory_url }}/{{ file['path'] }}">
+        {% endif %}
+            <img class="file_icon" src="{{ url_for('static', path='icons/icon-' + file['type'] + '.png') }}">
+            <div class="file_name">{{ file["name"] }}</div>
+            <div class="file_size">{{ file["size"] }}</div>
+        </a>
+        {% if file["type"] != "public_directory" and access_level >= 0 %}
+        <div class="file_properties">
+            <button>···
+                <div class="file_menu">
+                    <span title="{{ file['path'] }}">{{ file["name"] }}</span>
+                    <div onclick=''>Sharing</div>
+                    <div onclick=''>Rename</div>
+                    <div style="color: crimson;" onclick=''>Delete</div>
+                </div>
+            </button>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+{% else %}
+<div>[ Empty folder ]</div>
+{% endif %}
+</div>
+{% endmacro %}

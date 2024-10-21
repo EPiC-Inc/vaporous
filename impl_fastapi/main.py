@@ -67,6 +67,44 @@ async def get_file_response(
     )
 
 
+async def get_share_response(
+    request: Request,
+    share_id: str,
+    base: PathLike[str] | str,
+    file_path: Optional[PathLike[str] | str],
+    username: Optional[str] = None,
+    access_level: int = -1,
+):
+    file_path = file_handler.safe_path_regex.sub(".", str(file_path))
+    files = file_handler.list_files(base=base, subfolder=file_path, access_level=-1)
+    if files is None and file_path is not None:  # NOTE - I smell a possible bug here?
+        if file_contents := file_handler.get_file(base=base, file_path=file_path):
+            return file_contents
+        raise HTTPException(status_code=404, detail="Unable to get files")
+    if files:
+        for file_ in files:
+            file_["path"] = "/".join(Path(file_["path"]).parts[1:])
+    print(*files)
+    folder_name = Path(base).name
+    path_segments = [{"path": "", "name": f"{folder_name} (Shared Folder)"}]
+    current_path = []
+    if file_path:
+        for segment in Path(file_path).parts:
+            current_path.append(segment)
+            path_segments.append({"path": "/".join(current_path), "name": segment})
+    return templates.TemplateResponse(
+        request=request,
+        name="share_view.html",
+        context={
+            "files": files,
+            "current_directory_url": request.url_for("get_share", share_id=share_id),
+            "username": username,
+            "access_level": -1,
+            "path_segments": path_segments,
+        },
+    )
+
+
 @app.exception_handler(404)
 async def not_found(request: Request, exception: HTTPException):
     return templates.TemplateResponse(request=request, name="404.html")
@@ -154,14 +192,18 @@ async def get_public_files(
     )
 
 
+@app.get("/s/{share_id}")
 @app.get("/s/{share_id}/{file_path:path}")
 async def get_share(
     request: Request,
     session: Annotated[Optional[auth.Session], Security(get_session)],
     share_id: str,
-    file_path: PathLike[str] | str,
+    file_path: Optional[PathLike[str] | str] = None,
 ):
-    file_path = file_handler.safe_path_regex.sub(".", str(file_path))
+    if file_path:
+        file_path = file_handler.safe_path_regex.sub(".", str(file_path))
+    else:
+        file_path = "."
     try:
         share_id_bytes = bytes.fromhex(share_id)
     except ValueError:
@@ -177,12 +219,21 @@ async def get_share(
         elif not (share.anonymous_access or session):
             raise HTTPException(status_code=401, detail="Share not publicly accessible.")
         share_path = Path(share.path)
-        owner_id = share_path.parts[0]
-        share_subpath = share_path.relative_to(owner_id) / file_path
-        return (
-            owner_id,
-            str(share_subpath),
+        # owner_id = share_path.parts[0]
+        # share_path = share_path.relative_to(owner_id)
+        # share_subpath = share_path / file_path
+        return await get_share_response(
+            request=request,
+            share_id=share_id,
+            base=share_path,
+            file_path=file_path,
+            username=session.username if session else None,
+            access_level=session.access_level if session else -1,
         )
+        # return (
+        #     owner_id,
+        #     str(share_subpath),
+        # )
 
 
 # FIXME

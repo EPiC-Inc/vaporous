@@ -28,6 +28,13 @@ def get_upload_directory() -> Path:
     return UPLOAD_DIRECTORY
 
 
+def safe_join(base: PathLike[str] | str, subfolder: PathLike[str] | str):
+    base = safe_path_regex.sub(".", str(base))
+    subfolder = safe_path_regex.sub(".", str(subfolder))
+    subfolder = (Path(base) / subfolder).relative_to(base)
+    return base / subfolder
+
+
 def create_home_folder(uuid: str) -> None:
     uuid = safe_path_regex.sub(".", uuid)  # Also maybe unnecessary
     new_folder = get_upload_directory() / uuid
@@ -51,14 +58,14 @@ def list_files(
         )  # NOTE - may be unnecessary?
 
     files: list[dict] = []
+    directory_to_list = base
     if subfolder:
-        subfolder = safe_path_regex.sub(".", str(subfolder))
-        base = base / subfolder
+        directory_to_list = safe_join(base, subfolder)
     else:
         if (
-            (base != UPLOAD_DIRECTORY)
+            (directory_to_list != UPLOAD_DIRECTORY)
             and PUBLIC_DIRECTORY
-            and (base != PUBLIC_DIRECTORY)
+            and (directory_to_list != PUBLIC_DIRECTORY)
             and PUBLIC_DIRECTORY.exists(follow_symlinks=False)
             and (PUBLIC_DIRECTORY.is_dir())
             and access_level >= CONFIG.get("public_access_level", -1)
@@ -71,9 +78,9 @@ def list_files(
                     "type": "public_directory",
                 }
             )
-    if not base.exists() or not base.is_dir():
+    if not directory_to_list.exists() or not directory_to_list.is_dir():
         return None
-    for child in base.iterdir():
+    for child in directory_to_list.iterdir():
         if child.is_dir():
             type_ = "dir"
         else:
@@ -91,15 +98,14 @@ def list_files(
                 case _:
                     type_ = "file"
         files.append({"name": child.name, "path": r"/".join(child.parts[2:]), "type": type_})
-    files.sort(key=lambda f: f.get("name", ''))
+    files.sort(key=lambda f: f.get("name", ""))
     files.sort(key=lambda f: f.get("type") == "dir", reverse=True)
     files.sort(key=lambda f: f.get("type") == "public_directory", reverse=True)
     return files
 
 
 def get_file(base: PathLike[str] | str, file_path: PathLike[str] | str) -> FileResponse | None:
-    file_path = safe_path_regex.sub(".", str(file_path))
-    file_path = get_upload_directory() / base / file_path
+    file_path = get_upload_directory() / safe_join(base, file_path)
     if not file_path.exists() or not file_path.is_file():
         return None
     return FileResponse(file_path)
@@ -117,7 +123,7 @@ def create_share(
     #   I.E. DO NOT USE THIS METHOD FOR THE PUBLIC FOLDER
     # NOTE - The allow list overrides anonymous_access=True
     file_path = safe_path_regex.sub(".", str(file_path))
-    file_path_to_save = Path(user_id) / file_path
+    file_path_to_save = safe_join(user_id, file_path)
     if file_path == Path(user_id):
         return (False, "You cannot share your whole home folder!")
     file_path = get_upload_directory() / user_id / file_path
@@ -135,29 +141,3 @@ def create_share(
         engine.add(new_share)
         engine.commit()
     return (True, new_share_link)
-
-
-class FileHandler:
-    __slots__ = ("base",)
-
-    if not (UPLOAD_DIRECTORY := CONFIG.get("upload_directory")):  # type: ignore
-        raise KeyError("upload_directory not set in config")
-    UPLOAD_DIRECTORY: Path = Path(UPLOAD_DIRECTORY)
-    PUBLIC_DIRECTORY: Path | None = CONFIG.get("public_directory")
-    if PUBLIC_DIRECTORY:
-        PUBLIC_DIRECTORY = Path(safe_path_regex.sub(".", str(PUBLIC_DIRECTORY)))  # NOTE - may be unnecessary?
-
-    def __init__(self, base: PathLike[str] | str):
-        if not self.UPLOAD_DIRECTORY.exists(follow_symlinks=False):
-            raise FileNotFoundError("Upload directory does not exist!")
-        self.base: Path = self.UPLOAD_DIRECTORY / base
-
-    def list_files(self, subfolder: Optional[PathLike[str] | str] = None) -> Generator[Path]:
-        if subfolder:
-            subfolder = safe_path_regex.sub(".", str(subfolder))
-            yield from (self.base / subfolder).iterdir()
-        else:
-            yield from self.base.iterdir()
-            if (self.base != self.UPLOAD_DIRECTORY) and (self.PUBLIC_DIRECTORY):
-                if (public_directory := (self.UPLOAD_DIRECTORY / self.PUBLIC_DIRECTORY)).exists(follow_symlinks=False):
-                    yield public_directory
