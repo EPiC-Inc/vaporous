@@ -43,7 +43,7 @@ async def get_file_response(
 ):
     if file_path is not None:
         file_path = file_handler.safe_path_regex.sub(".", str(file_path))
-    files = file_handler.list_files(base=base, subfolder=file_path, access_level=access_level)
+    files = await file_handler.list_files(base=base, subfolder=file_path, access_level=access_level)
     if files is None and file_path is not None:  # NOTE - I smell a possible bug here?
         if file_contents := await file_handler.get_file(base=base, file_path=file_path):
             return file_contents
@@ -76,7 +76,7 @@ async def get_share_response(
     access_level: int = -1,
 ):
     file_path = file_handler.safe_path_regex.sub(".", str(file_path))
-    files = file_handler.list_files(base=base, subfolder=file_path, access_level=-1)
+    files = await file_handler.list_files(base=base, subfolder=file_path, access_level=-1)
     if files is None and file_path is not None:  # NOTE - I smell a possible bug here?
         if file_contents := await file_handler.get_file(base=base, file_path=file_path):
             return file_contents
@@ -98,7 +98,7 @@ async def get_share_response(
             "files": files,
             "current_directory_url": request.url_for("get_share", share_id=share_id),
             "username": username,
-            "access_level": -1,
+            "access_level": access_level,
             "path_segments": path_segments,
         },
     )
@@ -249,7 +249,7 @@ async def compose_file_view(
         base = CONFIG.get("public_directory")
     else:
         base = session.user_id
-    files = file_handler.list_files(base=str(base), subfolder=file_path)
+    files = await file_handler.list_files(base=str(base), subfolder=file_path)
     if files is None:
         raise HTTPException(status_code=404, detail="Unable to get files")
     return templates.TemplateResponse(
@@ -268,11 +268,30 @@ async def upload(
     request: Request,
     session: Annotated[Optional[auth.Session], Security(get_session)],
     file_path: Annotated[str, Form()],
+    compression_level: Annotated[int, Form()],
     files: list[UploadFile],
 ):
     if session is None:
         raise HTTPException(status_code=401, detail="You may not upload anonymously!")
-    return await file_handler.upload_files(base=session.user_id, file_path=file_path, files=files)
+    return await file_handler.upload_files(
+        base=session.user_id,
+        file_path=file_path,
+        files=files,
+        compression=compression_level,
+    )
+
+
+@app.post("/delete")
+async def delete(
+    request: Request,
+    session: Annotated[Optional[auth.Session], Security(get_session)],
+    file_path: Annotated[str, Body()]
+):
+    print(file_path)
+    if session is None:
+        raise HTTPException(status_code=401, detail="You CAN NOT delete anonymously!")
+    base = session.user_id
+    return await file_handler.delete_file(base, file_path)
 
 
 @app.post("/change_password")

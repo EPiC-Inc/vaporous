@@ -1,24 +1,21 @@
 """Module to handle file manipulation, usable from the main server as well as APIs."""
 
+import lzma
 from datetime import datetime
 from os import PathLike
 from pathlib import Path
 from re import compile as regex_compile
-from typing import Generator, Optional
-
-from config import CONFIG
-
-from database import SessionMaker
-from objects import Share
+from typing import Optional
 
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
 
-safe_path_regex = regex_compile(r"\.\.+")
+from config import CONFIG
+from database import SessionMaker
+from objects import Share
 
-# NOTE - Class based file handling uses a bit more memory (~3%) but is about 30% faster.
-#       Limited memory on the server _may_ be an issue, will look at later.
-#       Will also check for uploads / downloads
+
+safe_path_regex = regex_compile(r"\.\.+")
 
 
 def get_upload_directory() -> Path:
@@ -46,7 +43,7 @@ def create_home_folder(uuid: str) -> None:
     new_folder.mkdir()
 
 
-def list_files(
+async def list_files(
     base: PathLike[str] | str, subfolder: Optional[PathLike[str] | str] = None, access_level: int = 0
 ) -> list[dict] | None:
     UPLOAD_DIRECTORY = get_upload_directory()
@@ -111,7 +108,14 @@ async def get_file(base: PathLike[str] | str, file_path: PathLike[str] | str) ->
         return None
     return FileResponse(file_path)
 
-async def upload_files(base: PathLike[str] | str, file_path: PathLike[str] | str, files: list[UploadFile]) -> list[tuple[bool, str]]:
+
+async def upload_files(
+    base: PathLike[str] | str,
+    file_path: PathLike[str] | str,
+    files: list[UploadFile],
+    *,
+    compression: Optional[int] = None,
+) -> list[tuple[bool, str]]:
     results = []
     file_path = get_upload_directory() / safe_join(base, file_path)
     for file_object in files:
@@ -122,10 +126,23 @@ async def upload_files(base: PathLike[str] | str, file_path: PathLike[str] | str
         if (file_path / filename).exists():
             results.append((False, "Already exists!"))
             continue
-        (file_path / filename).write_bytes(await file_object.read())
+        if compression:
+            with lzma.open(file_path / f"{filename}.xz", "wb", preset=compression) as compressed_file:
+                compressed_file.write(await file_object.read())
+        else:
+            (file_path / filename).write_bytes(await file_object.read())
         results.append((True, "Success!"))
-
     return results
+
+
+async def delete_file(base: PathLike[str] | str, file_path: PathLike[str] | str) -> tuple[bool, str]:
+    print(base)
+    print(file_path)
+    file_path = get_upload_directory() / safe_join(base, file_path)
+    if not file_path.exists():
+        return (False, "Cannot delete nonexistent file")
+    file_path.unlink()
+    return (True, "File deleted")
 
 
 def create_share(

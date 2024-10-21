@@ -18,6 +18,10 @@
     <form method="dialog" onsubmit="upload_files();" id="upload_form">
         <input type="file" name="files" multiple>
         <div>
+            <label for="compression">Compression:</label>
+            <input type="number" min="0" max="9" id="compression" name="compression_level">
+        </div>
+        <div>
             <input type="submit" value="Upload">
             <input type="button" onclick="document.getElementById('upload_dialog').close()" value="Close">
         </div>
@@ -30,6 +34,7 @@
 <script type="text/javascript">
     var COMPOSER_URL = "{{ url_for('compose_file_view') }}";
     var UPLOAD_URL = "{{ url_for('upload') }}";
+    var DELETE_URL = "{{ url_for('delete') }}";
     var CURRENT_DIRECTORY = "{{ path_segments[-1]['path'] if path_segments else '' }}";
 </script>
 <script type="text/javascript" src="{{ url_for('static', path='file_view.js') }}"></script>
@@ -70,7 +75,7 @@
                     <span title="{{ file['path'] }}">{{ file["name"] }}</span>
                     <div onclick=''>Sharing</div>
                     <div onclick=''>Rename</div>
-                    <div style="color: crimson;" onclick=''>Delete</div>
+                    <div style="color: crimson;" onclick="if (confirm('Delete {{ file['name'] }}?')) {delete_file('{{ file['name'] }}');}">Delete</div>
                 </div>
             </button>
         </div>

@@ -3,7 +3,6 @@ function upload_files() {
 	let upload_form = new FormData(upload_form_element);
 	upload_form.append("file_path", CURRENT_DIRECTORY);
 	//TODO
-	upload_form.append("compression_level", 0);
 	fetch(UPLOAD_URL, {
 		method: "POST",
 		body: upload_form
@@ -11,7 +10,28 @@ function upload_files() {
 		upload_form_element.reset();
 		response.json().then(json => {
 			console.log(json);
-			// TODO - reload / re-compose
+			// TODO - re-compose?
+			window.location.reload();
+		});
+	});
+}
+
+function delete_file(filename) {
+	if (CURRENT_DIRECTORY.length > 0) {
+		filename = CURRENT_DIRECTORY + "/" + filename
+	}
+	console.log(filename);
+	fetch(DELETE_URL, {
+		method: "POST",
+		body: filename
+	}).then(response => {
+		response.json().then(json => {
+			success = json[0]
+			console.log(json);
+			// TODO - re-compose?
+			if (success) {
+				window.location.reload();
+			}
 		});
 	});
 }

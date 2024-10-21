@@ -147,14 +147,14 @@ span:hover a::after, tr:hover a::after, a:hover::after {
     flex-direction: column;
     font-size: 110%;
     height: 95%;
-    padding: 2% 0 7rem 0;
+    padding: 2% 0 7em 0;
     overflow-y: auto;
     width: 100%;
 }
 .file_select {
     display:flex;
     flex-direction: row;
-    gap: 2%; 
+    gap: 2%;
     width: 100%;
 }
 .file_select:hover td {
@@ -174,7 +174,7 @@ span:hover a::after, tr:hover a::after, a:hover::after {
 }
 .file_name {
     align-self: center;
-    flex-grow: 6; 
+    flex-grow: 6;
     position: relative;
     width: auto;
     word-break: break-all;
