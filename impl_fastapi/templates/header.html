@@ -20,7 +20,7 @@
 		</div>
 	</a>
 	{% if highlight == 'files' %}
-	<div class="header_btn">Upload</div>
+	<div class="header_btn" onclick="document.getElementById('upload_dialog').showModal()">Upload</div>
 	<div class="header_btn">New Folder</div>
 	{% endif %}
 	{% else %}

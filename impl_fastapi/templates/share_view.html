@@ -8,10 +8,10 @@
 
 
 {% block body %}
-{{ header(request, username, access_level, "files") }}
+{{ header(request, username, access_level) }}
 
 <div id="file_container">
-{{ list_files(files, current_directory_url, path_segments, access_level) }}
+{{ list_files(files, current_directory_url, path_segments) }}
 </div>
 {% endblock %}
 
@@ -36,7 +36,7 @@
 </div>
 {% endmacro %}
 
-{% macro list_files(files, current_directory_url, path_segments, access_level) %}
+{% macro list_files(files, current_directory_url, path_segments) %}
 {{ create_path(current_directory_url, path_segments) }}
 <div id="file_list">
 {% if files %}
@@ -51,17 +51,6 @@
             <div class="file_name">{{ file["name"] }}</div>
             <div class="file_size">{{ file["size"] }}</div>
         </a>
-        {% if file["type"] != "public_directory" and access_level >= 0 %}
-        <div class="file_properties">
-            <button>···
-                <div class="file_menu">
-                    <span title="{{ file['path'] }}">{{ file["name"] }}</span>
-                    <div onclick=''>Sharing</div>
-                    <div onclick=''>Rename</div>
-                    <div style="color: crimson;" onclick=''>Delete</div>
-                </div>
-            </button>
-        </div>
         {% endif %}
     </div>
     {% endfor %}

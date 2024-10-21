@@ -11,6 +11,7 @@ from config import CONFIG
 from database import SessionMaker
 from objects import Share
 
+from fastapi import UploadFile
 from fastapi.responses import FileResponse
 
 safe_path_regex = regex_compile(r"\.\.+")
@@ -104,11 +105,27 @@ def list_files(
     return files
 
 
-def get_file(base: PathLike[str] | str, file_path: PathLike[str] | str) -> FileResponse | None:
+async def get_file(base: PathLike[str] | str, file_path: PathLike[str] | str) -> FileResponse | None:
     file_path = get_upload_directory() / safe_join(base, file_path)
     if not file_path.exists() or not file_path.is_file():
         return None
     return FileResponse(file_path)
+
+async def upload_files(base: PathLike[str] | str, file_path: PathLike[str] | str, files: list[UploadFile]) -> list[tuple[bool, str]]:
+    results = []
+    file_path = get_upload_directory() / safe_join(base, file_path)
+    for file_object in files:
+        filename = file_object.filename
+        if not filename:
+            results.append((False, "No filename??"))
+            continue
+        if (file_path / filename).exists():
+            results.append((False, "Already exists!"))
+            continue
+        (file_path / filename).write_bytes(await file_object.read())
+        results.append((True, "Success!"))
+
+    return results
 
 
 def create_share(

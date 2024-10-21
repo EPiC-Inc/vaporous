@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Annotated, Optional
 from urllib.parse import urlparse
 
-from fastapi import Body, Cookie, HTTPException, FastAPI, Request, Security, status
+from fastapi import Body, Cookie, FastAPI, Form, HTTPException, Request, Security, UploadFile, status
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.staticfiles import StaticFiles
@@ -45,7 +45,7 @@ async def get_file_response(
         file_path = file_handler.safe_path_regex.sub(".", str(file_path))
     files = file_handler.list_files(base=base, subfolder=file_path, access_level=access_level)
     if files is None and file_path is not None:  # NOTE - I smell a possible bug here?
-        if file_contents := file_handler.get_file(base=base, file_path=file_path):
+        if file_contents := await file_handler.get_file(base=base, file_path=file_path):
             return file_contents
         raise HTTPException(status_code=404, detail="Unable to get files")
     path_segments = [{"path": "", "name": "Public Files"}] if public else []
@@ -78,13 +78,12 @@ async def get_share_response(
     file_path = file_handler.safe_path_regex.sub(".", str(file_path))
     files = file_handler.list_files(base=base, subfolder=file_path, access_level=-1)
     if files is None and file_path is not None:  # NOTE - I smell a possible bug here?
-        if file_contents := file_handler.get_file(base=base, file_path=file_path):
+        if file_contents := await file_handler.get_file(base=base, file_path=file_path):
             return file_contents
         raise HTTPException(status_code=404, detail="Unable to get files")
     if files:
         for file_ in files:
             file_["path"] = "/".join(Path(file_["path"]).parts[1:])
-    print(*files)
     folder_name = Path(base).name
     path_segments = [{"path": "", "name": f"{folder_name} (Shared Folder)"}]
     current_path = []
@@ -264,6 +263,33 @@ async def compose_file_view(
     )
 
 
+@app.post("/upload")
+async def upload(
+    request: Request,
+    session: Annotated[Optional[auth.Session], Security(get_session)],
+    file_path: Annotated[str, Form()],
+    files: list[UploadFile],
+):
+    if session is None:
+        raise HTTPException(status_code=401, detail="You may not upload anonymously!")
+    return await file_handler.upload_files(base=session.user_id, file_path=file_path, files=files)
+
+
+@app.post("/change_password")
+async def change_password(
+    request: Request,
+    session: Annotated[Optional[auth.Session], Security(get_session)],
+    old_password: Annotated[str, Form()],
+    new_password: Annotated[str, Form()],
+    confirm_new_password: Annotated[str, Form()],
+):
+    if session is None:
+        raise HTTPException(status_code=401, detail="Cannot change password without being logged in first!")
+    if new_password != confirm_new_password:
+        return (False, "New passwords must match!")
+    return auth.change_password(session.username, new_password=new_password, old_password=old_password)
+
+
 @app.get("/login")
 async def login_page(request: Request, next: Optional[str] = None, messages: Optional[list] = None):
     if messages is None:
@@ -291,7 +317,7 @@ async def login(request: Request, form: Annotated[OAuth2PasswordRequestForm, Sec
         response.set_cookie(
             key="session_id",
             value=auth.new_session(username),
-            secure=True,
+            # secure=True,
             max_age=int(auth.SESSION_EXPIRY.total_seconds()),
         )
         return response
