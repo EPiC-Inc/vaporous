@@ -17,7 +17,7 @@ import file_handler
 from api import api_v0
 from config import CONFIG
 from database import SessionMaker
-from objects import Share
+from objects import Share, User
 
 app = FastAPI(openapi_url=None)
 templates = Jinja2Templates(Path(__file__).parent / "templates")
@@ -230,10 +230,30 @@ async def get_share(
             username=session.username if session else None,
             access_level=session.access_level if session else -1,
         )
-        # return (
-        #     owner_id,
-        #     str(share_subpath),
-        # )
+
+
+@app.get("/list_shares")
+async def list_shares(request: Request,
+    session: Annotated[Optional[auth.Session], Security(get_session)]
+):
+    if session is None:
+        raise HTTPException(status_code=401, detail="Anonymous users cannot get shares!")
+    owned_shares: list[dict] = []
+    with SessionMaker() as engine:
+        shares: list[Share] = engine.execute(select(Share).filter_by(owner=bytes.fromhex(session.user_id))).scalars()
+        for share in shares:
+            allow_list = []
+            if share.user_whitelist:
+                for user_id in share.user_whitelist.split("$"):
+                    if (user := engine.execute(select(User).filter_by(user_id=bytes.fromhex(user_id))).scalar_one_or_none()):
+                        allow_list.append(user.username)
+            owned_shares.append({
+                "id": share.share_id.hex(),
+                "shared_file": share.path,
+                "anonymous_access": share.anonymous_access,
+                "allowed_users": allow_list
+            })
+    return owned_shares
 
 
 # FIXME
@@ -276,7 +296,7 @@ async def upload(
     if session is None:
         raise HTTPException(status_code=401, detail="You may not upload anonymously!")
     return await file_handler.upload_files(
-        base=CONFIG.get("public_directory") if to_public else session.user_id,
+        base=CONFIG.get("public_directory") if to_public and CONFIG.get("public_directory") else session.user_id,
         file_path=file_path,
         files=files,
         compression=compression_level,
@@ -293,7 +313,7 @@ async def delete(
     print(body)
     if session is None:
         raise HTTPException(status_code=401, detail="You CAN NOT delete anonymously!")
-    base = CONFIG.get("public_directory") if from_public else session.user_id
+    base = CONFIG.get("public_directory") if from_public and CONFIG.get("public_directory") else session.user_id
     return await file_handler.delete_file(base, file_path)
 
 

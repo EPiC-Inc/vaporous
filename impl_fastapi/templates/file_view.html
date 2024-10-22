@@ -14,6 +14,14 @@
 {{ list_files(files, current_directory_url, path_segments, access_level) }}
 </div>
 
+<dialog id="public_share_dialog">
+    <form method="dialog">
+        <span>Share link:</span>
+        <a type="text" id="public_link" class="link share_link" onclick="navigator.clipboard.writeText(this.innerText);"></a>
+        <input type="submit" value="Close">
+    </form>
+</dialog>
+
 <dialog id="share_dialog">
     <form method="dialog" onsubmit="console.log('test');" id="share_form">
         <div>Sharing options for <div id="name_to_share"></div></div>
@@ -87,8 +95,8 @@
         <div class="file_properties">
             <button>···
                 <div class="file_menu">
-                    <span title="{{ file['path'] }}">{{ file["name"] }}</span>
-                    <div onclick="open_share_dialog('{{ file['path'] }}');">Sharing</div>
+                    <span title="{{ file['name'] }}">{{ file["name"] }}</span>
+                    <div onclick="open_share_dialog('{{ file['name'] }}');">Sharing</div>
                     <div onclick=''>Rename</div>
                     <div style="color: crimson;" onclick="if (confirm('Delete {{ file['name'] }}?')) {delete_file('{{ file['name'] }}');}">Delete</div>
                 </div>
