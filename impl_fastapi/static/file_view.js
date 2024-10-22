@@ -2,6 +2,7 @@ function upload_files() {
 	let upload_form_element = document.getElementById("upload_form");
 	let upload_form = new FormData(upload_form_element);
 	upload_form.append("file_path", CURRENT_DIRECTORY);
+	upload_form.append("to_public", PUBLIC);
 	//TODO
 	fetch(UPLOAD_URL, {
 		method: "POST",
@@ -23,7 +24,8 @@ function delete_file(filename) {
 	console.log(filename);
 	fetch(DELETE_URL, {
 		method: "POST",
-		body: filename
+		headers: {"Content-Type": "application/json"},
+		body: JSON.stringify([PUBLIC, filename])
 	}).then(response => {
 		response.json().then(json => {
 			success = json[0]

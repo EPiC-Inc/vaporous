@@ -63,6 +63,7 @@ async def get_file_response(
             "username": username,
             "access_level": access_level,
             "path_segments": path_segments,
+            "in_public_folder": public,
         },
     )
 
@@ -268,13 +269,14 @@ async def upload(
     request: Request,
     session: Annotated[Optional[auth.Session], Security(get_session)],
     file_path: Annotated[str, Form()],
+    to_public: Annotated[bool, Form()],
     compression_level: Annotated[int, Form()],
     files: list[UploadFile],
 ):
     if session is None:
         raise HTTPException(status_code=401, detail="You may not upload anonymously!")
     return await file_handler.upload_files(
-        base=session.user_id,
+        base=CONFIG.get("public_directory") if to_public else session.user_id,
         file_path=file_path,
         files=files,
         compression=compression_level,
@@ -285,12 +287,13 @@ async def upload(
 async def delete(
     request: Request,
     session: Annotated[Optional[auth.Session], Security(get_session)],
-    file_path: Annotated[str, Body()]
+    body: Annotated[list, Body()]
 ):
-    print(file_path)
+    from_public, file_path = body
+    print(body)
     if session is None:
         raise HTTPException(status_code=401, detail="You CAN NOT delete anonymously!")
-    base = session.user_id
+    base = CONFIG.get("public_directory") if from_public else session.user_id
     return await file_handler.delete_file(base, file_path)
 
 
