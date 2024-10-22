@@ -19,16 +19,13 @@ function upload_files() {
 
 function open_share_dialog(filename) {
 	if (PUBLIC) {
-		if (window.location.href.endsWith("/")) {
-			document.getElementById("public_link").innerText = window.location.href + filename;
-		} else {
-			document.getElementById("public_link").innerText = window.location.href + filename;
-		}
+		document.getElementById("public_link").innerText = PUBLIC_URL + "/" + filename;
 		document.getElementById("public_share_dialog").showModal();
 	} else {
 		if (CURRENT_DIRECTORY.length > 0) {
 			filename = CURRENT_DIRECTORY + "/" + filename;
 		}
+		console.log(filename);
 	}
 }
 

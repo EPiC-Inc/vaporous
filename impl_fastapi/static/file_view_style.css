@@ -214,6 +214,7 @@ span:hover a::after, tr:hover a::after, a:hover::after {
     border-radius: 5px;
     color: var(--text-color);
     display: none;
+    font-weight: initial;
     z-index: 2;
 }
 .file_properties button:focus .file_menu {
