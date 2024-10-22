@@ -197,11 +197,16 @@ span:hover a::after, tr:hover a::after, a:hover::after {
 .file_properties button {
     background: none;
     border: none;
+    border-radius: 5px;
     color: var(--background-color);
     cursor: pointer;
     font-size: inherit;
+    font-weight: bold;
     margin: auto;
     position: relative;
+}
+.file_properties button:hover {
+    background: linear-gradient(to top, #1a0ff1 0%, #9401ff 100%);
 }
 .file_menu {
     background-color: var(--background-color);
