@@ -6,7 +6,7 @@
     --header-hover-color: rgb(200, 200, 200);
     --header-selected-color: rgb(200, 200, 200);
     --header-selected-hover-color: white;
-    --nav-color: #008b9d;
+    --nav-color: #a24dff;
     --text-color: darkgrey;
     --logout-color: darkred;
     --logout-hover-color: crimson;
@@ -74,7 +74,8 @@ a.link::after {
     transition: transform 0.3s ease-out;
     bottom: 0;
     left: 0;
-    background-color: var(--nav-color);
+    background: linear-gradient(to right, #9401ff 0%, #1a0ff1 100%);
+/*    background-color: var(--nav-color);*/
 }
 
 body {
