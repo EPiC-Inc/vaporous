@@ -1,4 +1,0 @@
-# /api API
-
-## Endpoints
-### 
