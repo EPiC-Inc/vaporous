@@ -12,9 +12,9 @@ from uuid import uuid1
 
 from sqlalchemy import select
 
-from database import SessionMaker
-from file_handler import create_home_folder
-from objects import PublicKey, User
+from .database import SessionMaker
+from .file_handler import create_home_folder
+from .objects import PublicKey, User
 
 # REVIEW - Now that we're using uuids as folder names, this should be fine to remove?
 INVALID_USERNAME_CHARACTERS = regex_compile(r'<|>|:|"|\?|\/|\\|\||\*')

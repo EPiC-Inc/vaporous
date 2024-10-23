@@ -7,6 +7,6 @@ if __name__ == "__main__":
     from hypercorn.asyncio import serve
 
     hypercorn_config = Config()
-    hypercorn_config.bind = [f"{CONFIG.host}:{CONFIG.port}"]
+    hypercorn_config.bind = [f"{CONFIG.get("host")}:{CONFIG.get("port")}"]
     # hypercorn_config.quic_bind = [f"{CONFIG.host}:{CONFIG.port}"]
     asyncio.run(serve(app, hypercorn_config))  # type: ignore

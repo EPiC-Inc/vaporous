@@ -12,12 +12,11 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
 
-import auth
-import file_handler
-from api import api_v0
-from config import CONFIG
-from database import SessionMaker
-from objects import Share, User
+from . import auth, file_handler
+from .api import api_v0
+from .config import CONFIG
+from .database import SessionMaker
+from .objects import Share, User
 
 app = FastAPI(openapi_url=None)
 templates = Jinja2Templates(Path(__file__).parent / "templates")

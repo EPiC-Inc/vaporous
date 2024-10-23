@@ -3,8 +3,8 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 
-from config import CONFIG
-from objects import Base
+from .config import CONFIG
+from .objects import Base
 
 if not (database_uri := CONFIG.get("database_uri")):
     raise KeyError("database_uri not found in config")

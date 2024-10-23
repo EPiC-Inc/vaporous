@@ -10,9 +10,9 @@ from typing import Optional
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
 
-from config import CONFIG
-from database import SessionMaker
-from objects import Share
+from .config import CONFIG
+from .database import SessionMaker
+from .objects import Share
 
 
 safe_path_regex = regex_compile(r"\.\.+")
