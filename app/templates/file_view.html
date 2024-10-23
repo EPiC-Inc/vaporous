@@ -14,6 +14,31 @@
 {{ list_files(files, current_directory_url, path_segments, access_level) }}
 </div>
 
+<dialog id="public_share_dialog">
+    <form method="dialog">
+        <span>Share link:</span>
+        <a type="text" id="public_link" class="link share_link" onclick="navigator.clipboard.writeText(this.innerText);"></a>
+        <input type="submit" value="Close">
+    </form>
+</dialog>
+
+<dialog id="share_dialog">
+    <form method="dialog" onsubmit="publish_share();" id="share_form">
+        <div>Sharing options for <span id="name_to_share" style="font-weight: bold;"></span></div>
+        <input type="text" id="file_path_to_share" disabled hidden value="">
+        <span>Existing shares:</span>
+        <div id="existing_shares"></div>
+        <div>
+            <label for="anon_access">Anonymous access?</label>
+            <input type="checkbox" id="anon_access" name="anonymous_access" checked>
+        </div>
+        <div>
+            <input type="submit" value="Share">
+            <input type="button" onclick="document.getElementById('share_dialog').close();document.getElementById('share_form').reset();" value="Close">
+        </div>
+    </form>
+</dialog>
+
 <dialog id="upload_dialog">
     <form method="dialog" onsubmit="upload_files();" id="upload_form">
         <input type="file" name="files" multiple>
@@ -23,7 +48,7 @@
         </div>
         <div>
             <input type="submit" value="Upload">
-            <input type="button" onclick="document.getElementById('upload_dialog').close()" value="Close">
+            <input type="button" onclick="document.getElementById('upload_dialog').close();document.getElementById('upload_form').reset();" value="Cancel">
         </div>
     </form>
 </dialog>
@@ -32,6 +57,10 @@
 
 {% block scripts %}
 <script type="text/javascript">
+    var PUBLIC = {{ in_public_folder | tojson }};
+    var PUBLIC_URL = "{{ url_for('get_public_files') }}"
+    var SHARE_URL = "{{ url_for('add_share') }}"
+    var LIST_SHARE_URL = "{{ url_for('list_shares') }}"
     var COMPOSER_URL = "{{ url_for('compose_file_view') }}";
     var UPLOAD_URL = "{{ url_for('upload') }}";
     var DELETE_URL = "{{ url_for('delete') }}";
@@ -73,7 +102,7 @@
             <button>···
                 <div class="file_menu">
                     <span title="{{ file['path'] }}">{{ file["name"] }}</span>
-                    <div onclick=''>Sharing</div>
+                    <div onclick="open_share_dialog('{{ file['path'] }}', '{{ file['name'] }}');">Sharing</div>
                     <div onclick=''>Rename</div>
                     <div style="color: crimson;" onclick="if (confirm('Delete {{ file['name'] }}?')) {delete_file('{{ file['name'] }}');}">Delete</div>
                 </div>

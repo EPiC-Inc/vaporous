@@ -17,7 +17,7 @@ import file_handler
 from api import api_v0
 from config import CONFIG
 from database import SessionMaker
-from objects import Share
+from objects import Share, User
 
 app = FastAPI(openapi_url=None)
 templates = Jinja2Templates(Path(__file__).parent / "templates")
@@ -63,6 +63,7 @@ async def get_file_response(
             "username": username,
             "access_level": access_level,
             "path_segments": path_segments,
+            "in_public_folder": public,
         },
     )
 
@@ -229,10 +230,49 @@ async def get_share(
             username=session.username if session else None,
             access_level=session.access_level if session else -1,
         )
-        # return (
-        #     owner_id,
-        #     str(share_subpath),
-        # )
+
+
+@app.post("/new_share")
+async def add_share(
+    request: Request,
+    session: Annotated[Optional[auth.Session], Security(get_session)],
+    file_path: Annotated[str, Body()],
+):
+    if session is None:
+        raise HTTPException(status_code=401, detail="neener neener neener")
+    base = session.user_id
+    return file_handler.create_share(user_id=session.user_id, file_path=file_path, expires=None)
+
+
+@app.get("/list_shares")
+async def list_shares(
+    request: Request,
+    session: Annotated[Optional[auth.Session], Security(get_session)],
+    filter: Optional[str] = None,
+):
+    if session is None:
+        raise HTTPException(status_code=401, detail="Anonymous users cannot get shares!")
+    if filter:
+        filter = f"{session.user_id}/{filter}"
+    owned_shares: list[dict] = []
+    with SessionMaker() as engine:
+        shares: list[Share] = engine.execute(select(Share).filter_by(owner=bytes.fromhex(session.user_id))).scalars()
+        for share in shares:
+            allow_list: list[str] = []
+            if share.user_whitelist:
+                for user_id in share.user_whitelist.split("$"):
+                    if (user := engine.execute(select(User).filter_by(user_id=bytes.fromhex(user_id))).scalar_one_or_none()):
+                        allow_list.append(user.username)
+            if filter and not share.path == filter:
+                continue
+            owned_shares.append({
+                "id": share.share_id.hex(),
+                "url": str(request.url_for("get_share", share_id=share.share_id.hex())),
+                "shared_file": share.path,
+                "anonymous_access": share.anonymous_access,
+                "allowed_users": allow_list
+            })
+    return owned_shares
 
 
 # FIXME
@@ -268,13 +308,14 @@ async def upload(
     request: Request,
     session: Annotated[Optional[auth.Session], Security(get_session)],
     file_path: Annotated[str, Form()],
+    to_public: Annotated[bool, Form()],
     compression_level: Annotated[int, Form()],
     files: list[UploadFile],
 ):
     if session is None:
         raise HTTPException(status_code=401, detail="You may not upload anonymously!")
     return await file_handler.upload_files(
-        base=session.user_id,
+        base=CONFIG.get("public_directory") if to_public and CONFIG.get("public_directory") else session.user_id,
         file_path=file_path,
         files=files,
         compression=compression_level,
@@ -285,12 +326,14 @@ async def upload(
 async def delete(
     request: Request,
     session: Annotated[Optional[auth.Session], Security(get_session)],
-    file_path: Annotated[str, Body()]
+    from_public: Annotated[bool, Body()],
+    file_path: Annotated[str, Body()],
 ):
-    print(file_path)
+    # from_public, file_path = body
+    print(from_public, file_path)
     if session is None:
         raise HTTPException(status_code=401, detail="You CAN NOT delete anonymously!")
-    base = session.user_id
+    base = CONFIG.get("public_directory") if from_public and CONFIG.get("public_directory") else session.user_id
     return await file_handler.delete_file(base, file_path)
 
 
