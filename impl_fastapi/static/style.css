@@ -7,10 +7,16 @@
     --header-selected-color: rgb(200, 200, 200);
     --header-selected-hover-color: white;
     --nav-color: #8675ef;
+    --nav-click-color: #5ff3f7;
     --text-color: darkgrey;
     --logout-color: darkred;
     --logout-hover-color: crimson;
     box-sizing: border-box;
+    color: var(--text-color);
+}
+
+dialog {
+    background-color: var(--background-color);
     color: var(--text-color);
 }
 
@@ -61,6 +67,7 @@ a {
 }
 a.link {
     color: var(--nav-color);
+    cursor: pointer;
     display: inline-block;
     position: relative;
 }
@@ -71,11 +78,14 @@ a.link::after {
     width: 100%;
     height: 3px;
     transform: scaleX(0);
-    transition: transform 0.3s ease-out;
+    transition: transform 300ms ease-out, color 500ms ease;
     bottom: 0;
     left: 0;
     background: linear-gradient(to right, #9401ff 0%, #1a0ff1 100%);
 /*    background-color: var(--nav-color);*/
+}
+a.link:active {
+    color: var(--nav-click-color);
 }
 
 body {

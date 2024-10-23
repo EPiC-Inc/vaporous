@@ -232,23 +232,42 @@ async def get_share(
         )
 
 
+@app.post("/new_share")
+async def add_share(
+    request: Request,
+    session: Annotated[Optional[auth.Session], Security(get_session)],
+    file_path: Annotated[str, Body()],
+):
+    if session is None:
+        raise HTTPException(status_code=401, detail="neener neener neener")
+    base = session.user_id
+    return file_handler.create_share(user_id=session.user_id, file_path=file_path, expires=None)
+
+
 @app.get("/list_shares")
-async def list_shares(request: Request,
-    session: Annotated[Optional[auth.Session], Security(get_session)]
+async def list_shares(
+    request: Request,
+    session: Annotated[Optional[auth.Session], Security(get_session)],
+    filter: Optional[str] = None,
 ):
     if session is None:
         raise HTTPException(status_code=401, detail="Anonymous users cannot get shares!")
+    if filter:
+        filter = f"{session.user_id}/{filter}"
     owned_shares: list[dict] = []
     with SessionMaker() as engine:
         shares: list[Share] = engine.execute(select(Share).filter_by(owner=bytes.fromhex(session.user_id))).scalars()
         for share in shares:
-            allow_list = []
+            allow_list: list[str] = []
             if share.user_whitelist:
                 for user_id in share.user_whitelist.split("$"):
                     if (user := engine.execute(select(User).filter_by(user_id=bytes.fromhex(user_id))).scalar_one_or_none()):
                         allow_list.append(user.username)
+            if filter and not share.path == filter:
+                continue
             owned_shares.append({
                 "id": share.share_id.hex(),
+                "url": str(request.url_for("get_share", share_id=share.share_id.hex())),
                 "shared_file": share.path,
                 "anonymous_access": share.anonymous_access,
                 "allowed_users": allow_list
@@ -307,10 +326,11 @@ async def upload(
 async def delete(
     request: Request,
     session: Annotated[Optional[auth.Session], Security(get_session)],
-    body: Annotated[list, Body()]
+    from_public: Annotated[bool, Body()],
+    file_path: Annotated[str, Body()],
 ):
-    from_public, file_path = body
-    print(body)
+    # from_public, file_path = body
+    print(from_public, file_path)
     if session is None:
         raise HTTPException(status_code=401, detail="You CAN NOT delete anonymously!")
     base = CONFIG.get("public_directory") if from_public and CONFIG.get("public_directory") else session.user_id

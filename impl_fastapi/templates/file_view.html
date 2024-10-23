@@ -23,8 +23,11 @@
 </dialog>
 
 <dialog id="share_dialog">
-    <form method="dialog" onsubmit="console.log('test');" id="share_form">
-        <div>Sharing options for <div id="name_to_share"></div></div>
+    <form method="dialog" onsubmit="publish_share();" id="share_form">
+        <div>Sharing options for <span id="name_to_share" style="font-weight: bold;"></span></div>
+        <input type="text" id="file_path_to_share" disabled hidden value="">
+        <span>Existing shares:</span>
+        <div id="existing_shares"></div>
         <div>
             <label for="anon_access">Anonymous access?</label>
             <input type="checkbox" id="anon_access" name="anonymous_access" checked>
@@ -56,6 +59,8 @@
 <script type="text/javascript">
     var PUBLIC = {{ in_public_folder | tojson }};
     var PUBLIC_URL = "{{ url_for('get_public_files') }}"
+    var SHARE_URL = "{{ url_for('add_share') }}"
+    var LIST_SHARE_URL = "{{ url_for('list_shares') }}"
     var COMPOSER_URL = "{{ url_for('compose_file_view') }}";
     var UPLOAD_URL = "{{ url_for('upload') }}";
     var DELETE_URL = "{{ url_for('delete') }}";
@@ -97,7 +102,7 @@
             <button>···
                 <div class="file_menu">
                     <span title="{{ file['path'] }}">{{ file["name"] }}</span>
-                    <div onclick="open_share_dialog('{{ file['path'] }}');">Sharing</div>
+                    <div onclick="open_share_dialog('{{ file['path'] }}', '{{ file['name'] }}');">Sharing</div>
                     <div onclick=''>Rename</div>
                     <div style="color: crimson;" onclick="if (confirm('Delete {{ file['name'] }}?')) {delete_file('{{ file['name'] }}');}">Delete</div>
                 </div>
