@@ -35,6 +35,7 @@ class Session:
     user_id: str
     access_level: int
     expires: datetime
+    session_id: str
 
 
 sessions_lock = Lock()
@@ -194,6 +195,7 @@ def new_session(username: str, *, invalidate_previous_sessions: bool = True):
                 user_id=user.user_id.hex(),
                 access_level=user.user_level,
                 expires=datetime.now() + SESSION_EXPIRY,
+                session_id=session_id,
             )
     return session_id
 
@@ -206,6 +208,13 @@ def check_session(session_id) -> Session | None:
             else:
                 return session
     return None
+
+
+def invalidate_session(session_id) -> None:
+    try:
+        del sessions[session_id]
+    except:
+        pass
 
 
 def change_password(username: str, *, new_password: str, old_password: Optional[str] = None) -> tuple[bool, str]:
@@ -229,7 +238,7 @@ def change_username(old_username: str, new_username: str) -> tuple[bool, str]:
         ).scalar_one_or_none()
         if user_already_exists:
             return (False, "New username is already in use!")
-        engine.expunge(user_already_exists)
+            engine.expunge(user_already_exists)
         user: User | None = engine.execute(select(User).filter_by(username=old_username)).scalar_one_or_none()
         if not user:
             return (False, "User does not exist!")

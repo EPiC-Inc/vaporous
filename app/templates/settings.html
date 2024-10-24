@@ -34,17 +34,21 @@
 
 <dialog id="username_change">
 	<form method="dialog" id="username_change_form" onsubmit="change_username();">
+		<div class="error" id="username_change_message"></div>
 		<div>
 			<label for="new_username">New username:</label>
 			<input id="new_username" name="new_username" autocomplete="off" type="text">
 		</div>
-		<input type="submit" value="Change">
+		<div>
+			<input type="submit" value="Change"> <input type="button" value="Cancel" onclick="document.getElementById('username_change').close();">
+		</div>
 	</form>
 </dialog>
 
 <dialog id="password_change">
 	<form method="dialog" id="password_change_form" onsubmit="change_password();">
 		<div class="error" id="password_change_message"></div>
+		<input type="text" name="username" autocomplete="username" hidden disabled>
 		<div>
 			<label for="old_password">Current password:</label>
 			<input id="old_password" name="old_password" autocomplete="off" type="password">
@@ -66,6 +70,7 @@
 {% block scripts %}
 <script type="text/javascript">
 	const PASSWORD_CHANGE_URL = "{{ url_for('change_password') }}";
+	const USERNAME_CHANGE_URL = "{{ url_for('change_username') }}";
     const LIST_SHARE_URL = "{{ url_for('list_shares') }}";
     const DELETE_SHARE_URL = "{{ url_for('remove_share') }}";
     const FILE_URL = "{{ url_for('get_files') }}";

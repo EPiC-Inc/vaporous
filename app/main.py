@@ -377,6 +377,17 @@ async def change_password(
     return auth.change_password(session.username, new_password=new_password, old_password=old_password)
 
 
+@app.post("/change_username")
+async def change_username(
+    request: Request,
+    session: Annotated[Optional[auth.Session], Security(get_session)],
+    new_username: Annotated[str, Form()],
+):
+    if session is None:
+        raise HTTPException(status_code=401, detail="Cannot change username without being logged in first!")
+    return auth.change_username(old_username=session.username, new_username=new_username)
+
+
 @app.get("/login")
 async def login_page(request: Request, next: Optional[str] = None, messages: Optional[list] = None):
     if messages is None:
@@ -434,7 +445,7 @@ async def passkey_challenge():
 async def logout(request: Request, session: Annotated[Optional[auth.Session], Security(get_session)]):
     response = RedirectResponse(url=request.url_for("root"))
     if session:
-        # auth.invalidate_session(session)
+        auth.invalidate_session(session.session_id)
         response.delete_cookie(key="session_id")
     return response
 

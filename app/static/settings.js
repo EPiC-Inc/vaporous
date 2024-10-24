@@ -6,6 +6,27 @@ function change_username() {
 	setTimeout(() => {
 		loading_dialog.close();
 	}, 1000);
+	document.getElementById("username_change_message").innerText = "";
+	loading_dialog.show();
+	fetch(USERNAME_CHANGE_URL, {
+		method: "POST",
+		body: new FormData(username_change_form)
+	}).then(response => {
+		response.json().then(json => {
+			username_change_form.reset();
+			let success = json[0];
+			let message = json[1];
+			console.log(success);
+			console.log(message);
+			loading_dialog.close();
+			if (success) {
+				window.location.reload();
+			} else {
+				document.getElementById("username_change_message").innerText = message;
+				document.getElementById("username_change").showModal();
+			}
+		});
+	});
 }
 
 function change_password() {
@@ -16,7 +37,6 @@ function change_password() {
 		method: "POST",
 		body: new FormData(password_change_form)
 	}).then(response => {
-	console.log("TEST2")
 		response.json().then(json => {
 			password_change_form.reset();
 			let success = json[0];
