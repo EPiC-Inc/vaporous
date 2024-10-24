@@ -27,7 +27,7 @@ def get_upload_directory() -> Path:
     return UPLOAD_DIRECTORY
 
 
-def safe_join(base: PathLike[str] | str, subfolder: PathLike[str] | str):
+def safe_join(base: PathLike[str] | str, subfolder: PathLike[str] | str) -> Path:
     base = safe_path_regex.sub(".", str(base))
     subfolder = safe_path_regex.sub(".", str(subfolder))
     subfolder = (Path(base) / subfolder).relative_to(base)
@@ -150,6 +150,11 @@ async def delete_file(base: PathLike[str] | str, file_path: PathLike[str] | str)
         file_path.rmdir()
     else:
         file_path.unlink()
+    with SessionMaker() as engine:
+        shares: list[Share] = engine.execute(select(Share).filter_by(path=str(share_path))).scalars()
+        for share in shares:
+            engine.delete(share)
+        engine.commit()
     return (True, "File deleted")
 
 async def new_folder(base: PathLike[str] | str, file_path: PathLike[str] | str, folder_name: str) -> tuple[bool, str]:
@@ -165,7 +170,8 @@ async def new_folder(base: PathLike[str] | str, file_path: PathLike[str] | str, 
 
 
 async def rename(base: PathLike[str] | str, file_path: PathLike[str] | str, new_name: str) -> tuple[bool, str]:
-    file_path = get_upload_directory() / safe_join(base, file_path)
+    share_path = safe_join(base, file_path)
+    file_path = get_upload_directory() / share_path
     if not file_path.exists():
         return (False, "Cannot rename nonexistent file / folder!")
     try:
@@ -175,6 +181,11 @@ async def rename(base: PathLike[str] | str, file_path: PathLike[str] | str, new_
     if new_path.exists():
         return (False, "Name already exists!")
     file_path.rename(new_path)
+    with SessionMaker() as engine:
+        shares: list[Share] = engine.execute(select(Share).filter_by(path=str(share_path))).scalars()
+        for share in shares:
+            share.path = str(share_path.with_name(new_name))
+        engine.commit()
     return (True, "Renamed!")
 
 
