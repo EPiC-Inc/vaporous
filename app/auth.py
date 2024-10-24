@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from hashlib import scrypt
 from os import environ
 from re import compile as regex_compile
+from sched import scheduler
 from secrets import token_bytes
 from threading import Lock
 from typing import Optional
@@ -27,6 +28,8 @@ HASH_LENGTH: int = 32
 
 SECRET_KEY = environ.get("VAPOROUS_SECRET_KEY") or token_bytes(32).hex()
 SESSION_EXPIRY: timedelta = timedelta(days=3)
+
+invalidator = scheduler()
 
 
 @dataclass(slots=True)
@@ -211,10 +214,22 @@ def check_session(session_id) -> Session | None:
 
 
 def invalidate_session(session_id) -> None:
-    try:
-        del sessions[session_id]
-    except:
-        pass
+    with sessions_lock:
+        try:
+            del sessions[session_id]
+        except:
+            pass
+
+
+def invalidate_sessions() -> None:
+    sessions_to_delete = []
+    with sessions_lock:
+        for session_id, session in sessions.values():
+            if datetime.now() > session.expires:
+                sessions_to_delete.append(session_id)
+        for session_id in sessions_to_delete:
+            del sessions[session_id]
+    invalidator.enter(36000, 1, invalidate_sessions)
 
 
 def change_password(username: str, *, new_password: str, old_password: Optional[str] = None) -> tuple[bool, str]:
@@ -267,3 +282,6 @@ def change_access_level(username: str, access_level: int) -> tuple[bool, str]:
             if session.username == username:
                 session.access_level = access_level
     return (True, "User access level has changed")
+
+
+invalidator.enter(36000, 1, invalidate_sessions)
