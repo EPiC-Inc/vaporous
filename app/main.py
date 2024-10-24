@@ -251,7 +251,10 @@ async def list_shares(
 ):
     if session is None:
         raise HTTPException(status_code=401, detail="Anonymous users cannot get shares!")
-    return await file_handler.list_shares(session.user_id, filter)
+    shares = await file_handler.list_shares(session.user_id, filter)
+    for share in shares:
+        share["url"] = str(request.url_for("get_share", share_id=share["id"]))
+    return shares
 
 
 @app.post("/remove_share")
@@ -353,7 +356,6 @@ async def delete(
     file_path: Annotated[str, Body()],
 ):
     # from_public, file_path = body
-    print(from_public, file_path)
     if session is None:
         raise HTTPException(status_code=401, detail="You CAN NOT delete anonymously!")
     base = CONFIG.get("public_directory") if from_public and CONFIG.get("public_directory") else session.user_id
