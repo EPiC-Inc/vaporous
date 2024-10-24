@@ -31,3 +31,66 @@ function change_password() {
 		});
 	});
 }
+
+function get_shares() {
+	document.getElementById("existing_shares").innerHTML = "Loading...";
+	fetch(LIST_SHARE_URL, {
+		method: "GET"
+	}).then(response => {
+		// upload_form_element.reset();
+		response.json().then(json => {
+			document.getElementById("existing_shares").innerHTML = "";
+			if (json.length > 0) {
+				json.forEach(share => {
+					let child = document.createElement("div");
+					let child_link = document.createElement("a");
+					let child_filename = document.createElement("a");
+					let child_unshare = document.createElement("button");
+					child_link.classList.add("link");
+					child_link.onclick = () => {
+						navigator.clipboard.writeText(share.url);
+					}
+					child_link.innerText = share.id;
+					child.appendChild(child_link);
+
+					child_filename.classList.add("link");
+					child_filename.innerText = share.shared_filename;
+					child_filename.title = share.shared_file;
+					child_filename.href = FILE_URL + "/" + share.shared_file;
+					child.appendChild(child_filename);
+
+					child_unshare.classList.add("unshare_button");
+					child_unshare.innerText = "Unshare";
+					child_unshare.onclick = () => {unshare(share.id);};
+					child.appendChild(child_unshare);
+
+					document.getElementById("existing_shares").appendChild(child);
+				});
+			} else {
+				document.getElementById("existing_shares").innerText = "None";
+			}
+		});
+	});
+}
+
+function unshare(share_id) {
+	fetch(DELETE_SHARE_URL, {
+		method: "POST",
+		body: share_id
+	}).then(response => {
+		response.json().then(json => {
+			success = json[0];
+			message = json[1];
+			console.log(json);
+			if (success) {
+				get_shares();
+			} else {
+				alert(message);
+			}
+		});
+	});
+}
+
+window.onload = () => {
+	get_shares();
+}

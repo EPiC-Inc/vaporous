@@ -20,8 +20,8 @@
 		</div>
 	</a>
 	{% if highlight == 'files' %}
-	<div class="header_btn" onclick="document.getElementById('upload_dialog').showModal()">Upload</div>
-	<div class="header_btn">New Folder</div>
+	<div class="header_btn" onclick="document.getElementById('upload_dialog').showModal();">Upload</div>
+	<div class="header_btn" onclick="create_new_folder();">New Folder</div>
 	{% endif %}
 	{% else %}
 	<a href="{{ request.url_for('login') }}?next={{ request.url.path }}">

@@ -9,6 +9,7 @@ from typing import Optional
 
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
+from sqlalchemy import select
 
 from .config import CONFIG
 from .database import SessionMaker
@@ -136,16 +137,73 @@ async def upload_files(
 
 
 async def delete_file(base: PathLike[str] | str, file_path: PathLike[str] | str) -> tuple[bool, str]:
-    print(base)
-    print(file_path)
-    file_path = get_upload_directory() / safe_join(base, file_path)
+    share_path = safe_join(base, file_path)
+    file_path = get_upload_directory() / share_path
     if not file_path.exists():
         return (False, "Cannot delete nonexistent file")
-    file_path.unlink()
+    if file_path.is_dir():
+        for root, directories, files in file_path.walk():
+            for file_ in files:
+                (root / file_).unlink()
+            for directory in directories:
+                (root / directory).rmdir()
+        file_path.rmdir()
+    else:
+        file_path.unlink()
     return (True, "File deleted")
 
+async def new_folder(base: PathLike[str] | str, file_path: PathLike[str] | str, folder_name: str) -> tuple[bool, str]:
+    file_path = get_upload_directory() / safe_join(base, file_path) / "new_folder"
+    try:
+        new_folder = file_path.with_name(folder_name)
+    except ValueError:
+        return (False, "Invalid folder name!")
+    if new_folder.exists():
+        return (False, "Name already exists!")
+    new_folder.mkdir()
+    return (True, "Folder created!")
 
-def create_share(
+
+async def rename(base: PathLike[str] | str, file_path: PathLike[str] | str, new_name: str) -> tuple[bool, str]:
+    file_path = get_upload_directory() / safe_join(base, file_path)
+    if not file_path.exists():
+        return (False, "Cannot rename nonexistent file / folder!")
+    try:
+        new_path = file_path.with_name(new_name)
+    except ValueError:
+        return (False, "Invalid name!")
+    if new_path.exists():
+        return (False, "Name already exists!")
+    file_path.rename(new_path)
+    return (True, "Renamed!")
+
+
+async def list_shares(owner: str, filter: Optional[str] = None) -> list[dict]:
+    if filter:
+        filter = f"{owner}/{filter}"
+    owned_shares: list[dict] = []
+    with SessionMaker() as engine:
+        shares: list[Share] = engine.execute(select(Share).filter_by(owner=bytes.fromhex(owner)).order_by(Share.path)).scalars()
+        for share in shares:
+            allow_list: list[str] = []
+            if share.user_whitelist:
+                for user_id in share.user_whitelist.split("$"):
+                    if (user := engine.execute(select(User).filter_by(user_id=bytes.fromhex(user_id))).scalar_one_or_none()):
+                        allow_list.append(user.username)
+            if filter and not share.path == filter:
+                continue
+            owned_shares.append({
+                "id": share.share_id.hex(),
+                "url": str(request.url_for("get_share", share_id=share.share_id.hex())),
+                "shared_filename": Path(share.path).name,
+                "shared_file": "/".join(Path(share.path).parts[1:]),
+                "anonymous_access": share.anonymous_access,
+                "allowed_users": allow_list
+            })
+    return owned_shares
+
+
+async def create_share(
     user_id: str,
     file_path: PathLike[str] | str,
     expires: Optional[datetime] = None,
@@ -175,3 +233,13 @@ def create_share(
         engine.add(new_share)
         engine.commit()
     return (True, new_share_link)
+
+async def delete_share(share_id: str, owner_id: str) -> tuple[bool, str]:
+    with SessionMaker() as engine:
+        share: Share = engine.execute(select(Share).filter_by(share_id=bytes.fromhex(share_id))).scalar_one_or_none()
+        if share and share.owner.hex() == owner_id:
+            engine.delete(share)
+            engine.commit()
+        else:
+            return (False, "Cannot delete nonexistent share!")
+    return (True, "Share deleted")

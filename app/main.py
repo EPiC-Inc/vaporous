@@ -240,7 +240,7 @@ async def add_share(
     if session is None:
         raise HTTPException(status_code=401, detail="neener neener neener")
     base = session.user_id
-    return file_handler.create_share(user_id=session.user_id, file_path=file_path, expires=None)
+    return await file_handler.create_share(user_id=session.user_id, file_path=file_path, expires=None)
 
 
 @app.get("/list_shares")
@@ -251,27 +251,51 @@ async def list_shares(
 ):
     if session is None:
         raise HTTPException(status_code=401, detail="Anonymous users cannot get shares!")
-    if filter:
-        filter = f"{session.user_id}/{filter}"
-    owned_shares: list[dict] = []
-    with SessionMaker() as engine:
-        shares: list[Share] = engine.execute(select(Share).filter_by(owner=bytes.fromhex(session.user_id))).scalars()
-        for share in shares:
-            allow_list: list[str] = []
-            if share.user_whitelist:
-                for user_id in share.user_whitelist.split("$"):
-                    if (user := engine.execute(select(User).filter_by(user_id=bytes.fromhex(user_id))).scalar_one_or_none()):
-                        allow_list.append(user.username)
-            if filter and not share.path == filter:
-                continue
-            owned_shares.append({
-                "id": share.share_id.hex(),
-                "url": str(request.url_for("get_share", share_id=share.share_id.hex())),
-                "shared_file": share.path,
-                "anonymous_access": share.anonymous_access,
-                "allowed_users": allow_list
-            })
-    return owned_shares
+    return await file_handler.list_shares(session.user_id, filter)
+
+
+@app.post("/remove_share")
+async def remove_share(
+    request: Request,
+    session: Annotated[Optional[auth.Session], Security(get_session)],
+    share_id: Annotated[str, Body()],
+):
+    if session is None:
+        raise HTTPException(status_code=401, detail="Anonymous users cannot get shares!")
+    return await file_handler.delete_share(share_id, session.user_id)
+
+@app.post("/new_folder")
+async def new_folder(
+    request: Request,
+    session: Annotated[Optional[auth.Session], Security(get_session)],
+    file_path: Annotated[str, Body()],
+    folder_name: Annotated[str, Body()],
+    to_public: Annotated[bool, Body()], 
+):
+    if session is None:
+        raise HTTPException(status_code=401, detail="Anonymous users cannot create folders!")
+    return await file_handler.new_folder(
+        base=CONFIG.get("public_directory") if to_public and CONFIG.get("public_directory") else session.user_id,
+        file_path=file_path,
+        folder_name=folder_name,
+    )
+
+
+@app.post("/rename")
+async def rename(
+    request: Request,
+    session: Annotated[Optional[auth.Session], Security(get_session)],
+    file_path: Annotated[str, Body()],
+    new_name: Annotated[str, Body()],
+    to_public: Annotated[bool, Body()],
+):
+    if session is None:
+        raise HTTPException(status_code=401, detail="Anonymous users cannot rename!")
+    return await file_handler.rename(
+        base=CONFIG.get("public_directory") if to_public and CONFIG.get("public_directory") else session.user_id,
+        file_path=file_path,
+        new_name=new_name,
+    )
 
 
 # FIXME

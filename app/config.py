@@ -12,3 +12,10 @@ if not config_path.exists():
 
 with open(config_path, "rb") as config_file:
     CONFIG = toml_load(config_file)
+
+if not CONFIG.get("upload_directory"):
+    raise KeyError("upload_directory not found in config")
+
+if not Path(CONFIG.get("upload_directory")).exists():
+    # TODO - maybe create it automatically
+    raise FileNotFoundError("Upload directory specified in the config does not exist!")
