@@ -1,3 +1,56 @@
+function create_new_folder() {
+	let new_folder_name = prompt("New folder name?");
+	if (new_folder_name) {
+		fetch(NEW_FOLDER_URL, {
+			method: "POST",
+			headers: {"Content-Type": "application/json"},
+			body: JSON.stringify({
+				file_path: CURRENT_DIRECTORY,
+				folder_name: new_folder_name,
+				to_public: PUBLIC,
+			})
+		}).then(response => {
+			response.json().then(json => {
+				success = json[0];
+				message = json[1];
+				if (success) {
+					window.location.reload();
+				} else {
+					alert(message);
+				}
+			});
+		});
+	}
+}
+
+function rename(filename, new_name="") {
+	new_name = prompt(`Rename ${filename} to?`);
+	if (new_name) {
+		if (CURRENT_DIRECTORY.length > 0) {
+			filename = CURRENT_DIRECTORY + "/" + filename;
+		}
+		fetch(RENAME_URL, {
+			method: "POST",
+			headers: {"Content-Type": "application/json"},
+			body: JSON.stringify({
+				file_path: filename,
+				new_name: new_name,
+				to_public: PUBLIC,
+			})
+		}).then(response => {
+			response.json().then(json => {
+				success = json[0];
+				message = json[1];
+				if (success) {
+					window.location.reload();
+				} else {
+					alert(message);
+				}
+			});
+		});
+	}
+}
+
 function upload_files() {
 	let upload_form_element = document.getElementById("upload_form");
 	let upload_form = new FormData(upload_form_element);
@@ -22,6 +75,7 @@ function open_share_dialog(filepath, filename) {
 		document.getElementById("public_link").innerText = PUBLIC_URL + "/" + filepath;
 		document.getElementById("public_share_dialog").showModal();
 	} else {
+		document.getElementById("existing_shares").innerHTML = "Loading...";
 		document.getElementById("file_path_to_share").value = filepath;
 		fetch(LIST_SHARE_URL + "?filter=" + filepath, {
 			method: "GET"
@@ -57,14 +111,27 @@ function publish_share() {
 	}).then(response => {
 		// upload_form_element.reset();
 		response.json().then(json => {
-			console.log(json);
-			// TODO - re-compose?
-			document.getElementById("share_dialog").showModal();
+			success = json[0];
+			message = json[1];
+			if (success) {
+				navigator.clipboard.writeText(message);
+				open_share_dialog(
+					document.getElementById("file_path_to_share").value,
+					document.getElementById("name_to_share").innerText
+				);
+			} else {
+				alert(message);
+			}
 		});
 	});
 }
 
-function delete_file(filename) {
+function delete_file(filename, is_dir=false) {
+	if (is_dir) {
+		if (!confirm(filename + " is a directory! Delete anyway?")) {
+			return;
+		}
+	}
 	// TODO - make this use file path instead of file name??
 	if (CURRENT_DIRECTORY.length > 0) {
 		filename = CURRENT_DIRECTORY + "/" + filename;
@@ -81,7 +148,6 @@ function delete_file(filename) {
 		response.json().then(json => {
 			success = json[0];
 			message = json[1];
-			console.log(json);
 			// TODO - re-compose?
 			if (success) {
 				window.location.reload();

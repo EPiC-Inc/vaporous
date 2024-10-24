@@ -19,6 +19,11 @@ dialog {
     background-color: var(--background-color);
     color: var(--text-color);
 }
+dialog > * {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
 
 header {
     align-items: flex-end;
@@ -83,6 +88,10 @@ a.link::after {
     left: 0;
     background: linear-gradient(to right, #9401ff 0%, #1a0ff1 100%);
 /*    background-color: var(--nav-color);*/
+}
+a.link:hover::after {
+  transform: scaleX(1);
+  transform-origin: bottom left;
 }
 a.link:active {
     color: var(--nav-click-color);

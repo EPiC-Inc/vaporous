@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from auth import *
-from database import engine
+from app.auth import *
+from app.database import engine
 
 
 @dataclass(slots=True)

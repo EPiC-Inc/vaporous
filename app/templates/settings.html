@@ -11,7 +11,7 @@
 {{ header(request, username, access_level, "settings") }}
 <div id="settings_container">
 	<div id="settings_nav">
-		<div id="settings" class="settings_section"><a href="#settings">Account Settings</a>
+		<div id="settings" class="settings_section"><a href="#settings" class="settings_button">Account Settings</a>
 			<div class="collapsed">
 				<div>
 					<span>Username: {{ username }}</span> <button onclick="document.getElementById('username_change').showModal()">Change</button>
@@ -19,9 +19,10 @@
 				<div><button onclick="document.getElementById('password_change').showModal()">Change password</button></div>
 			</div>
 		</div>
-		<div id="shares" class="settings_section"><a href="#shares">Share links</a>
+		<div id="shares" class="settings_section"><a href="#shares" class="settings_button">Share links</a>
 			<div class="collapsed">
 				<div>Your shares</div>
+				<div id="existing_shares"></div>
 			</div>
 		</div>
 	</div>
@@ -64,7 +65,10 @@
 
 {% block scripts %}
 <script type="text/javascript">
-	var PASSWORD_CHANGE_URL = "{{ url_for('change_password') }}";
+	const PASSWORD_CHANGE_URL = "{{ url_for('change_password') }}";
+    const LIST_SHARE_URL = "{{ url_for('list_shares') }}";
+    const DELETE_SHARE_URL = "{{ url_for('remove_share') }}";
+    const FILE_URL = "{{ url_for('get_files') }}";
 </script>
 <script type="text/javascript" src="{{ url_for('static', path='settings.js') }}"></script>
 {% endblock %}

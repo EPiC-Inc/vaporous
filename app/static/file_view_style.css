@@ -28,9 +28,10 @@
     content: " ⎘";
 }
 
-span:hover a::after, tr:hover a::after, a:hover::after {
-  transform: scaleX(1);
-  transform-origin: bottom left;
+#existing_shares {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
 }
 
 #drop_zone {
