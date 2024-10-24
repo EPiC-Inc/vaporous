@@ -251,7 +251,10 @@ async def list_shares(
 ):
     if session is None:
         raise HTTPException(status_code=401, detail="Anonymous users cannot get shares!")
-    return await file_handler.list_shares(session.user_id, filter)
+    shares = await file_handler.list_shares(session.user_id, filter)
+    for share in shares:
+        share["url"] = str(request.url_for("get_share", share_id=share["id"]))
+    return shares
 
 
 @app.post("/remove_share")
@@ -353,7 +356,6 @@ async def delete(
     file_path: Annotated[str, Body()],
 ):
     # from_public, file_path = body
-    print(from_public, file_path)
     if session is None:
         raise HTTPException(status_code=401, detail="You CAN NOT delete anonymously!")
     base = CONFIG.get("public_directory") if from_public and CONFIG.get("public_directory") else session.user_id
@@ -373,6 +375,17 @@ async def change_password(
     if new_password != confirm_new_password:
         return (False, "New passwords must match!")
     return auth.change_password(session.username, new_password=new_password, old_password=old_password)
+
+
+@app.post("/change_username")
+async def change_username(
+    request: Request,
+    session: Annotated[Optional[auth.Session], Security(get_session)],
+    new_username: Annotated[str, Form()],
+):
+    if session is None:
+        raise HTTPException(status_code=401, detail="Cannot change username without being logged in first!")
+    return auth.change_username(old_username=session.username, new_username=new_username)
 
 
 @app.get("/login")
@@ -432,7 +445,7 @@ async def passkey_challenge():
 async def logout(request: Request, session: Annotated[Optional[auth.Session], Security(get_session)]):
     response = RedirectResponse(url=request.url_for("root"))
     if session:
-        # auth.invalidate_session(session)
+        auth.invalidate_session(session.session_id)
         response.delete_cookie(key="session_id")
     return response
 

@@ -19,3 +19,6 @@ if not CONFIG.get("upload_directory"):
 if not Path(CONFIG.get("upload_directory")).exists():
     # TODO - maybe create it automatically
     raise FileNotFoundError("Upload directory specified in the config does not exist!")
+
+if CONFIG.get("public_directory") and not (public_path := Path(CONFIG.get("upload_directory")) / CONFIG.get("public_directory")).exists():
+    public_path.mkdir()
