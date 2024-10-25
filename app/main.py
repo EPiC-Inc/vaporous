@@ -81,9 +81,6 @@ async def get_share_response(
         if file_contents := await file_handler.get_file(base=base, file_path=file_path):
             return file_contents
         raise HTTPException(status_code=404, detail="Unable to get files")
-    if files:
-        for file_ in files:
-            file_["path"] = "/".join(Path(file_["path"]).parts[1:])
     folder_name = Path(base).name
     path_segments = [{"path": "", "name": f"{folder_name} (Shared Folder)"}]
     current_path = []
@@ -240,7 +237,8 @@ async def add_share(
     if session is None:
         raise HTTPException(status_code=401, detail="neener neener neener")
     base = session.user_id
-    return await file_handler.create_share(user_id=session.user_id, file_path=file_path, expires=None)
+    share_id = await file_handler.create_share(user_id=session.user_id, file_path=file_path, expires=None)
+    return str(request.url_for('get_share', share_id=share_id))
 
 
 @app.get("/list_shares")
