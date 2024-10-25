@@ -89,7 +89,7 @@ async def list_files(
                     type_ = "document"
                 case ".jpg" | ".jpeg" | ".png" | ".webp" | ".gif" | ".bmp" | ".tiff" | ".avif" | ".apng":
                     type_ = "image"
-                case ".mp3" | ".wav" | ".flac" | ".ogg" | ".aiff" | ".aac" | ".alac" | ".pcm" | ".dsd":
+                case ".mp3" | ".wav" | ".flac" | ".ogg" | ".aiff" | ".aac" | ".alac" | ".pcm" | ".dsd" | ".wma":
                     type_ = "audio"
                 case ".mp4" | ".wmv" | ".webm" | ".mov" | ".avi" | ".mkv":
                     type_ = "video"
@@ -97,7 +97,7 @@ async def list_files(
                     type_ = "archive"
                 case _:
                     type_ = "file"
-        files.append({"name": child.name, "path": r"/".join(child.parts[2:]), "type": type_})
+        files.append({"name": child.name, "path": str(child.relative_to(base)), "type": type_})
     files.sort(key=lambda f: f.get("name", ""))
     files.sort(key=lambda f: f.get("type") == "dir", reverse=True)
     files.sort(key=lambda f: f.get("type") == "public_directory", reverse=True)
