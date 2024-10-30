@@ -141,6 +141,7 @@ async def upload_files(
     file_path = get_upload_directory() / safe_join(base, file_path)
     for file_object in files:
         filename = file_object.filename
+        filename = safe_path_regex.sub(".", filename)
         if not filename:
             results.append((False, "No filename??"))
             continue
