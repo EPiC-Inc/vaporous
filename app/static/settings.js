@@ -1,10 +1,9 @@
 var loading_dialog = document.getElementById("loading_dialog");
 
 function change_username() {
+	loading_dialog.show();
 	let username_change_form = document.getElementById("username_change_form");
-	loading_dialog.show();
 	document.getElementById("username_change_message").innerText = "";
-	loading_dialog.show();
 	fetch(USERNAME_CHANGE_URL, {
 		method: "POST",
 		body: new FormData(username_change_form)
