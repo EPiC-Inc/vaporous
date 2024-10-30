@@ -457,7 +457,7 @@ async def enroll_page(request: Request, next: Optional[str] = None, messages: Op
 
 
 @app.post("/signup")
-async def enroll(request: Request, form: Annotated[OAuth2PasswordRequestForm, Security()], confirm_password: Annotated[str, Form()] = None, next: Optional[str] = None, passcode: Annotated[Optional[str], Form()] = None):
+async def enroll(request: Request, form: Annotated[OAuth2PasswordRequestForm, Security()], confirm_password: Annotated[str, Form()], next: Optional[str] = None, passcode: Annotated[Optional[str], Form()] = None):
     if not CONFIG.get("self_enrollment"):
         return RedirectResponse(url=request.url_for("login_page").include_query_params(next=next or ""))
     username = form.username

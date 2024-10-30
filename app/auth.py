@@ -14,7 +14,7 @@ from uuid import uuid1
 from sqlalchemy import select
 
 from .database import SessionMaker
-from .file_handler import create_home_folder
+from .file_handler import create_home_folder, mark_home_folder_as_deleted
 from .objects import PublicKey, User
 
 # REVIEW - Now that we're using uuids as folder names, this should be fine to remove?
@@ -114,7 +114,7 @@ def login_with_password(username: str, password: str) -> bool:
 def add_user(
     username: str, *, password: Optional[str] = None, passkey_token=None, user_level: Optional[int] = None
 ) -> tuple[bool, str | set[str]]:
-    username = username.strip()[:USERNAME_LENGTH]
+    username = username.strip()
     with SessionMaker() as engine:
         result = engine.execute(select(User).where(User.username == username))
         for _ in result:
@@ -151,12 +151,14 @@ def add_user(
 
 
 def remove_user(username: str) -> tuple[bool, str]:
+    user_id: str
     with SessionMaker() as engine:
         user: User | None = engine.execute(select(User).filter_by(username=username)).scalar_one_or_none()
         if not user:
             return (False, "User does not exist to be deleted!")
         engine.delete(user)
         engine.commit()
+        user_id = user.user_id.hex()
     with sessions_lock:
         sessions_to_delete: list = []
         for session_id, session in sessions.items():
@@ -164,6 +166,7 @@ def remove_user(username: str) -> tuple[bool, str]:
                 sessions_to_delete.append(session_id)
         for session_id in sessions_to_delete:
             del sessions[session_id]
+    mark_home_folder_as_deleted(user_id)
     return (True, "User has been deleted")
 
 

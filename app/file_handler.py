@@ -45,6 +45,15 @@ def create_home_folder(uuid: str) -> None:
     new_folder.mkdir()
 
 
+def mark_home_folder_as_deleted(uuid: str) -> None:
+    uuid = safe_path_regex.sub(".", uuid)  # Also maybe unnecessary
+    home_folder = get_upload_directory() / uuid
+    new_folder = home_folder.with_name(f"acct_del-{home_folder.name}")
+    if new_folder.exists():
+        raise FileExistsError("Collision?? Deleted!!! home folder already exists!")
+    home_folder.rename(new_folder)
+
+
 async def list_files(
     base: PathLike[str] | str, subfolder: Optional[PathLike[str] | str] = None, access_level: int = 0
 ) -> list[dict] | None:
@@ -132,6 +141,7 @@ async def upload_files(
     file_path = get_upload_directory() / safe_join(base, file_path)
     for file_object in files:
         filename = file_object.filename
+        filename = safe_path_regex.sub(".", filename)
         if not filename:
             results.append((False, "No filename??"))
             continue
