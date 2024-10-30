@@ -172,7 +172,7 @@ async def get_public_files(
     if not CONFIG.get("public_directory"):
         raise HTTPException(status_code=404, detail="Public directory not enabled.")
     if session is None:
-        if CONFIG.get("public_access_requires_login"):
+        if CONFIG.get("public_access_requires_login",True):
             return RedirectResponse(url=request.url_for("login_page").include_query_params(next=request.url.path))
     else:
         if session.access_level < CONFIG.get("public_access_level", -1):
