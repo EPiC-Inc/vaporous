@@ -81,6 +81,7 @@ async def list_files(
     if not directory_to_list.exists() or not directory_to_list.is_dir():
         return None
     for child in directory_to_list.iterdir():
+        is_protected = False
         if child.is_dir():
             type_ = "dir"
         else:
@@ -97,7 +98,16 @@ async def list_files(
                     type_ = "archive"
                 case _:
                     type_ = "file"
-        files.append({"name": child.name, "path": str(child.relative_to(base)), "type": type_})
+        for protected_path in CONFIG.get("protected_public_directories", []):
+            if child.is_relative_to(PUBLIC_DIRECTORY / protected_path):
+                is_protected = True
+                break
+        files.append({
+            "name": child.name,
+            "path": str(child.relative_to(base)),
+            "type": type_,
+            "protected": is_protected,
+        })
     files.sort(key=lambda f: f.get("name", ""))
     files.sort(key=lambda f: f.get("type") == "dir", reverse=True)
     files.sort(key=lambda f: f.get("type") == "public_directory", reverse=True)

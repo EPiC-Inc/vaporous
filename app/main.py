@@ -393,7 +393,12 @@ async def login_page(request: Request, next: Optional[str] = None, messages: Opt
     return templates.TemplateResponse(
         request=request,
         name="login.html",
-        context={"messages": messages, "next": next, "banner": CONFIG.get("banner")},
+        context={
+            "messages": messages,
+            "next": next,
+            "banner": CONFIG.get("banner"),
+            "can_enroll": bool(CONFIG.get("self_enrollment", False)),
+        },
     )
 
 
@@ -409,7 +414,7 @@ async def login(request: Request, form: Annotated[OAuth2PasswordRequestForm, Sec
         # The above branch breaks everything if next was maliciously set, so let's properly un-break it
         if not next:
             next = request.url_for("root")  # type:ignore
-        response = RedirectResponse(url=next, status_code=status.HTTP_303_SEE_OTHER)  # type:ignore
+        response = RedirectResponse(url=next or request.url_for("root"), status_code=status.HTTP_303_SEE_OTHER)  # type:ignore
         response.set_cookie(
             key="session_id",
             value=auth.new_session(username),
@@ -436,6 +441,60 @@ async def login_passkey(request: Request, next: Optional[str] = None):
 @app.get("/login/passkey/challenge")
 async def passkey_challenge():
     return Response(content=auth.passkey_challenge())
+
+
+@app.get("/signup")
+async def enroll_page(request: Request, next: Optional[str] = None, messages: Optional[list] = None):
+    if messages is None:
+        messages = []
+    if not CONFIG.get("self_enrollment"):
+        return RedirectResponse(url=request.url_for("login_page").include_query_params(next=next or ""))
+    return templates.TemplateResponse(
+        request=request,
+        name="enroll.html",
+        context={"messages": messages, "next": next, "banner": CONFIG.get("banner"), "passcode": CONFIG.get("self_enrollment_passcode")},
+    )
+
+
+@app.post("/signup")
+async def enroll(request: Request, form: Annotated[OAuth2PasswordRequestForm, Security()], confirm_password: Annotated[str, Form()] = None, next: Optional[str] = None, passcode: Annotated[Optional[str], Form()] = None):
+    if not CONFIG.get("self_enrollment"):
+        return RedirectResponse(url=request.url_for("login_page").include_query_params(next=next or ""))
+    username = form.username
+    password = form.password
+    if password != confirm_password:
+        return await enroll_page(request=request, next=next, messages=[("error", "Passwords must match!")])
+    stored_passcode = CONFIG.get("self_enrollment_passcode")
+    if stored_passcode and passcode != stored_passcode:
+        return await enroll_page(request=request, next=next, messages=[("error", "Passcode is incorrect!")])
+    success, message = auth.add_user(username=username, password=password)
+    if success:
+        response = RedirectResponse(url=next or request.url_for("root"), status_code=status.HTTP_303_SEE_OTHER)  # type:ignore
+        response.set_cookie(
+            key="session_id",
+            value=auth.new_session(username),
+            # secure=True,
+            max_age=int(auth.SESSION_EXPIRY.total_seconds()),
+        )
+        return response
+    return await enroll_page(request=request, next=next, messages=[("error", message)])
+    # success = auth.login_with_password(username, password)
+    # if success:
+    #     # Get rid of any unexpected redirects
+    #     if next:
+    #         next = urlparse(next).path
+    #     # The above branch breaks everything if next was maliciously set, so let's properly un-break it
+    #     if not next:
+    #         next = request.url_for("root")  # type:ignore
+    #     response = RedirectResponse(url=next, status_code=status.HTTP_303_SEE_OTHER)  # type:ignore
+    #     response.set_cookie(
+    #         key="session_id",
+    #         value=auth.new_session(username),
+    #         # secure=True,
+    #         max_age=int(auth.SESSION_EXPIRY.total_seconds()),
+    #     )
+    #     return response
+    # return await login_page(request=request, next=next, messages=[("error", "Username or password is incorrect")])
 
 
 # TODO - finish this
