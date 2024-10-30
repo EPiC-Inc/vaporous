@@ -114,7 +114,7 @@ def login_with_password(username: str, password: str) -> bool:
 def add_user(
     username: str, *, password: Optional[str] = None, passkey_token=None, user_level: Optional[int] = None
 ) -> tuple[bool, str | set[str]]:
-    username = username.strip()[:USERNAME_LENGTH]
+    username = username.strip()
     with SessionMaker() as engine:
         result = engine.execute(select(User).where(User.username == username))
         for _ in result:
