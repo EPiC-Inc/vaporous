@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}log in{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', path='login_style.css') }}">
+{% endblock %}
+
+{% block body %}
+{% if banner %}
+<div id="login_banner">
+    {{ banner }}
+</div>
+{% endif %}
+<section>
+    <div id="login">
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        {% if next %}
+        <form action="{{ url_for('enroll').include_query_params(next=next) }}" method="post">
+        {% else %}
+        <form action="{{ url_for('enroll') }}" method="post">
+        {% endif %}
+            <div id="fields">
+                <label for="user">username</label>
+                <input id="user" class="bg_glow_gradient" name="username" type="text" maxlength="40" autofocus autocomplete="username" required>
+                <label for="pass">password</label>
+                <input id="pass" class="bg_glow_gradient" name="password" type="password" maxlength="100" autocomplete="new-password" required>
+                <label for="confirm_pass">confirm password</label>
+                <input id="confirm_pass" class="bg_glow_gradient" name="confirm_password" type="password" maxlength="100" autocomplete="new-password" required>
+                {% if passcode %}
+                <label for="passcode">enrollment code</label >
+                <input id="passcode" class="bg_glow_gradient" name="passcode" type="password" maxlength="120" autocomplete="off" required>
+                {% endif %}
+            </div>
+            <input type="submit" value="sign up">
+        </form>
+        <a href="{{ url_for('login') }}" class="link">log in</a>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript">
+    var CHALLENGE_URL = "{{ url_for('passkey_challenge') }}"
+</script>
+<script type="text/javascript" src="{{ url_for('static', path='login_passkey.js') }}"></script>
+{% endblock %}

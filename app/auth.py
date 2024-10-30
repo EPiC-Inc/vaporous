@@ -224,7 +224,7 @@ def invalidate_session(session_id) -> None:
 def invalidate_sessions() -> None:
     sessions_to_delete = []
     with sessions_lock:
-        for session_id, session in sessions.values():
+        for session_id, session in sessions.items():
             if datetime.now() > session.expires:
                 sessions_to_delete.append(session_id)
         for session_id in sessions_to_delete:

@@ -14,6 +14,10 @@
 {{ list_files(files, current_directory_url, path_segments, access_level) }}
 </div>
 
+<dialog id="loading_dialog">
+    <div>Loading...</div>
+</dialog>
+
 <dialog id="public_share_dialog">
     <form method="dialog">
         <span>Share link:</span>
@@ -105,8 +109,10 @@
                 <div class="file_menu">
                     <span title="{{ file['path'] }}">{{ file["name"] }}</span>
                     <div onclick="open_share_dialog('{{ file['path'] }}', '{{ file['name'] }}');">Sharing</div>
+                    {% if (not file["protected"]) or (access_level > 2) %}
                     <div onclick="rename('{{ file['name'] }}');">Rename</div>
                     <div style="color: crimson;" onclick="if (confirm('Delete {{ file['name'] }}?')) {delete_file('{{ file['name'] }}', {% if file['type'] == 'dir' %}true{% endif %});}">Delete</div>
+                    {% endif %}
                 </div>
             </button>
         </div>

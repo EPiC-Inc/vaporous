@@ -1,6 +1,18 @@
+var loading_dialog = document.getElementById("loading_dialog");
+
+function refresh() {
+	// Let the file system sync for slower systems
+	// TODO - re-compose instead of reload?
+	setTimeout(() => {
+		loading_dialog.close();
+		window.location.reload();
+	}, 200);
+}
+
 function create_new_folder() {
 	let new_folder_name = prompt("New folder name?");
 	if (new_folder_name) {
+		loading_dialog.show();
 		fetch(NEW_FOLDER_URL, {
 			method: "POST",
 			headers: {"Content-Type": "application/json"},
@@ -14,8 +26,9 @@ function create_new_folder() {
 				success = json[0];
 				message = json[1];
 				if (success) {
-					window.location.reload();
+					refresh();
 				} else {
+					loading_dialog.close();
 					alert(message);
 				}
 			});
@@ -26,6 +39,7 @@ function create_new_folder() {
 function rename(filename, new_name="") {
 	new_name = prompt(`Rename ${filename} to?`);
 	if (new_name) {
+		loading_dialog.show();
 		if (CURRENT_DIRECTORY.length > 0) {
 			filename = CURRENT_DIRECTORY + "/" + filename;
 		}
@@ -42,8 +56,9 @@ function rename(filename, new_name="") {
 				success = json[0];
 				message = json[1];
 				if (success) {
-					window.location.reload();
+					refresh();
 				} else {
+					loading_dialog.close();
 					alert(message);
 				}
 			});
@@ -52,6 +67,7 @@ function rename(filename, new_name="") {
 }
 
 function upload_files() {
+	loading_dialog.show();
 	let upload_form_element = document.getElementById("upload_form");
 	let upload_form = new FormData(upload_form_element);
 	upload_form.append("file_path", CURRENT_DIRECTORY);
@@ -64,8 +80,7 @@ function upload_files() {
 		upload_form_element.reset();
 		response.json().then(json => {
 			console.log(json);
-			// TODO - re-compose?
-			window.location.reload();
+			refresh();
 		});
 	});
 }
@@ -104,6 +119,7 @@ function open_share_dialog(filepath, filename) {
 }
 
 function publish_share() {
+	loading_dialog.show();
 	let filepath = document.getElementById("file_path_to_share").value;
 	fetch(SHARE_URL, {
 		method: "POST",
@@ -113,6 +129,7 @@ function publish_share() {
 		response.json().then(json => {
 			success = json[0];
 			message = json[1];
+			loading_dialog.close();
 			if (success) {
 				navigator.clipboard.writeText(message);
 				open_share_dialog(
@@ -132,6 +149,7 @@ function delete_file(filename, is_dir=false) {
 			return;
 		}
 	}
+	loading_dialog.show();
 	// TODO - make this use file path instead of file name??
 	if (CURRENT_DIRECTORY.length > 0) {
 		filename = CURRENT_DIRECTORY + "/" + filename;
@@ -150,8 +168,9 @@ function delete_file(filename, is_dir=false) {
 			message = json[1];
 			// TODO - re-compose?
 			if (success) {
-				window.location.reload();
+				refresh();
 			} else {
+				loading_dialog.close();
 				alert(message);
 			}
 		});
