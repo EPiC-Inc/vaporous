@@ -107,11 +107,11 @@
         <div class="file_properties">
             <button>···
                 <div class="file_menu">
-                    <span title="{{ file['path'] }}">{{ file["name"] }}</span>
-                    <div onclick="open_share_dialog('{{ file['path'] }}', '{{ file['name'] }}');">Sharing</div>
+                    <span title={{ file['path'] | tojson }}>{{ file["name"] }}</span>
+                    <div onclick='open_share_dialog({{ file["path"] | tojson}}, {{ file["name"] | tojson }});'>Sharing</div>
                     {% if (not file["protected"]) or (access_level >= 2) %}
-                    <div onclick="rename('{{ file['name'] }}');">Rename</div>
-                    <div style="color: crimson;" onclick="if (confirm('Delete {{ file['name'] }}?')) {delete_file('{{ file['name'] }}', {% if file['type'] == 'dir' %}true{% endif %});}">Delete</div>
+                    <div onclick='rename({{ file["name"] | tojson }});'>Rename</div>
+                    <div style="color: crimson;" onclick='if (confirm("Delete {{ file["name"] }}?")) {delete_file({{ file["name"] | tojson }}, {% if file["type"] == "dir" %}true{% endif %});}'>Delete</div>
                     {% endif %}
                 </div>
             </button>
