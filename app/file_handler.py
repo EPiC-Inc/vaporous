@@ -210,6 +210,17 @@ async def rename(base: PathLike[str] | str, file_path: PathLike[str] | str, new_
     return (True, "Renamed!")
 
 
+async def move(base: PathLike[str] | str, to_base: PathLike[str] | str, file_path: PathLike[str] | str, to: PathLike[str] | str) -> tuple[bool, str]:
+    file_path = get_upload_directory() / safe_join(base, file_path)
+    to = get_upload_directory() / safe_join(to_base, to) / file_path.name
+    if file_path == to:
+        return (True, "Already here!")
+    if to.exists():
+        return (False, "A file or folder with the same name already exists here!")
+    file_path.rename(to)
+    return (True, "Renamed!")
+
+
 async def list_shares(owner: str, filter: Optional[str] = None) -> list[dict]:
     if filter:
         filter = f"{owner}/{filter}"

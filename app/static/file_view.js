@@ -9,6 +9,93 @@ function refresh() {
 	}, 200);
 }
 
+function dragover(self, event) {
+	event.preventDefault();
+	event.stopPropagation();
+	self.classList.add("dragging");
+}
+function dragover_files(self, event) {
+	event.preventDefault();
+	event.stopPropagation();
+	if (!event.dataTransfer.types.includes("Files")) {
+		return;
+	}
+	self.classList.add("dragging");
+}
+function dragleave(self, event) {
+	event.preventDefault();
+	event.stopPropagation();
+	self.classList.remove("dragging");
+}
+function dragstart(self, event) {
+	event.preventDefault();
+	event.stopPropagation();
+	event.dataTransfer.setData("vaporous_data", self.getAttribute("path"));
+}
+function drop(self, event) {
+	event.preventDefault();
+	event.stopPropagation();
+	self.classList.remove("dragging");
+
+	let subject_path = event.dataTransfer.getData("vaporous_data");
+	let target_path = self.getAttribute("path");
+	if (!subject_path) {
+		return;
+	}
+	if (subject_path == target_path) {
+		return;
+	} else {
+		loading_dialog.show();
+		fetch(MOVE_URL, {
+			method: "POST",
+			headers: {"Content-Type": "application/json"},
+			body: JSON.stringify({
+				file_path: subject_path,
+				to: target_path,
+				to_public: PUBLIC,
+			})
+		}).then(response => {
+			response.json().then(json => {
+				success = json[0];
+				message = json[1];
+				if (success) {
+					refresh();
+				} else {
+					loading_dialog.close();
+					alert(message);
+				}
+			});
+		});
+	}
+}
+function drop_files(self, event) {
+	event.preventDefault();
+	event.stopPropagation();
+	self.classList.remove("dragging");
+	event.dataTransfer.dropEffect = "copy";
+	let files = event.dataTransfer.files;
+	if (files.length < 1) {
+		return;
+	}
+	loading_dialog.show();
+	let upload_form = new FormData();
+	upload_form.append("file_path", CURRENT_DIRECTORY);
+	upload_form.append("to_public", PUBLIC);
+	upload_form.append("compression_level", 0);
+	for (var i = 0; i < files.length; i++) {
+		upload_form.append("files", files[i]);
+	}
+	fetch(UPLOAD_URL, {
+		method: "POST",
+		body: upload_form
+	}).then(response => {
+		response.json().then(json => {
+			console.log(json);
+			refresh();
+		});
+	});
+}
+
 function create_new_folder() {
 	let new_folder_name = prompt("New folder name?");
 	if (new_folder_name) {

@@ -299,6 +299,31 @@ async def rename(
     )
 
 
+@app.post("/move")
+async def move(
+    request: Request,
+    session: Annotated[Optional[auth.Session], Security(get_session)],
+    file_path: Annotated[str, Body()],
+    to: Annotated[str, Body()],
+    to_public: Annotated[bool, Body()],
+):
+    if session is None:
+        raise HTTPException(status_code=401, detail="Anonymous users cannot move!")
+    to_base = None
+    if not to:
+        to_base = session.user_id
+    elif to == "||public||":
+        to = ""
+        to_base = CONFIG.get("public_directory") or session.user_id
+    base = CONFIG.get("public_directory") if to_public and CONFIG.get("public_directory") else session.user_id
+    return await file_handler.move(
+        base=base,
+        to_base=to_base or base,
+        file_path=file_path,
+        to=to,
+    )
+
+
 # FIXME
 @app.post("/compose")
 async def compose_file_view(

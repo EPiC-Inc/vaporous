@@ -11,6 +11,7 @@
     --text-color: darkgrey;
     --logout-color: darkred;
     --logout-hover-color: crimson;
+    --dragover-color: #220050;
     box-sizing: border-box;
     color: var(--text-color);
 }
@@ -23,6 +24,11 @@ dialog > * {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+}
+#loading_dialog {
+    position: absolute;
+    z-index: 4;
+    top: 50%;
 }
 
 header {
