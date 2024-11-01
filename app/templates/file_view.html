@@ -9,9 +9,10 @@
 
 {% block body %}
 {{ header(request, username, access_level, "files") }}
-
-<div id="file_container">
-{{ list_files(files, current_directory_url, path_segments, access_level) }}
+<div id="drop_zone" ondragover="dragover_files(this, event);" ondragleave="dragleave(this, event);" ondrop="drop_files(this, event);">
+    <div id="file_container">
+    {{ list_files(files, current_directory_url, path_segments, access_level) }}
+    </div>
 </div>
 
 <dialog id="loading_dialog">
@@ -65,24 +66,26 @@
     const PUBLIC_URL = "{{ url_for('get_public_files') }}";
     const NEW_FOLDER_URL = "{{ url_for('new_folder') }}";
     const RENAME_URL = "{{ url_for('rename') }}";
+    const MOVE_URL = "{{ url_for('move') }}";
     const SHARE_URL = "{{ url_for('add_share') }}";
     const LIST_SHARE_URL = "{{ url_for('list_shares') }}";
     const COMPOSER_URL = "{{ url_for('compose_file_view') }}";
     const UPLOAD_URL = "{{ url_for('upload') }}";
     const DELETE_URL = "{{ url_for('delete') }}";
     const CURRENT_DIRECTORY = "{{ path_segments[-1]['path'] if path_segments else '' }}";
+    const DRAG_IMAGE_URL = "{{ url_for('static', path='drag_image.png') }}";
 </script>
 <script type="text/javascript" src="{{ url_for('static', path='file_view.js') }}"></script>
 {% endblock %}
 
 
 {% macro create_path(current_directory_url, path_segments) %}
-<div class="file_navigate">
-    <a class="link location_select" href="/">HOME</a>
+<div class="file_navigate" draggable="false">
+    <a draggable="false" class="link location_select" path="" href="/" ondragover="dragover(this, event);" ondragleave="dragleave(this, event);" ondrop="drop(this, event);">HOME</a>
     {% if path_segments %}
     {% for segment in path_segments %}
     <span>/</span>
-        <a class="link location_select" href="{{ current_directory_url }}/{{ segment['path'] }}">{{ segment["name"] }}</a>
+        <a draggable="false" class="link location_select" path={{ segment['path'] | tojson }} href="{{ current_directory_url }}/{{ segment['path'] }}" ondragover="dragover(this, event);" ondragleave="dragleave(this, event);" ondrop="drop(this, event);">{{ segment["name"] }}</a>
     {% endfor %}
     {% endif %}
 </div>
@@ -93,13 +96,13 @@
 <div id="file_list">
 {% if files %}
     {% for file in files %}
-    <div class="file_select">
+    <div class="file_select" draggable="{% if ((not file['protected']) or (access_level >= 2)) and file['type'] != 'public_directory' %}true{% else %}false{% endif %}"{% if file['type'] in ('dir', 'public_directory') %} ondragover="dragover(this, event);" ondragleave="dragleave(this, event);" ondragstart="dragstart(this, event);" ondrop="drop(this, event);"{% endif %}{% if file['type'] == 'dir' %}path={{ file['path'] | tojson }}{% elif file['type'] == 'public_directory' %} path="||public||"{% endif %}>
         {% if file["type"] == "public_directory" %}
-        <a class="link" href="{{ url_for('get_public_files') }}">
+        <a class="link" href="{{ url_for('get_public_files') }}" draggable="false">
         {% else %}
-        <a class="link" href="{{ current_directory_url }}/{{ file['path'] }}">
+        <a class="link" href={{ (current_directory_url + "/" + file['path']) | tojson }} draggable="false">
         {% endif %}
-            <img class="file_icon" src="{{ url_for('static', path='icons/icon-' + file['type'] + '.png') }}">
+            <img class="file_icon" src="{{ url_for('static', path='icons/icon-' + file['type'] + '.png') }}" draggable="false">
             <div class="file_name">{{ file["name"] }}</div>
             <div class="file_size">{{ file["size"] }}</div>
         </a>

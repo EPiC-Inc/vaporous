@@ -36,10 +36,10 @@
 
 #drop_zone {
     border: 10px solid #0000;
-    min-height: 100vh;
+    min-height: 90vh;
 }
-#drop_zone.dragging {
-    border: 10px dashed var(--drop-zone-color);
+.dragging {
+    background-color: var(--dragover-color);
 }
 
 #progress_bar {
@@ -130,7 +130,6 @@
     80%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 0,100% 0,100% 0)}
     100%   {clip-path:polygon(50% 50%,0 0,0 0,0 0,0 0,0 0)}
 }
-
 
 #file_container {
     margin: 3% auto 0 auto;
