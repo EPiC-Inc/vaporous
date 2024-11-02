@@ -16,7 +16,18 @@
 				<div>
 					<span>Username: {{ username }}</span> <button onclick="document.getElementById('username_change').showModal()">Change</button>
 				</div>
-				<div><button onclick="document.getElementById('password_change').showModal()">Change password</button></div>
+				{% if has_password %}
+				<div>
+					<button onclick="document.getElementById('password_change').showModal();">Change password</button>
+				</div>
+				<div>
+					<button onclick="remove_password();">Remove Password</button>
+				</div>
+				{% else %}
+				<div>
+					<button onclick="document.getElementById('password_add').showModal();">Add Password</button>
+				</div>
+				{% endif %}
 			</div>
 		</div>
 		<div id="shares" class="settings_section"><a href="#shares" class="settings_button">Share links</a>
@@ -64,11 +75,29 @@
 		<div><input type="submit" value="Change"> <input type="button" value="Cancel" onclick="document.getElementById('password_change').close();"></div>
 	</form>
 </dialog>
+
+<dialog id="password_add">
+	<form method="dialog" id="password_add_form" onsubmit="add_password();">
+		<div class="error" id="password_add_message"></div>
+		<input type="text" name="username" autocomplete="username" hidden disabled value="{{ username }}">
+		<div>
+			<label for="add_pass">New password:</label>
+			<input id="add_pass" name="new_password" autocomplete="new-password" type="password" required>
+		</div>
+		<div>
+			<label for="confirm_add_pass">Confirm new password:</label>
+			<input id="confirm_add_pass" name="confirm_new_password" autocomplete="new-password" type="password" required>
+		</div>
+		<div><input type="submit" value="Change"> <input type="button" value="Cancel" onclick="document.getElementById('password_add').close();"></div>
+	</form>
+</dialog>
 {% endblock %}
 
 
 {% block scripts %}
 <script type="text/javascript">
+	const PASSWORD_ADD_URL = "{{ url_for('add_password') }}";
+	const PASSWORD_REMOVE_URL = "{{ url_for('remove_password') }}";
 	const PASSWORD_CHANGE_URL = "{{ url_for('change_password') }}";
 	const USERNAME_CHANGE_URL = "{{ url_for('change_username') }}";
     const LIST_SHARE_URL = "{{ url_for('list_shares') }}";

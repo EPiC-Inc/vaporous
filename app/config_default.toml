@@ -6,6 +6,6 @@ upload_directory = "./uploads"
 public_directory = "public"
 public_access_requires_login = true
 public_access_level = 0
-protected_public_directories = ["books"]
+protected_public_directories = []
 self_enrollment = false
 self_enrollment_passcode = ""

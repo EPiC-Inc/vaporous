@@ -1,0 +1,79 @@
+{% from "header.html" import header %}
+{% from "file_view.html" import list_files with context %}
+{% extends "base.html" %}
+
+{% block title %}files{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', path='file_view_style.css') }}">
+{% endblock %}
+
+
+{% block body %}
+{{ header(request, username, access_level, "files") }}
+<div id="drop_zone" ondragover="dragover_files(this, event);" ondragleave="dragleave(this, event);" ondrop="drop_files(this, event);">
+    <div id="file_container">
+    {{ list_files(files, current_directory_url, path_segments, access_level) }}
+    </div>
+</div>
+
+<dialog id="loading_dialog">
+    <div>Loading...</div>
+</dialog>
+
+<dialog id="public_share_dialog">
+    <form method="dialog">
+        <span>Share link:</span>
+        <a type="text" id="public_link" class="link share_link" onclick="navigator.clipboard.writeText(this.innerText);"></a>
+        <input type="submit" value="Close">
+    </form>
+</dialog>
+
+<dialog id="share_dialog">
+    <form method="dialog" onsubmit="publish_share();" id="share_form">
+        <div>Sharing options for <span id="name_to_share" style="font-weight: bold;"></span></div>
+        <input type="text" id="file_path_to_share" disabled hidden value="">
+        <span>Existing shares:</span>
+        <div id="existing_shares"></div>
+        <div>
+            <label for="anon_access">Anonymous access?</label>
+            <input type="checkbox" id="anon_access" name="anonymous_access" checked>
+        </div>
+        <div>
+            <input type="submit" value="Share">
+            <input type="button" onclick="document.getElementById('share_dialog').close();document.getElementById('share_form').reset();" value="Close">
+        </div>
+    </form>
+</dialog>
+
+<dialog id="upload_dialog">
+    <form method="dialog" onsubmit="upload_files();" id="upload_form">
+        <input type="file" name="files" multiple>
+        <div>
+            <label for="compression">Compression:</label>
+            <input type="number" min="0" max="9" value="0" id="compression" name="compression_level">
+        </div>
+        <div>
+            <input type="submit" value="Upload">
+            <input type="button" onclick="document.getElementById('upload_dialog').close();document.getElementById('upload_form').reset();" value="Cancel">
+        </div>
+    </form>
+</dialog>
+{% endblock %}
+
+
+{% block scripts %}
+<script type="text/javascript">
+    const PUBLIC = false;
+    const PUBLIC_URL = "{{ url_for('get_public_files') }}";
+    const NEW_FOLDER_URL = "{{ url_for('collab_new_folder', share_id=share_id) }}";
+    const RENAME_URL = "{{ url_for('collab_rename', share_id=share_id) }}";
+    const MOVE_URL = "{{ url_for('collab_move', share_id=share_id) }}";
+    const UPLOAD_URL = "{{ url_for('collab_upload', share_id=share_id) }}";
+    const DELETE_URL = "{{ url_for('collab_delete', share_id=share_id) }}";
+    const SHARE_URL = "{{ url_for('add_share') }}";
+    const LIST_SHARE_URL = "{{ url_for('list_shares') }}";
+    const COMPOSER_URL = "{{ url_for('compose_file_view') }}";
+    const CURRENT_DIRECTORY = "{{ path_segments[-1]['path'] if path_segments else '' }}";
+</script>
+<script type="text/javascript" src="{{ url_for('static', path='file_view.js') }}"></script>
+{% endblock %}

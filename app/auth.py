@@ -236,6 +236,26 @@ def invalidate_sessions() -> None:
     invalidator.run()
 
 
+def remove_password(username: str) -> tuple[bool, str]:
+    with SessionMaker() as engine:
+        user: User | None = engine.execute(select(User).filter_by(username=username)).scalar_one_or_none()
+        if user is None:
+            return (False, "User does not exist")
+        if not user.public_keys:
+            return (False, "You do not have any alternative method to log in!")
+        user.password = ""
+        engine.commit()
+    return (True, "Password removed!")
+
+
+def check_user_has_password(username: str) -> bool:
+    with SessionMaker() as engine:
+        user: User | None = engine.execute(select(User).filter_by(username=username)).scalar_one_or_none()
+        if user is None:
+            return False
+        return bool(user.password)
+
+
 def change_password(username: str, *, new_password: str, old_password: Optional[str] = None) -> tuple[bool, str]:
     with SessionMaker() as engine:
         user: User | None = engine.execute(select(User).filter_by(username=username)).scalar_one_or_none()

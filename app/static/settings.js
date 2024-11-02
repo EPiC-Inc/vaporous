@@ -48,6 +48,48 @@ function change_password() {
 	});
 }
 
+function add_password() {
+	document.getElementById("password_change_message").innerText = "";
+	let password_add_form = document.getElementById("password_add_form");
+	loading_dialog.show();
+	fetch(PASSWORD_ADD_URL, {
+		method: "POST",
+		body: new FormData(password_add_form)
+	}).then(response => {
+		response.json().then(json => {
+			password_add_form.reset();
+			let success = json[0];
+			let message = json[1];
+			console.log(success);
+			console.log(message);
+			loading_dialog.close();
+			if (!success) {
+				document.getElementById("password_add_message").innerText = message;
+				document.getElementById("password_add").showModal();
+			}
+		});
+	});
+}
+
+function remove_password() {
+	if (!confirm("Remove your password? Note: Any devices without passkeys will be difficult to set up!")) {
+		return;
+	}
+	loading_dialog.show();
+	fetch(PASSWORD_REMOVE_URL, {
+		method: "POST",
+	}).then(response => {
+		response.json().then(json => {
+			let success = json[0];
+			let message = json[1];
+			loading_dialog.close();
+			if (!success) {
+				alert("Error: " + message);
+			}
+		});
+	});
+}
+
 function get_shares() {
 	document.getElementById("existing_shares").innerHTML = "Loading...";
 	fetch(LIST_SHARE_URL, {
@@ -66,7 +108,13 @@ function get_shares() {
 					child_link.onclick = () => {
 						navigator.clipboard.writeText(share.url);
 					}
-					child_link.innerText = share.id;
+					let info = "";
+					if (share.collaborative) {
+						info = "(Collab) "
+					} else if (share.anonymous_access) {
+						info = "(Anon) "
+					}
+					child_link.innerText = info + share.id;
 					child.appendChild(child_link);
 
 					child_filename.classList.add("link");

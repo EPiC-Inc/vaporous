@@ -33,9 +33,16 @@
         <input type="text" id="file_path_to_share" disabled hidden value="">
         <span>Existing shares:</span>
         <div id="existing_shares"></div>
-        <div>
-            <label for="anon_access">Anonymous access?</label>
-            <input type="checkbox" id="anon_access" name="anonymous_access" checked>
+        <input type="button" onclick="document.getElementById('share_options').classList.toggle('dropdown_hidden');" value="Options">
+        <div id="share_options" class="dropdown_hidden">
+            <div>
+                <label for="anon_access">Anonymous access?</label>
+                <input type="checkbox" id="anon_access" name="anonymous_access" checked>
+            </div>
+            <div>
+                <label for="collab">Collaborative?</label>
+                <input type="checkbox" id="collab" name="collaborative">
+            </div>
         </div>
         <div>
             <input type="submit" value="Share">
@@ -73,7 +80,6 @@
     const UPLOAD_URL = "{{ url_for('upload') }}";
     const DELETE_URL = "{{ url_for('delete') }}";
     const CURRENT_DIRECTORY = "{{ path_segments[-1]['path'] if path_segments else '' }}";
-    const DRAG_IMAGE_URL = "{{ url_for('static', path='drag_image.png') }}";
 </script>
 <script type="text/javascript" src="{{ url_for('static', path='file_view.js') }}"></script>
 {% endblock %}
