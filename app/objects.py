@@ -28,6 +28,7 @@ class Share(Base):
     user_whitelist: Mapped[Optional[str]] = mapped_column(
         String(), nullable=True
     )  # TODO - Maybe make it an "association" class?
+    collaborative: Mapped[bool] = mapped_column(Boolean(), default=False)
     share_id: Mapped[bytes] = mapped_column(BLOB(16), primary_key=True, default_factory=lambda: uuid4().bytes)
 
 

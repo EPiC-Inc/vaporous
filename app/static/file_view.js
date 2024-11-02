@@ -28,7 +28,7 @@ function dragleave(self, event) {
 	self.classList.remove("dragging");
 }
 function dragstart(self, event) {
-	event.preventDefault();
+	// event.preventDefault();
 	event.stopPropagation();
 	event.dataTransfer.setData("vaporous_data", self.getAttribute("path"));
 }
@@ -177,6 +177,7 @@ function open_share_dialog(filepath, filename) {
 		document.getElementById("public_link").innerText = PUBLIC_URL + "/" + filepath;
 		document.getElementById("public_share_dialog").showModal();
 	} else {
+		document.getElementById('share_form').reset();
 		document.getElementById("existing_shares").innerHTML = "Loading...";
 		document.getElementById("file_path_to_share").value = filepath;
 		fetch(LIST_SHARE_URL + "?filter=" + filepath, {
@@ -207,12 +208,13 @@ function open_share_dialog(filepath, filename) {
 
 function publish_share() {
 	loading_dialog.show();
-	let filepath = document.getElementById("file_path_to_share").value;
+	let share_form_element = document.getElementById('share_form');
+	let upload_form = new FormData(share_form_element);
+	upload_form.append("file_path", document.getElementById("file_path_to_share").value);
 	fetch(SHARE_URL, {
 		method: "POST",
-		body: filepath
+		body: upload_form
 	}).then(response => {
-		// upload_form_element.reset();
 		response.json().then(json => {
 			success = json[0];
 			message = json[1];

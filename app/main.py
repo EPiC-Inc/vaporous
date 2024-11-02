@@ -58,7 +58,7 @@ async def get_file_response(
         name="file_view.html",
         context={
             "files": files,
-            "current_directory_url": current_directory_url,
+            "current_directory_url": str(current_directory_url),
             "username": username,
             "access_level": access_level,
             "path_segments": path_segments,
@@ -93,10 +93,71 @@ async def get_share_response(
         name="share_view.html",
         context={
             "files": files,
-            "current_directory_url": request.url_for("get_share", share_id=share_id),
+            "current_directory_url": str(request.url_for("get_share", share_id=share_id)),
             "username": username,
             "access_level": access_level,
             "path_segments": path_segments,
+        },
+    )
+
+
+async def get_collab_share_info(session: Optional[auth.Session], share_id: str) -> dict | None:
+    try:
+        share_id_bytes = bytes.fromhex(share_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid share ID.")
+
+    with SessionMaker() as engine:
+        share: Share | None = engine.execute(select(Share).filter_by(share_id=share_id_bytes)).scalar_one_or_none()
+        if not share:
+            raise HTTPException(status_code=404, detail="Share ID not found.")
+        if not share.collaborative:
+            raise HTTPException(status_code=405, detail="Not a collaborative share.")
+        allow_list = share.user_whitelist
+        if allow_list:
+            allow_list.split("$")
+            if not session.user_id in allow_list:
+                raise HTTPException(status_code=403, detail="User ID not on allow list.")
+        share_path = Path(share.path)
+        return {
+            "base": share_path,
+            "anonymous_access": share.anonymous_access,
+            "allow_list": allow_list or None,
+        }
+
+
+async def get_collab_response(
+    request: Request,
+    share_id: str,
+    base: PathLike[str] | str,
+    file_path: Optional[PathLike[str] | str],
+    username: Optional[str] = None,
+    access_level: int = -1,
+):
+    file_path = file_handler.safe_path_regex.sub(".", str(file_path))
+    files = await file_handler.list_files(base=base, subfolder=file_path, access_level=-1)
+    if files is None and file_path is not None:  # NOTE - I smell a possible bug here?
+        if file_contents := await file_handler.get_file(base=base, file_path=file_path):
+            return file_contents
+        raise HTTPException(status_code=404, detail="Unable to get files")
+    folder_name = Path(base).name
+    path_segments = [{"path": "", "name": f"{folder_name} (Shared Folder)"}]
+    current_path = []
+    if file_path:
+        for segment in Path(file_path).parts:
+            current_path.append(segment)
+            path_segments.append({"path": "/".join(current_path), "name": segment})
+    return templates.TemplateResponse(
+        request=request,
+        name="collab_view.html",
+        context={
+            "share_id": share_id,
+            "files": files,
+            "current_directory_url": str(request.url_for("get_collab", share_id=share_id)),
+            "username": username,
+            "access_level": access_level,
+            "path_segments": path_segments,
+            "in_public_folder": False,
         },
     )
 
@@ -123,6 +184,7 @@ async def settings(request: Request, session: Annotated[Optional[auth.Session], 
         context={
             "username": session.username,
             "access_level": session.access_level,
+            "has_password": auth.check_user_has_password(session.username),
         },
     )
 
@@ -214,6 +276,8 @@ async def get_share(
                 raise HTTPException(status_code=403, detail="Not on share list.")
         elif not (share.anonymous_access or session):
             raise HTTPException(status_code=401, detail="Share not publicly accessible.")
+        if share.collaborative:
+            return RedirectResponse(url=request.url_for('get_collab', share_id=share_id, file_path=file_path))
         share_path = Path(share.path)
         # owner_id = share_path.parts[0]
         # share_path = share_path.relative_to(owner_id)
@@ -228,16 +292,66 @@ async def get_share(
         )
 
 
+@app.get("/collab/{share_id}")
+@app.get("/collab/{share_id}/{file_path:path}")
+async def get_collab(
+    request: Request,
+    session: Annotated[Optional[auth.Session], Security(get_session)],
+    share_id: str,
+    file_path: Optional[PathLike[str]] = None,
+):
+    if file_path:
+        file_path = file_handler.safe_path_regex.sub(".", str(file_path))
+    else:
+        file_path = "."
+    try:
+        share_id_bytes = bytes.fromhex(share_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid share ID.")
+
+    with SessionMaker() as engine:
+        share: Share | None = engine.execute(select(Share).filter_by(share_id=share_id_bytes)).scalar_one_or_none()
+        if not share:
+            raise HTTPException(status_code=404, detail="Share ID not found.")
+        if allow_list := share.user_whitelist:
+            if not (session and session.user_id in allow_list.split("$")):
+                raise HTTPException(status_code=403, detail="Not on share list.")
+        elif not (share.anonymous_access or session):
+            raise HTTPException(status_code=401, detail="Share not publicly accessible.")
+        if not share.collaborative:
+            return RedirectResponse(url=request.url_for('get_share', share_id=share_id, file_path=file_path))
+        share_path = Path(share.path)
+        # owner_id = share_path.parts[0]
+        # share_path = share_path.relative_to(owner_id)
+        # share_subpath = share_path / file_path
+        return await get_collab_response(
+            request=request,
+            share_id=share_id,
+            base=share_path,
+            file_path=file_path,
+            username=session.username if session else None,
+            access_level=session.access_level if session else -1,
+        )
+
+
 @app.post("/new_share")
 async def add_share(
     request: Request,
     session: Annotated[Optional[auth.Session], Security(get_session)],
-    file_path: Annotated[str, Body()],
+    file_path: Annotated[str, Form()],
+    anonymous_access: Annotated[bool, Form()] = False,
+    collaborative: Annotated[bool, Form()] = False,
 ):
     if session is None:
         raise HTTPException(status_code=401, detail="neener neener neener")
     base = session.user_id
-    share_id = await file_handler.create_share(user_id=session.user_id, file_path=file_path, expires=None)
+    share_id = await file_handler.create_share(
+        user_id=session.user_id,
+        file_path=file_path,
+        anonymous_access=anonymous_access,
+        collaborative=collaborative,
+        expires=None
+    )
     return str(request.url_for('get_share', share_id=share_id))
 
 
@@ -399,6 +513,33 @@ async def change_password(
         return (False, "New passwords must match!")
     return auth.change_password(session.username, new_password=new_password, old_password=old_password)
 
+@app.post("/add_password")
+async def add_password(
+    request: Request,
+    session: Annotated[Optional[auth.Session], Security(get_session)],
+    new_password: Annotated[str, Form()],
+    confirm_new_password: Annotated[str, Form()],
+):
+    if session is None:
+        raise HTTPException(status_code=401, detail="Cannot add password without being logged in first!")
+    if not new_password:
+        return (False, "Cannot add a blank password!")
+    if new_password != confirm_new_password:
+        return (False, "New passwords must match!")
+    if not auth.check_user_has_password(session.username):
+        return auth.change_password(session.username, new_password=new_password)
+    return (False, "Cannot add a password to an account that already has one!")
+
+
+@app.post("/remove_password")
+async def remove_password(
+    request: Request,
+    session: Annotated[Optional[auth.Session], Security(get_session)],
+):
+    if session is None:
+        raise HTTPException(status_code=401, detail="Cannot remove password without being logged in first!")
+    return auth.remove_password(session.username)
+
 
 @app.post("/change_username")
 async def change_username(
@@ -503,23 +644,87 @@ async def enroll(request: Request, form: Annotated[OAuth2PasswordRequestForm, Se
         )
         return response
     return await enroll_page(request=request, next=next, messages=[("error", message)])
-    # success = auth.login_with_password(username, password)
-    # if success:
-    #     # Get rid of any unexpected redirects
-    #     if next:
-    #         next = urlparse(next).path
-    #     # The above branch breaks everything if next was maliciously set, so let's properly un-break it
-    #     if not next:
-    #         next = request.url_for("root")  # type:ignore
-    #     response = RedirectResponse(url=next, status_code=status.HTTP_303_SEE_OTHER)  # type:ignore
-    #     response.set_cookie(
-    #         key="session_id",
-    #         value=auth.new_session(username),
-    #         # secure=True,
-    #         max_age=int(auth.SESSION_EXPIRY.total_seconds()),
-    #     )
-    #     return response
-    # return await login_page(request=request, next=next, messages=[("error", "Username or password is incorrect")])
+
+
+# SECTION - Collab operations
+@app.post("/collab/{share_id}/new_folder")
+async def collab_new_folder(
+    request: Request,
+    session: Annotated[Optional[auth.Session], Security(get_session)],
+    share_id: str,
+    file_path: Annotated[str, Body()],
+    folder_name: Annotated[str, Body()],
+):
+    share_info = await get_collab_share_info(session, share_id)
+    return await file_handler.new_folder(
+        base=share_info.get("base"),
+        file_path=file_path,
+        folder_name=folder_name,
+    )
+
+
+@app.post("/collab/{share_id}/rename")
+async def collab_rename(
+    request: Request,
+    session: Annotated[Optional[auth.Session], Security(get_session)],
+    share_id: str,
+    file_path: Annotated[str, Body()],
+    new_name: Annotated[str, Body()],
+):
+    share_info = await get_collab_share_info(session, share_id)
+    return await file_handler.rename(
+        base=share_info.get("base"),
+        file_path=file_path,
+        new_name=new_name,
+    )
+
+
+@app.post("/collab/{share_id}/move")
+async def collab_move(
+    request: Request,
+    session: Annotated[Optional[auth.Session], Security(get_session)],
+    share_id: str,
+    file_path: Annotated[str, Body()],
+    to: Annotated[str, Body()],
+):
+    share_info = await get_collab_share_info(session, share_id)
+    return await file_handler.move(
+        base=share_info.get("base"),
+        to_base=share_info.get("base"),
+        file_path=file_path,
+        to=to,
+    )
+
+
+@app.post("/collab/{share_id}/upload")
+async def collab_upload(
+    request: Request,
+    session: Annotated[Optional[auth.Session], Security(get_session)],
+    share_id: str,
+    file_path: Annotated[str, Form()],
+    compression_level: Annotated[int, Form()],
+    files: list[UploadFile],
+):
+    share_info = await get_collab_share_info(session, share_id)
+    return await file_handler.upload_files(
+        base=share_info.get("base"),
+        file_path=file_path,
+        files=files,
+        compression=compression_level,
+    )
+
+
+@app.post("/collab/{share_id}/delete")
+async def collab_delete(
+    request: Request,
+    session: Annotated[Optional[auth.Session], Security(get_session)],
+    share_id: str,
+    from_public: Annotated[bool, Body()],
+    file_path: Annotated[str, Body()],
+):
+    share_info = await get_collab_share_info(session, share_id)
+    return await file_handler.delete_file(share_info.get("base"), file_path)
+#!SECTION
 
 
 # TODO - finish this

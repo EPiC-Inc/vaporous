@@ -240,6 +240,7 @@ async def list_shares(owner: str, filter: Optional[str] = None) -> list[dict]:
                 "shared_filename": Path(share.path).name,
                 "shared_file": "/".join(Path(share.path).parts[1:]),
                 "anonymous_access": share.anonymous_access,
+                "collaborative": share.collaborative,
                 "allowed_users": allow_list
             })
     return owned_shares
@@ -250,6 +251,7 @@ async def create_share(
     file_path: PathLike[str] | str,
     expires: Optional[datetime] = None,
     anonymous_access: bool = True,
+    collaborative: bool = False,
     whitelist: Optional[list[str]] = None,
 ) -> tuple[bool, str]:
     # NOTE - since this method forces the share to be created under the user's home folder,
@@ -268,6 +270,7 @@ async def create_share(
         expires=expires,
         path=str(file_path_to_save),
         anonymous_access=anonymous_access,
+        collaborative=collaborative if collaborative and file_path.is_dir() else False,
         user_whitelist="$".join(whitelist) if whitelist else None,
     )
     new_share_link = new_share.share_id.hex()
