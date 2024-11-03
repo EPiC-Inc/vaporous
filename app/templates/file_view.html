@@ -102,7 +102,13 @@
 <div id="file_list">
 {% if files %}
     {% for file in files %}
-    <div class="file_select" draggable="{% if ((not file['protected']) or (access_level >= 2)) and file['type'] != 'public_directory' %}true{% else %}false{% endif %}"{% if file['type'] in ('dir', 'public_directory') %} ondragover="dragover(this, event);" ondragleave="dragleave(this, event);" ondragstart="dragstart(this, event);" ondrop="drop(this, event);"{% endif %}{% if file['type'] == 'dir' %}path={{ file['path'] | tojson }}{% elif file['type'] == 'public_directory' %} path="||public||"{% endif %}>
+    <div class="file_select"
+    {% if ((not file['protected']) or (access_level >= 2)) and file['type'] != 'public_directory' %}
+    draggable="true" ondragstart="dragstart(this, event);"
+    {% else %}
+    draggable="false"
+    {% endif %}
+    {% if file['type'] in ('dir', 'public_directory') %} ondragover="dragover(this, event);" ondragleave="dragleave(this, event);" ondrop="drop(this, event);"{% endif %}{% if file['type'] == 'public_directory' %} path="||public||"{% else%} path={{ file['path'] | tojson }}{% endif %}>
         {% if file["type"] == "public_directory" %}
         <a class="link" href="{{ url_for('get_public_files') }}" draggable="false">
         {% else %}
