@@ -112,7 +112,7 @@
         {% if file["type"] == "public_directory" %}
         <a class="link" href="{{ url_for('get_public_files') }}" draggable="false">
         {% else %}
-        <a class="link" href={{ (current_directory_url + "/" + file['path']) | tojson }} draggable="false">
+        <a class="link" href="{{ (current_directory_url + '/' + file['path']) }}" draggable="false">
         {% endif %}
             <img class="file_icon" src="{{ url_for('static', path='icons/icon-' + file['type'] + '.png') }}" draggable="false">
             <div class="file_name">{{ file["name"] }}</div>
