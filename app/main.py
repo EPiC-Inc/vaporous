@@ -10,6 +10,7 @@ from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Resp
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from jinja2 import Environment
 from sqlalchemy import select
 
 from . import auth, file_handler
@@ -17,6 +18,9 @@ from .api import api_v0
 from .config import CONFIG
 from .database import SessionMaker
 from .objects import Share, User
+
+jinja2_environment = Environment()
+jinja2_environment.policies['json.dumps_kwargs']['ensure_ascii'] = False
 
 app = FastAPI(openapi_url=None)
 templates = Jinja2Templates(Path(__file__).parent / "templates")
@@ -385,7 +389,7 @@ async def new_folder(
     session: Annotated[Optional[auth.Session], Security(get_session)],
     file_path: Annotated[str, Body()],
     folder_name: Annotated[str, Body()],
-    to_public: Annotated[bool, Body()], 
+    to_public: Annotated[bool, Body()],
 ):
     if session is None:
         raise HTTPException(status_code=401, detail="Anonymous users cannot create folders!")
@@ -758,14 +762,3 @@ async def security_policy(request: Request):
 
 
 app.mount("/api/v0", api_v0)
-
-if __name__ == "__main__":
-    import asyncio
-
-    from hypercorn.asyncio import serve
-    from hypercorn.config import Config
-
-    hypercorn_config = Config()
-    hypercorn_config.bind = [f"{CONFIG.get("host")}:{CONFIG.get("port")}"]
-    # hypercorn_config.quic_bind = [f"{CONFIG.host}:{CONFIG.port}"]
-    asyncio.run(serve(app, hypercorn_config))  # type: ignore
