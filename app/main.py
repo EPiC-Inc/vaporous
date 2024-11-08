@@ -1,5 +1,6 @@
 """The main server monolith."""
 
+from mimetypes import guess_file_type
 from os import PathLike
 from pathlib import Path
 from typing import Annotated, Optional
@@ -17,7 +18,7 @@ from . import auth, file_handler
 from .api import api_v0
 from .config import CONFIG
 from .database import SessionMaker
-from .objects import Share, User
+from .objects import Share
 
 jinja2_environment = Environment()
 jinja2_environment.policies["json.dumps_kwargs"]["ensure_ascii"] = False
@@ -35,7 +36,46 @@ async def get_session(session_id: Annotated[Optional[str], Cookie()] = None) -> 
     return None
 
 
-async def get_file_response(
+# TODO - rename
+async def directory_list(
+    base: PathLike[str] | str,
+    file_path: Optional[PathLike[str] | str],
+    access_level: int = 0,
+) -> list | None:
+    if file_path is not None:
+        file_path = file_handler.safe_path_regex.sub(".", str(file_path))
+    files = await file_handler.list_files(base=base, subfolder=file_path, access_level=access_level)
+    return files
+
+
+async def get_direct_file_response(
+    base: PathLike[str] | str,
+    file_path: PathLike[str] | str,
+):
+    if file_contents := await file_handler.get_file(base=base, file_path=file_path, direct=True):
+        return file_contents
+    raise HTTPException(status_code=404, detail="Unable to get file")
+
+
+async def get_file_response_or_embed(
+    request: Request, base: PathLike[str] | str, file_path: PathLike[str] | str, direct_url: str
+):
+    if file_contents := await file_handler.get_file(base=base, file_path=file_path):
+        if file_contents == "||video||":
+            file_path_to_serve = file_handler.get_upload_directory() / file_handler.safe_join(base, file_path)
+            return templates.TemplateResponse(
+                request=request,
+                name="embed_video.html",
+                context={
+                    "mime_type": guess_file_type(file_path_to_serve)[0],
+                    "direct_url": direct_url,
+                },
+            )
+        return file_contents
+    raise HTTPException(status_code=404, detail="Unable to get file")
+
+
+async def get_full_file_response(
     request: Request,
     base: PathLike[str] | str,
     file_path: Optional[PathLike[str] | str],
@@ -44,32 +84,44 @@ async def get_file_response(
     access_level: int = 0,
     public: bool = False,
 ):
-    if file_path is not None:
-        file_path = file_handler.safe_path_regex.sub(".", str(file_path))
-    files = await file_handler.list_files(base=base, subfolder=file_path, access_level=access_level)
-    if files is None and file_path is not None:  # NOTE - I smell a possible bug here?
-        if file_contents := await file_handler.get_file(base=base, file_path=file_path):
-            return file_contents
-        raise HTTPException(status_code=404, detail="Unable to get files")
-    path_segments = [{"path": "", "name": "Public Files"}] if public else []
-    current_path = []
-    if file_path:
-        for segment in Path(file_path).parts:
-            current_path.append(segment)
-            path_segments.append({"path": "/".join(current_path), "name": segment})
-    return templates.TemplateResponse(
-        request=request,
-        name="file_view.html",
-        context={
-            "files": files,
-            "media_files": list(filter(lambda f: f["type"] not in ("dir", "public_directory"), files)),
-            "current_directory_url": str(current_directory_url),
-            "username": username,
-            "access_level": access_level,
-            "path_segments": path_segments,
-            "in_public_folder": public,
-        },
+    files = await directory_list(
+        base=base,
+        file_path=file_path,
+        access_level=access_level,
     )
+    if files is not None:
+        path_segments = [{"path": "", "name": "Public Files"}] if public else []
+        current_path = []
+        if file_path:
+            for segment in Path(file_path).parts:
+                current_path.append(segment)
+                path_segments.append({"path": "/".join(current_path), "name": segment})
+        return templates.TemplateResponse(
+            request=request,
+            name="file_view.html",
+            context={
+                "files": files,
+                "media_files": list(filter(lambda f: f["type"] not in ("dir", "public_directory"), files)),
+                "current_directory_url": str(current_directory_url),
+                "username": username,
+                "access_level": access_level,
+                "path_segments": path_segments,
+                "in_public_folder": public,
+            },
+        )
+    if file_path is not None:
+        if file_contents := await get_file_response_or_embed(
+            request=request,
+            base=base,
+            file_path=file_path,
+            direct_url=(
+                str(request.url_for("serve_public_file_direct", file_path=file_path))
+                if public
+                else str(request.url_for("serve_file_direct", file_path=file_path))
+            ),
+        ):
+            return file_contents
+    raise HTTPException(status_code=404, detail="Unable to get files")
 
 
 async def get_share_response(
@@ -80,31 +132,40 @@ async def get_share_response(
     username: Optional[str] = None,
     access_level: int = -1,
 ):
-    file_path = file_handler.safe_path_regex.sub(".", str(file_path))
-    files = await file_handler.list_files(base=base, subfolder=file_path, access_level=-1)
-    if files is None and file_path is not None:  # NOTE - I smell a possible bug here?
-        if file_contents := await file_handler.get_file(base=base, file_path=file_path):
-            return file_contents
-        raise HTTPException(status_code=404, detail="Unable to get files")
-    folder_name = Path(base).name
-    path_segments = [{"path": "", "name": f"{folder_name} (Shared Folder)"}]
-    current_path = []
-    if file_path:
-        for segment in Path(file_path).parts:
-            current_path.append(segment)
-            path_segments.append({"path": "/".join(current_path), "name": segment})
-    return templates.TemplateResponse(
-        request=request,
-        name="share_view.html",
-        context={
-            "files": files,
-            "media_files": list(filter(lambda f: f["type"] not in ("dir", "public_directory"), files)),
-            "current_directory_url": str(request.url_for("get_share", share_id=share_id)),
-            "username": username,
-            "access_level": access_level,
-            "path_segments": path_segments,
-        },
+    files = await directory_list(
+        base=base,
+        file_path=file_path,
+        access_level=access_level,
     )
+    if files is not None:
+        folder_name = Path(base).name
+        path_segments = [{"path": "", "name": f"{folder_name} (Shared Folder)"}]
+        current_path = []
+        if file_path:
+            for segment in Path(file_path).parts:
+                current_path.append(segment)
+                path_segments.append({"path": "/".join(current_path), "name": segment})
+        return templates.TemplateResponse(
+            request=request,
+            name="share_view.html",
+            context={
+                "files": files,
+                "media_files": list(filter(lambda f: f["type"] not in ("dir", "public_directory"), files)),
+                "current_directory_url": str(request.url_for("get_share", share_id=share_id)),
+                "username": username,
+                "access_level": access_level,
+                "path_segments": path_segments,
+            },
+        )
+    if file_path is not None:
+        if file_contents := await get_file_response_or_embed(
+            request=request,
+            base=base,
+            file_path=file_path,
+            direct_url=str(request.url_for("serve_share_file_direct", share_id=share_id, file_path=file_path)),
+        ):
+            return file_contents
+    raise HTTPException(status_code=404, detail="Unable to get files")
 
 
 async def get_collab_response(
@@ -115,33 +176,42 @@ async def get_collab_response(
     username: Optional[str] = None,
     access_level: int = -1,
 ):
-    file_path = file_handler.safe_path_regex.sub(".", str(file_path))
-    files = await file_handler.list_files(base=base, subfolder=file_path, access_level=-1)
-    if files is None and file_path is not None:  # NOTE - I smell a possible bug here?
-        if file_contents := await file_handler.get_file(base=base, file_path=file_path):
-            return file_contents
-        raise HTTPException(status_code=404, detail="Unable to get files")
-    folder_name = Path(base).name
-    path_segments = [{"path": "", "name": f"{folder_name} (Shared Folder)"}]
-    current_path = []
-    if file_path:
-        for segment in Path(file_path).parts:
-            current_path.append(segment)
-            path_segments.append({"path": "/".join(current_path), "name": segment})
-    return templates.TemplateResponse(
-        request=request,
-        name="collab_view.html",
-        context={
-            "share_id": share_id,
-            "files": files,
-            "media_files": list(filter(lambda f: f["type"] not in ("dir", "public_directory"), files)),
-            "current_directory_url": str(request.url_for("get_collab", share_id=share_id)),
-            "username": username,
-            "access_level": access_level,
-            "path_segments": path_segments,
-            "in_public_folder": False,
-        },
+    files = await directory_list(
+        base=base,
+        file_path=file_path,
+        access_level=access_level,
     )
+    if files is not None:
+        folder_name = Path(base).name
+        path_segments = [{"path": "", "name": f"{folder_name} (Shared Folder)"}]
+        current_path = []
+        if file_path:
+            for segment in Path(file_path).parts:
+                current_path.append(segment)
+                path_segments.append({"path": "/".join(current_path), "name": segment})
+        return templates.TemplateResponse(
+            request=request,
+            name="collab_view.html",
+            context={
+                "share_id": share_id,
+                "files": files,
+                "media_files": list(filter(lambda f: f["type"] not in ("dir", "public_directory"), files)),
+                "current_directory_url": str(request.url_for("get_collab", share_id=share_id)),
+                "username": username,
+                "access_level": access_level,
+                "path_segments": path_segments,
+                "in_public_folder": False,
+            },
+        )
+    if file_path is not None:
+        if file_contents := await get_file_response_or_embed(
+            request=request,
+            base=base,
+            file_path=file_path,
+            direct_url=str(request.url_for("serve_share_file_direct", share_id=share_id, file_path=file_path)),
+        ):
+            return file_contents
+    raise HTTPException(status_code=404, detail="Unable to get files")
 
 
 async def get_collab_share_info(session: Optional[auth.Session], share_id: str) -> dict:
@@ -221,7 +291,9 @@ async def get_files(
 ):
     if session is None:
         return RedirectResponse(url=request.url_for("login_page").include_query_params(next=request.url.path))
-    return await get_file_response(
+    if str(file_path) == ".":
+        file_path = None
+    return await get_full_file_response(
         request=request,
         base=session.user_id,
         file_path=file_path,
@@ -229,6 +301,17 @@ async def get_files(
         username=session.username,
         access_level=session.access_level,
     )
+
+
+@app.get("/d/{file_path:path}")
+async def serve_file_direct(
+    request: Request,
+    session: Annotated[Optional[auth.Session], Security(get_session)],
+    file_path: str,
+):
+    if session is None:
+        return RedirectResponse(url=request.url_for("login_page").include_query_params(next=request.url.path))
+    return await get_direct_file_response(base=session.user_id, file_path=file_path)
 
 
 @app.get("/public")
@@ -246,7 +329,7 @@ async def get_public_files(
     else:
         if session.access_level < CONFIG.get("public_access_level", -1):
             raise HTTPException(status_code=403, detail="User level insufficient.")
-    return await get_file_response(
+    return await get_full_file_response(
         request=request,
         base=str(CONFIG.get("public_directory")),
         file_path=file_path,
@@ -255,6 +338,23 @@ async def get_public_files(
         access_level=session.access_level if session else -1,
         public=True,
     )
+
+
+@app.get("/d_public/{file_path:path}")
+async def serve_public_file_direct(
+    request: Request,
+    session: Annotated[Optional[auth.Session], Security(get_session)],
+    file_path: PathLike[str] | str,
+):
+    if not CONFIG.get("public_directory"):
+        raise HTTPException(status_code=404, detail="Public directory not enabled.")
+    if session is None:
+        if CONFIG.get("public_access_requires_login", True):
+            return RedirectResponse(url=request.url_for("login_page").include_query_params(next=request.url.path))
+    else:
+        if session.access_level < CONFIG.get("public_access_level", -1):
+            raise HTTPException(status_code=403, detail="User level insufficient.")
+    return await get_direct_file_response(base=str(CONFIG.get("public_directory")), file_path=file_path)
 
 
 @app.get("/s/{share_id}")
@@ -297,6 +397,31 @@ async def get_share(
             username=session.username if session else None,
             access_level=session.access_level if session else -1,
         )
+
+
+@app.get("/d_s/{share_id}/{file_path:path}")
+async def serve_share_file_direct(
+    request: Request,
+    session: Annotated[Optional[auth.Session], Security(get_session)],
+    share_id: str,
+    file_path: PathLike[str] | str,
+):
+    file_path = file_handler.safe_path_regex.sub(".", str(file_path))
+    try:
+        share_id_bytes = bytes.fromhex(share_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid share ID.")
+    with SessionMaker() as engine:
+        share: Share | None = engine.execute(select(Share).filter_by(share_id=share_id_bytes)).scalar_one_or_none()
+        if not share:
+            raise HTTPException(status_code=404, detail="Share ID not found.")
+        if allow_list := share.user_whitelist:
+            if not (session and session.user_id in allow_list.split("$")):
+                raise HTTPException(status_code=403, detail="Not on share list.")
+        elif not (share.anonymous_access or session):
+            raise HTTPException(status_code=401, detail="Share not publicly accessible.")
+        share_path = Path(share.path)
+    return await get_direct_file_response(base=share_path, file_path=file_path)
 
 
 @app.get("/collab/{share_id}")

@@ -10,7 +10,7 @@ from typing import Optional
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy import select
-from sqlalchemy.sql.expression import bindparam
+from typing import Literal
 
 from .config import CONFIG
 from .database import SessionMaker
@@ -33,6 +33,22 @@ def safe_join(base: PathLike[str] | str, subfolder: PathLike[str] | str) -> Path
     subfolder = safe_path_regex.sub(".", str(subfolder))
     subfolder = (Path(base) / subfolder).relative_to(base)
     return base / subfolder
+
+
+def get_file_type(extension: str):
+    match extension:
+        case ".txt" | ".pdf" | ".md" | ".rtf" | ".rst" | ".odt" | ".doc" | ".docx" | ".xls" | ".xlsx":
+            return "document"
+        case ".jpg" | ".jpeg" | ".png" | ".webp" | ".gif" | ".bmp" | ".tiff" | ".avif" | ".apng":
+            return "image"
+        case ".mp3" | ".wav" | ".flac" | ".ogg" | ".aiff" | ".aac" | ".alac" | ".pcm" | ".dsd" | ".wma":
+            return "audio"
+        case ".mp4" | ".wmv" | ".webm" | ".mov" | ".avi" | ".mkv":
+            return "video"
+        case ".zip" | ".7z" | ".xz" | ".rar" | ".gz" | ".bz2":
+            return "archive"
+        case _:
+            return "file"
 
 
 def create_home_folder(uuid: str) -> None:
@@ -94,19 +110,7 @@ async def list_files(
         if child.is_dir():
             type_ = "dir"
         else:
-            match child.suffix:
-                case ".txt" | ".pdf" | ".md" | ".rtf" | ".rst" | ".odt" | ".doc" | ".docx" | ".xls" | ".xlsx":
-                    type_ = "document"
-                case ".jpg" | ".jpeg" | ".png" | ".webp" | ".gif" | ".bmp" | ".tiff" | ".avif" | ".apng":
-                    type_ = "image"
-                case ".mp3" | ".wav" | ".flac" | ".ogg" | ".aiff" | ".aac" | ".alac" | ".pcm" | ".dsd" | ".wma":
-                    type_ = "audio"
-                case ".mp4" | ".wmv" | ".webm" | ".mov" | ".avi" | ".mkv":
-                    type_ = "video"
-                case ".zip" | ".7z" | ".xz" | ".rar" | ".gz" | ".bz2":
-                    type_ = "archive"
-                case _:
-                    type_ = "file"
+            type_ = get_file_type(child.suffix)
         for protected_path in CONFIG.get("protected_public_directories", []):
             if child.is_relative_to(PUBLIC_DIRECTORY / protected_path):
                 is_protected = True
@@ -125,10 +129,13 @@ async def list_files(
     return files
 
 
-async def get_file(base: PathLike[str] | str, file_path: PathLike[str] | str) -> FileResponse | None:
+async def get_file(base: PathLike[str] | str, file_path: PathLike[str] | str, direct: bool = False) -> FileResponse | Literal["||video||"] | None:
     file_path = get_upload_directory() / safe_join(base, file_path)
     if not file_path.exists() or not file_path.is_file():
         return None
+    if not direct:
+        if get_file_type(file_path.suffix) == "video":
+            return "||video||"
     return FileResponse(file_path)
 
 
@@ -228,7 +235,7 @@ async def move(
 
 async def list_shares(owner: str, filter: Optional[str] = None) -> list[dict]:
     if filter:
-        filter = f"{owner}/{filter}"
+        filter = str(Path(owner) / filter)
     owned_shares: list[dict] = []
     with SessionMaker() as engine:
         shares = engine.execute(select(Share).filter_by(owner=bytes.fromhex(owner)).order_by(Share.path)).scalars()
