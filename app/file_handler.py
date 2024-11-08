@@ -10,11 +10,11 @@ from typing import Optional
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy import select
-from sqlalchemy.sql.expression import bindparam
+from typing import Literal
 
 from .config import CONFIG
 from .database import SessionMaker
-from .objects import Share
+from .objects import Share, User
 
 
 safe_path_regex = regex_compile(r"\.\.+")
@@ -33,6 +33,22 @@ def safe_join(base: PathLike[str] | str, subfolder: PathLike[str] | str) -> Path
     subfolder = safe_path_regex.sub(".", str(subfolder))
     subfolder = (Path(base) / subfolder).relative_to(base)
     return base / subfolder
+
+
+def get_file_type(extension: str):
+    match extension:
+        case ".txt" | ".pdf" | ".md" | ".rtf" | ".rst" | ".odt" | ".doc" | ".docx" | ".xls" | ".xlsx":
+            return "document"
+        case ".jpg" | ".jpeg" | ".png" | ".webp" | ".gif" | ".bmp" | ".tiff" | ".avif" | ".apng":
+            return "image"
+        case ".mp3" | ".wav" | ".flac" | ".ogg" | ".aiff" | ".aac" | ".alac" | ".pcm" | ".dsd" | ".wma":
+            return "audio"
+        case ".mp4" | ".wmv" | ".webm" | ".mov" | ".avi" | ".mkv":
+            return "video"
+        case ".zip" | ".7z" | ".xz" | ".rar" | ".gz" | ".bz2":
+            return "archive"
+        case _:
+            return "file"
 
 
 def create_home_folder(uuid: str) -> None:
@@ -94,39 +110,32 @@ async def list_files(
         if child.is_dir():
             type_ = "dir"
         else:
-            match child.suffix:
-                case ".txt" | ".pdf" | ".md" | ".rtf" | ".rst" | ".odt" | ".doc" | ".docx" | ".xls" | ".xlsx":
-                    type_ = "document"
-                case ".jpg" | ".jpeg" | ".png" | ".webp" | ".gif" | ".bmp" | ".tiff" | ".avif" | ".apng":
-                    type_ = "image"
-                case ".mp3" | ".wav" | ".flac" | ".ogg" | ".aiff" | ".aac" | ".alac" | ".pcm" | ".dsd" | ".wma":
-                    type_ = "audio"
-                case ".mp4" | ".wmv" | ".webm" | ".mov" | ".avi" | ".mkv":
-                    type_ = "video"
-                case ".zip" | ".7z" | ".xz" | ".rar" | ".gz" | ".bz2":
-                    type_ = "archive"
-                case _:
-                    type_ = "file"
+            type_ = get_file_type(child.suffix)
         for protected_path in CONFIG.get("protected_public_directories", []):
             if child.is_relative_to(PUBLIC_DIRECTORY / protected_path):
                 is_protected = True
                 break
-        files.append({
-            "name": child.name,
-            "path": str(child.relative_to(base)),
-            "type": type_,
-            "protected": is_protected,
-        })
+        files.append(
+            {
+                "name": child.name,
+                "path": str(child.relative_to(base)),
+                "type": type_,
+                "protected": is_protected,
+            }
+        )
     files.sort(key=lambda f: f.get("name", ""))
     files.sort(key=lambda f: f.get("type") == "dir", reverse=True)
     files.sort(key=lambda f: f.get("type") == "public_directory", reverse=True)
     return files
 
 
-async def get_file(base: PathLike[str] | str, file_path: PathLike[str] | str) -> FileResponse | None:
+async def get_file(base: PathLike[str] | str, file_path: PathLike[str] | str, direct: bool = False) -> FileResponse | Literal["||video||"] | None:
     file_path = get_upload_directory() / safe_join(base, file_path)
     if not file_path.exists() or not file_path.is_file():
         return None
+    if not direct:
+        if get_file_type(file_path.suffix) == "video":
+            return "||video||"
     return FileResponse(file_path)
 
 
@@ -141,10 +150,10 @@ async def upload_files(
     file_path = get_upload_directory() / safe_join(base, file_path)
     for file_object in files:
         filename = file_object.filename
-        filename = safe_path_regex.sub(".", filename)
         if not filename:
             results.append((False, "No filename??"))
             continue
+        filename = safe_path_regex.sub(".", filename)
         if (file_path / filename).exists():
             results.append((False, "Already exists!"))
             continue
@@ -172,11 +181,12 @@ async def delete_file(base: PathLike[str] | str, file_path: PathLike[str] | str)
     else:
         file_path.unlink()
     with SessionMaker() as engine:
-        shares: list[Share] = engine.execute(select(Share).filter(Share.path.startswith(str(share_path)))).scalars()
+        shares = engine.execute(select(Share).filter(Share.path.startswith(str(share_path)))).scalars()
         for share in shares:
             engine.delete(share)
         engine.commit()
     return (True, "File deleted")
+
 
 async def new_folder(base: PathLike[str] | str, file_path: PathLike[str] | str, folder_name: str) -> tuple[bool, str]:
     file_path = get_upload_directory() / safe_join(base, file_path) / "new_folder"
@@ -203,14 +213,16 @@ async def rename(base: PathLike[str] | str, file_path: PathLike[str] | str, new_
         return (False, "Name already exists!")
     file_path.rename(new_path)
     with SessionMaker() as engine:
-        shares: list[Share] = engine.execute(select(Share).filter(Share.path.startswith(str(share_path)))).scalars()
+        shares = engine.execute(select(Share).filter(Share.path.startswith(str(share_path)))).scalars()
         for share in shares:
             share.path = share.path.replace(str(share_path), str(share_path.with_name(new_name)))
         engine.commit()
     return (True, "Renamed!")
 
 
-async def move(base: PathLike[str] | str, to_base: PathLike[str] | str, file_path: PathLike[str] | str, to: PathLike[str] | str) -> tuple[bool, str]:
+async def move(
+    base: PathLike[str] | str, to_base: PathLike[str] | str, file_path: PathLike[str] | str, to: PathLike[str] | str
+) -> tuple[bool, str]:
     file_path = get_upload_directory() / safe_join(base, file_path)
     to = get_upload_directory() / safe_join(to_base, to) / file_path.name
     if file_path == to:
@@ -223,26 +235,30 @@ async def move(base: PathLike[str] | str, to_base: PathLike[str] | str, file_pat
 
 async def list_shares(owner: str, filter: Optional[str] = None) -> list[dict]:
     if filter:
-        filter = f"{owner}/{filter}"
+        filter = str(Path(owner) / filter)
     owned_shares: list[dict] = []
     with SessionMaker() as engine:
-        shares: list[Share] = engine.execute(select(Share).filter_by(owner=bytes.fromhex(owner)).order_by(Share.path)).scalars()
+        shares = engine.execute(select(Share).filter_by(owner=bytes.fromhex(owner)).order_by(Share.path)).scalars()
         for share in shares:
             allow_list: list[str] = []
             if share.user_whitelist:
                 for user_id in share.user_whitelist.split("$"):
-                    if (user := engine.execute(select(User).filter_by(user_id=bytes.fromhex(user_id))).scalar_one_or_none()):
+                    if user := engine.execute(
+                        select(User).filter_by(user_id=bytes.fromhex(user_id))
+                    ).scalar_one_or_none():
                         allow_list.append(user.username)
             if filter and not share.path == filter:
                 continue
-            owned_shares.append({
-                "id": share.share_id.hex(),
-                "shared_filename": Path(share.path).name,
-                "shared_file": "/".join(Path(share.path).parts[1:]),
-                "anonymous_access": share.anonymous_access,
-                "collaborative": share.collaborative,
-                "allowed_users": allow_list
-            })
+            owned_shares.append(
+                {
+                    "id": share.share_id.hex(),
+                    "shared_filename": Path(share.path).name,
+                    "shared_file": "/".join(Path(share.path).parts[1:]),
+                    "anonymous_access": share.anonymous_access,
+                    "collaborative": share.collaborative,
+                    "allowed_users": allow_list,
+                }
+            )
     return owned_shares
 
 
@@ -279,9 +295,12 @@ async def create_share(
         engine.commit()
     return (True, new_share_link)
 
+
 async def delete_share(share_id: str, owner_id: str) -> tuple[bool, str]:
     with SessionMaker() as engine:
-        share: Share = engine.execute(select(Share).filter_by(share_id=bytes.fromhex(share_id))).scalar_one_or_none()
+        share: Share | None = engine.execute(
+            select(Share).filter_by(share_id=bytes.fromhex(share_id))
+        ).scalar_one_or_none()
         if share and share.owner.hex() == owner_id:
             engine.delete(share)
             engine.commit()

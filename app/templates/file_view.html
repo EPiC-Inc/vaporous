@@ -108,7 +108,7 @@
     {% else %}
     draggable="false"
     {% endif %}
-    {% if file['type'] in ('dir', 'public_directory') %} ondragover="dragover(this, event);" ondragleave="dragleave(this, event);" ondrop="drop(this, event);"{% endif %}{% if file['type'] == 'public_directory' %} path="||public||"{% else%} path={{ file['path'] | tojson }}{% endif %}>
+    {% if file['type'] in ('dir', 'public_directory') %} ondragover="dragover(this, event);" ondragleave="dragleave(this, event);" ondrop="drop(this, event);"{% endif %}{% if file['type'] == 'public_directory' %} path="||public||"{% else%} path="{{ file['path'] }}"{% endif %}>
         {% if file["type"] == "public_directory" %}
         <a class="link" href="{{ url_for('get_public_files') }}" draggable="false">
         {% else %}
