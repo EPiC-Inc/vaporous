@@ -215,7 +215,7 @@ async def rename(base: PathLike[str] | str, file_path: PathLike[str] | str, new_
     with SessionMaker() as engine:
         shares = engine.execute(select(Share).filter(Share.path.startswith(str(share_path)))).scalars()
         for share in shares:
-            share.path = share.path.replace(str(share_path), str(share_path.with_name(new_name)))
+            share.path = share.path.replace(str(share_path), str(share_path.with_stem(new_name)))
         engine.commit()
     return (True, "Renamed!")
 
