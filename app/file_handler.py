@@ -136,7 +136,7 @@ async def get_file(base: PathLike[str] | str, file_path: PathLike[str] | str, di
     if not direct:
         if get_file_type(file_path.suffix) == "video":
             return "||video||"
-    return FileResponse(file_path, filename=file_path.name)
+    return FileResponse(file_path)
 
 
 async def upload_files(
