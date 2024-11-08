@@ -62,6 +62,7 @@ async def get_file_response(
         name="file_view.html",
         context={
             "files": files,
+            "media_files": list(filter(lambda f: f['type'] not in ("dir", "public_directory"), files)),
             "current_directory_url": str(current_directory_url),
             "username": username,
             "access_level": access_level,
@@ -97,37 +98,13 @@ async def get_share_response(
         name="share_view.html",
         context={
             "files": files,
+            "media_files": list(filter(lambda f: f['type'] not in ("dir", "public_directory"), files)),
             "current_directory_url": str(request.url_for("get_share", share_id=share_id)),
             "username": username,
             "access_level": access_level,
             "path_segments": path_segments,
         },
     )
-
-
-async def get_collab_share_info(session: Optional[auth.Session], share_id: str) -> dict | None:
-    try:
-        share_id_bytes = bytes.fromhex(share_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid share ID.")
-
-    with SessionMaker() as engine:
-        share: Share | None = engine.execute(select(Share).filter_by(share_id=share_id_bytes)).scalar_one_or_none()
-        if not share:
-            raise HTTPException(status_code=404, detail="Share ID not found.")
-        if not share.collaborative:
-            raise HTTPException(status_code=405, detail="Not a collaborative share.")
-        allow_list = share.user_whitelist
-        if allow_list:
-            allow_list.split("$")
-            if not session.user_id in allow_list:
-                raise HTTPException(status_code=403, detail="User ID not on allow list.")
-        share_path = Path(share.path)
-        return {
-            "base": share_path,
-            "anonymous_access": share.anonymous_access,
-            "allow_list": allow_list or None,
-        }
 
 
 async def get_collab_response(
@@ -157,6 +134,7 @@ async def get_collab_response(
         context={
             "share_id": share_id,
             "files": files,
+            "media_files": list(filter(lambda f: f['type'] not in ("dir", "public_directory"), files)),
             "current_directory_url": str(request.url_for("get_collab", share_id=share_id)),
             "username": username,
             "access_level": access_level,
@@ -164,6 +142,31 @@ async def get_collab_response(
             "in_public_folder": False,
         },
     )
+
+
+async def get_collab_share_info(session: Optional[auth.Session], share_id: str) -> dict | None:
+    try:
+        share_id_bytes = bytes.fromhex(share_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid share ID.")
+
+    with SessionMaker() as engine:
+        share: Share | None = engine.execute(select(Share).filter_by(share_id=share_id_bytes)).scalar_one_or_none()
+        if not share:
+            raise HTTPException(status_code=404, detail="Share ID not found.")
+        if not share.collaborative:
+            raise HTTPException(status_code=405, detail="Not a collaborative share.")
+        allow_list = share.user_whitelist
+        if allow_list:
+            allow_list.split("$")
+            if not session.user_id in allow_list:
+                raise HTTPException(status_code=403, detail="User ID not on allow list.")
+        share_path = Path(share.path)
+        return {
+            "base": share_path,
+            "anonymous_access": share.anonymous_access,
+            "allow_list": allow_list or None,
+        }
 
 
 @app.exception_handler(404)
@@ -349,14 +352,14 @@ async def add_share(
     if session is None:
         raise HTTPException(status_code=401, detail="neener neener neener")
     base = session.user_id
-    share_id = await file_handler.create_share(
+    success, share_id = await file_handler.create_share(
         user_id=session.user_id,
         file_path=file_path,
         anonymous_access=anonymous_access,
         collaborative=collaborative,
         expires=None
     )
-    return str(request.url_for('get_share', share_id=share_id))
+    return (success, str(request.url_for('get_share', share_id=share_id)))
 
 
 @app.get("/list_shares")
