@@ -67,6 +67,7 @@ async def get_file_response_or_embed(
                 request=request,
                 name="embed_video.html",
                 context={
+                    "url": str(request.url),
                     "mime_type": guess_file_type(file_path_to_serve)[0],
                     "direct_url": direct_url,
                     "title": file_path_to_serve.name,
