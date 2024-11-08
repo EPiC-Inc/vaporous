@@ -359,7 +359,7 @@ async def add_share(
         collaborative=collaborative,
         expires=None
     )
-    return (success, str(request.url_for('get_share', share_id=share_id)))
+    return (success, str(request.url_for('get_share', share_id=share_id)).replace(" ", "%20"))
 
 
 @app.get("/list_shares")
@@ -372,7 +372,7 @@ async def list_shares(
         raise HTTPException(status_code=401, detail="Anonymous users cannot get shares!")
     shares = await file_handler.list_shares(session.user_id, filter)
     for share in shares:
-        share["url"] = str(request.url_for("get_share", share_id=share["id"]))
+        share["url"] = str(request.url_for("get_share", share_id=share["id"])).replace(" ", "%20")
     return shares
 
 

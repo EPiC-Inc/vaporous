@@ -174,7 +174,8 @@ function upload_files() {
 
 function open_share_dialog(filepath, filename) {
 	if (PUBLIC) {
-		document.getElementById("public_link").innerText = PUBLIC_URL + "/" + filepath;
+		let share_url = PUBLIC_URL + "/" + filepath;
+		document.getElementById("public_link").innerText = share_url.replace(" ", "%20");
 		document.getElementById("public_share_dialog").showModal();
 	} else {
 		document.getElementById('share_form').reset();
