@@ -71,7 +71,7 @@ def mark_home_folder_as_deleted(uuid: str) -> None:
     home_folder.rename(new_folder)
 
 @lru_cache
-async def get_file_size(file_path: Path) -> str:
+def get_file_size(file_path: Path) -> str:
     if file_path.is_dir():
         size_bytes = sum(f.stat().st_size for f in file_path.glob("**/*") if f.is_file())
     else:
@@ -138,7 +138,7 @@ async def list_files(
                 "path": str(child.relative_to(base)),
                 "type": type_,
                 "protected": is_protected,
-                "size": await get_file_size(child),
+                "size": get_file_size(child),
             }
         )
     files.sort(key=lambda f: f.get("name", ""))
