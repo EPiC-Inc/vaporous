@@ -64,12 +64,15 @@
         </div>
     </form>
 </dialog>
+
+<dialog id="media_viewer" popover></dialog>
 {% endblock %}
 
 
 {% block scripts %}
 <script type="text/javascript">
     const PUBLIC = {{ in_public_folder | tojson }};
+    const COLLAB = false;
     const PUBLIC_URL = "{{ url_for('get_public_files') }}";
     const NEW_FOLDER_URL = "{{ url_for('new_folder') }}";
     const RENAME_URL = "{{ url_for('rename') }}";
@@ -104,7 +107,7 @@
     {% for file in files %}
     <div class="file_select"
     {% if ((not file['protected']) or (access_level >= 2)) and file['type'] != 'public_directory' %}
-    draggable="true" ondragstart="dragstart(this, event);"
+    draggable="true" ondragstart="dragstart(this, event);" ondragend="dragend();"
     {% else %}
     draggable="false"
     {% endif %}

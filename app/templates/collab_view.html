@@ -28,23 +28,6 @@
     </form>
 </dialog>
 
-<dialog id="share_dialog">
-    <form method="dialog" onsubmit="publish_share();" id="share_form">
-        <div>Sharing options for <span id="name_to_share" style="font-weight: bold;"></span></div>
-        <input type="text" id="file_path_to_share" disabled hidden value="">
-        <span>Existing shares:</span>
-        <div id="existing_shares"></div>
-        <div>
-            <label for="anon_access">Anonymous access?</label>
-            <input type="checkbox" id="anon_access" name="anonymous_access" checked>
-        </div>
-        <div>
-            <input type="submit" value="Share">
-            <input type="button" onclick="document.getElementById('share_dialog').close();document.getElementById('share_form').reset();" value="Close">
-        </div>
-    </form>
-</dialog>
-
 <dialog id="upload_dialog">
     <form method="dialog" onsubmit="upload_files();" id="upload_form">
         <input type="file" name="files" multiple>
@@ -64,7 +47,9 @@
 {% block scripts %}
 <script type="text/javascript">
     const PUBLIC = false;
+    const COLLAB = true;
     const PUBLIC_URL = "{{ url_for('get_public_files') }}";
+    const COLLAB_URL = "{{ url_for('get_collab', share_id=share_id) }}";
     const NEW_FOLDER_URL = "{{ url_for('collab_new_folder', share_id=share_id) }}";
     const RENAME_URL = "{{ url_for('collab_rename', share_id=share_id) }}";
     const MOVE_URL = "{{ url_for('collab_move', share_id=share_id) }}";

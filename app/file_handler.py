@@ -70,6 +70,18 @@ def mark_home_folder_as_deleted(uuid: str) -> None:
     home_folder.rename(new_folder)
 
 
+async def get_file_size(size_bytes: int) -> str:
+    if size_bytes < 1_000:
+        return f"{size_bytes}B"
+    if size_bytes < 1_000_000:
+        return f"{size_bytes / 1_000:.2f}KB"
+    if size_bytes < 1_000_000_000:
+        return f"{size_bytes / 1_000_000:.2f}MB"
+    if size_bytes < 1_000_000_000_000:
+        return f"{size_bytes / 1_000_000_000:.2f}GB"
+    return "TB+"
+
+
 async def list_files(
     base: PathLike[str] | str, subfolder: Optional[PathLike[str] | str] = None, access_level: int = 0
 ) -> list[dict] | None:
@@ -107,6 +119,7 @@ async def list_files(
         return None
     for child in directory_to_list.iterdir():
         is_protected = False
+        # NOTE - This could probably be sped up somehow
         if child.is_dir():
             type_ = "dir"
         else:
@@ -121,6 +134,11 @@ async def list_files(
                 "path": str(child.relative_to(base)),
                 "type": type_,
                 "protected": is_protected,
+                "size": (
+                    await get_file_size(sum(f.stat().st_size for f in child.glob("**/*") if f.is_file()))
+                    if child.is_dir()
+                    else await get_file_size(child.stat().st_size)
+                ),
             }
         )
     files.sort(key=lambda f: f.get("name", ""))
@@ -129,7 +147,9 @@ async def list_files(
     return files
 
 
-async def get_file(base: PathLike[str] | str, file_path: PathLike[str] | str, direct: bool = False) -> FileResponse | Literal["||video||"] | None:
+async def get_file(
+    base: PathLike[str] | str, file_path: PathLike[str] | str, direct: bool = False
+) -> FileResponse | Literal["||video||"] | None:
     file_path = get_upload_directory() / safe_join(base, file_path)
     if not file_path.exists() or not file_path.is_file():
         return None
