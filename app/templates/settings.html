@@ -62,15 +62,15 @@
 		<input type="text" name="username" autocomplete="username" hidden disabled value="{{ username }}">
 		<div>
 			<label for="old_password">Current password:</label>
-			<input id="old_password" name="old_password" autocomplete="off" type="password">
+			<input id="old_password" name="old_password" autocomplete="off" type="password" maxlength="100">
 		</div>
 		<div>
 			<label for="new_password">New password:</label>
-			<input id="new_password" name="new_password" autocomplete="new-password" type="password" required>
+			<input id="new_password" name="new_password" autocomplete="new-password" type="password" required maxlength="100">
 		</div>
 		<div>
 			<label for="confirm_new_password">Confirm new password:</label>
-			<input id="confirm_new_password" name="confirm_new_password" autocomplete="new-password" type="password" required>
+			<input id="confirm_new_password" name="confirm_new_password" autocomplete="new-password" type="password" required maxlength="100">
 		</div>
 		<div><input type="submit" value="Change"> <input type="button" value="Cancel" onclick="document.getElementById('password_change').close();"></div>
 	</form>
@@ -82,11 +82,11 @@
 		<input type="text" name="username" autocomplete="username" hidden disabled value="{{ username }}">
 		<div>
 			<label for="add_pass">New password:</label>
-			<input id="add_pass" name="new_password" autocomplete="new-password" type="password" required>
+			<input id="add_pass" name="new_password" autocomplete="new-password" type="password" required maxlength="100">
 		</div>
 		<div>
 			<label for="confirm_add_pass">Confirm new password:</label>
-			<input id="confirm_add_pass" name="confirm_new_password" autocomplete="new-password" type="password" required>
+			<input id="confirm_add_pass" name="confirm_new_password" autocomplete="new-password" type="password" required maxlength="100">
 		</div>
 		<div><input type="submit" value="Change"> <input type="button" value="Cancel" onclick="document.getElementById('password_add').close();"></div>
 	</form>
