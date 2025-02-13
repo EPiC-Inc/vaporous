@@ -10,3 +10,4 @@ protected_public_directories = []
 self_enrollment = false
 self_enrollment_passcode = ""
 reverse_proxy_ips = ""
+multiple_sessions_signout = true

@@ -721,7 +721,7 @@ async def login(request: Request, form: Annotated[OAuth2PasswordRequestForm, Sec
         )  # type:ignore
         response.set_cookie(
             key="session_id",
-            value=auth.new_session(username),
+            value=auth.new_session(username, invalidate_previous_sessions=CONFIG.get("multiple_sessions_signout")),
             # secure=True,
             max_age=int(auth.SESSION_EXPIRY.total_seconds()),
         )
