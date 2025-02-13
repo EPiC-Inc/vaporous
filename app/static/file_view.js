@@ -1,4 +1,5 @@
 var loading_dialog = document.getElementById("loading_dialog");
+var saved_y = 0;
 
 function refresh() {
 	// Let the file system sync for slower systems
@@ -31,6 +32,17 @@ function dragstart(self, event) {
 	// event.preventDefault();
 	event.stopPropagation();
 	event.dataTransfer.setData("vaporous_data", self.getAttribute("path"));
+	saved_y = window.scrollY;
+	window.scroll({
+		top: 0,
+		behavior: "smooth"
+	});
+}
+function dragend() {
+	window.scroll({
+		top: saved_y,
+		behavior: "smooth"
+	});
 }
 function drop(self, event) {
 	event.preventDefault();
@@ -177,6 +189,10 @@ function open_share_dialog(filepath, filename) {
 		let share_url = PUBLIC_URL + "/" + filepath;
 		document.getElementById("public_link").innerText = share_url.replace(" ", "%20");
 		document.getElementById("public_share_dialog").showModal();
+	} else if (COLLAB) {
+		let share_url = COLLAB_URL + "/" + filepath;
+		document.getElementById("public_link").innerText = share_url.replace(" ", "%20");
+		document.getElementById("public_share_dialog").showModal();
 	} else {
 		document.getElementById('share_form').reset();
 		document.getElementById("existing_shares").innerHTML = "Loading...";
@@ -184,7 +200,6 @@ function open_share_dialog(filepath, filename) {
 		fetch(LIST_SHARE_URL + "?filter=" + filepath, {
 			method: "GET"
 		}).then(response => {
-			// upload_form_element.reset();
 			response.json().then(json => {
 				document.getElementById("name_to_share").innerText = filename;
 				document.getElementById("existing_shares").innerHTML = "";
@@ -256,7 +271,6 @@ function delete_file(filename, is_dir=false) {
 		response.json().then(json => {
 			success = json[0];
 			message = json[1];
-			// TODO - re-compose?
 			if (success) {
 				refresh();
 			} else {

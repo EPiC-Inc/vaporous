@@ -9,6 +9,7 @@ from typing import Optional
 
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
+from functools import lru_cache
 from sqlalchemy import select
 from typing import Literal
 
@@ -69,6 +70,22 @@ def mark_home_folder_as_deleted(uuid: str) -> None:
         raise FileExistsError("Collision?? Deleted!!! home folder already exists!")
     home_folder.rename(new_folder)
 
+@lru_cache
+def get_file_size(file_path: Path) -> str:
+    if file_path.is_dir():
+        size_bytes = sum(f.stat().st_size for f in file_path.glob("**/*") if f.is_file())
+    else:
+        size_bytes = file_path.stat().st_size
+    if size_bytes < 1_000:
+        return f"{size_bytes}B"
+    if size_bytes < 1_000_000:
+        return f"{size_bytes / 1_000:.2f}KB"
+    if size_bytes < 1_000_000_000:
+        return f"{size_bytes / 1_000_000:.2f}MB"
+    if size_bytes < 1_000_000_000_000:
+        return f"{size_bytes / 1_000_000_000:.2f}GB"
+    return "TB+"
+
 
 async def list_files(
     base: PathLike[str] | str, subfolder: Optional[PathLike[str] | str] = None, access_level: int = 0
@@ -121,6 +138,7 @@ async def list_files(
                 "path": str(child.relative_to(base)),
                 "type": type_,
                 "protected": is_protected,
+                "size": get_file_size(child),
             }
         )
     files.sort(key=lambda f: f.get("name", ""))
@@ -129,7 +147,9 @@ async def list_files(
     return files
 
 
-async def get_file(base: PathLike[str] | str, file_path: PathLike[str] | str, direct: bool = False) -> FileResponse | Literal["||video||"] | None:
+async def get_file(
+    base: PathLike[str] | str, file_path: PathLike[str] | str, direct: bool = False
+) -> FileResponse | Literal["||video||"] | None:
     file_path = get_upload_directory() / safe_join(base, file_path)
     if not file_path.exists() or not file_path.is_file():
         return None
@@ -215,7 +235,7 @@ async def rename(base: PathLike[str] | str, file_path: PathLike[str] | str, new_
     with SessionMaker() as engine:
         shares = engine.execute(select(Share).filter(Share.path.startswith(str(share_path)))).scalars()
         for share in shares:
-            share.path = share.path.replace(str(share_path), str(share_path.with_name(new_name)))
+            share.path = share.path.replace(str(share_path), str(share_path.with_stem(new_name)))
         engine.commit()
     return (True, "Renamed!")
 

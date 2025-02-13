@@ -19,5 +19,6 @@ Additionally, you may want to alter `config.toml` to store files in a different 
 - `public_access_requires_login`: Whether or not public file access needs an account. Optional, default is True.
 - `public_access_level`: The minimum user access level to be able to access public files. Optional, default is all accounts can access. Setting this field to 1 or more means that public_access_requires_login will be True.
 - `protected_public_directories`: Subfolders inside the public_directory that are write-protected to non-admins (access level 2). Optional.
-- `self_enrollment`: Whether users can make an account themselves.
+- `self_enrollment`: Whether users can make an account themselves. Optional, default is False.
 - `self_enrollment_passcode`: A passcode asked on the signup page. Optional.
+- `multiple_sessions_signout`: Whether or not to invalidate the user's previous sessions when signing in. Optional, default is False.
