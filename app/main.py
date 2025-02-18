@@ -713,9 +713,6 @@ async def login(request: Request, form: Annotated[OAuth2PasswordRequestForm, Sec
         # Get rid of any unexpected redirects
         if next:
             next = urlparse(next).path
-        # The above branch breaks everything if next was maliciously set, so let's properly un-break it
-        if not next:
-            next = request.url_for("root")  # type:ignore
         response = RedirectResponse(
             url=next or request.url_for("root"), status_code=status.HTTP_303_SEE_OTHER
         )  # type:ignore
