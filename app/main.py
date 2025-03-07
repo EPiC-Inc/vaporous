@@ -20,7 +20,7 @@ from .config import CONFIG
 from .database import SessionMaker
 from .objects import Share
 
-jinja2_environment = Environment()
+jinja2_environment = Environment(autoescape=True)
 jinja2_environment.policies["json.dumps_kwargs"]["ensure_ascii"] = False
 
 app = FastAPI(openapi_url=None)
