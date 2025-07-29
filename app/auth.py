@@ -218,10 +218,8 @@ def check_session(session_id) -> Session | None:
 
 def invalidate_session(session_id) -> None:
     with sessions_lock:
-        try:
+        if sessions.get(session_id):
             del sessions[session_id]
-        except:
-            pass
 
 
 def invalidate_sessions() -> None:
@@ -243,7 +241,7 @@ def remove_password(username: str) -> tuple[bool, str]:
             return (False, "User does not exist")
         if not user.public_keys:
             return (False, "You do not have any alternative method to log in!")
-        user.password = ""
+        user.password = str(None)
         engine.commit()
     return (True, "Password removed!")
 
