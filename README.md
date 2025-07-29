@@ -9,7 +9,7 @@ If you want a fully-featured file server, look at [Copyparty](https://github.com
 Development on this has been very slow - I'll still occasionally work on this for fun, but Copyparty probably has everything you will ever need.
 
 ## setup
-Once everything is downloaded, you may need to add an initial user with `control_panel.py`.
+Once everything is downloaded, you will need to add an initial user with `control_panel.py`.
 
 Additionally, you may want to alter `config.toml` to store files in a different directory.
 
