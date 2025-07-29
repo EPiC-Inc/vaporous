@@ -3,6 +3,11 @@
 This is a file server written in Python, created since Google Drive does not provide the necessary space for videos for my friends.
 (Also, I wanted to challenge myself and not use an off-the-shelf file server)
 
+## probably don't use this
+If you want a fully-featured file server, look at [Copyparty](https://github.com/9001/copyparty)!
+
+Development on this has been very slow - I'll still occasionally work on this for fun, but Copyparty probably has everything you will ever need.
+
 ## setup
 Once everything is downloaded, you may need to add an initial user with `control_panel.py`.
 
